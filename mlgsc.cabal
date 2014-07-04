@@ -1,0 +1,85 @@
+name:           MLGSC
+version:        0.1
+synopsis:       Maximum-Likelihood General sequence classfier
+author:         Thomas Junier
+license:        BSD3
+build-type:     Simple
+cabal-version:  >= 1.2
+
+-- module tests
+
+test-suite	  mlgsc_types
+  type:           exitcode-stdio-1.0
+  main-is:        TestTypes.hs
+  build-depends:  base, HUnit
+  hs-source-dirs: src, test
+
+test-suite	  model
+  type:           exitcode-stdio-1.0
+  main-is:        TestModel.hs
+  build-depends:  base, HUnit
+  hs-source-dirs: src, test
+
+test-suite	  align
+  type:           exitcode-stdio-1.0
+  main-is:        TestAlign.hs
+  build-depends:  base, HUnit, array
+  hs-source-dirs: src, test
+
+-- Disabled - tree scoring is currently not used.
+-- test-suite	  treescore
+--   type:           exitcode-stdio-1.0
+--   main-is:        TestTreeScore.hs
+--   build-depends:  base, HUnit, MissingH
+--   hs-source-dirs: src, test
+
+test-suite	  cdf
+  type:           exitcode-stdio-1.0
+  main-is:        TestCdf.hs
+  build-depends:  base, HUnit
+  hs-source-dirs: src, test
+
+test-suite	  fasta
+  type:           exitcode-stdio-1.0
+  main-is:        TestFastA.hs
+  build-depends:  base, HUnit
+  hs-source-dirs: src, test
+
+---- Re-enable this when enabling path-scores w/ fully-labeled trees
+--test-suite	  newick
+--  type:           exitcode-stdio-1.0
+--  main-is:        TestNewickParser.hs
+--  build-depends:  base, HUnit
+--  hs-source-dirs: src, test
+
+-- test-suite	  logodds
+--   type:           exitcode-stdio-1.0
+--   main-is:        TestLogOdds.hs
+--   build-depends:  base, HUnit
+--   hs-source-dirs: src, test
+-- application tests
+
+test-suite        test_mlgsc
+  type:           exitcode-stdio-1.0
+  main-is:        test_mlgsc.hs
+  build-depends:  base, process, filepath
+  hs-source-dirs: test
+
+test-suite        test_mlgsc_train
+  type:           exitcode-stdio-1.0
+  main-is:        test_mlgsc_train.hs
+  build-depends:  base, process, filepath, MissingH, random
+  hs-source-dirs: test
+
+-- executables
+
+executable mlgsc_train
+  build-depends: base, split, parsec, containers, directory, random, text
+  main-is:        mlgsc_train.hs
+  hs-source-dirs: src
+
+executable mlgsc
+  build-depends: base, split, parsec, containers, directory, array, bytestring
+  main-is:        mlgsc.hs
+  hs-source-dirs: src
+
