@@ -4,6 +4,7 @@
 
 -- module Main where
 
+import Data.Tree
 import System.Environment (getArgs)
 import System.Console.GetOpt
 import System.IO
@@ -154,10 +155,10 @@ parseFastAFile fname = do
         let records = fastATextToRecords $ T.pack fasta
         return records
 
-align :: RoseTree Model -> FastA -> FastA
+align :: Tree Model -> FastA -> FastA
 align hm fasta = fasta { FastA.sequence = aln_sequence }
         where   aln_sequence = msalign defScoring isl (FastA.sequence fasta)
-                isl = (matrix . rTreeData) hm
+                isl = (matrix . rootLabel) hm
 
 scoreQuery hm q = (header q, fst scoreTuple, snd scoreTuple, FastA.sequence q)
         where   scoreTuple = tightModelRTreeScore hm (FastA.sequence q)
