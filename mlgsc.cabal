@@ -45,12 +45,11 @@ test-suite	  fasta
   build-depends:  base, HUnit
   hs-source-dirs: src, test
 
----- Re-enable this when enabling path-scores w/ fully-labeled trees
---test-suite	  newick
---  type:           exitcode-stdio-1.0
---  main-is:        TestNewickParser.hs
---  build-depends:  base, HUnit
---  hs-source-dirs: src, test
+test-suite	  newick
+  type:           exitcode-stdio-1.0
+  main-is:        TestNewickParser.hs
+  build-depends:  base, HUnit
+  hs-source-dirs: src, test
 
 -- test-suite	  logodds
 --   type:           exitcode-stdio-1.0
