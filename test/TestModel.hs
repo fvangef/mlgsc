@@ -2,8 +2,9 @@
 
 import Test.HUnit
 import Data.Map as Map
+import Data.Tree
+
 import MlgscTypes
-import Trees
 import Model
 import NewickParser
 
@@ -194,7 +195,7 @@ pair_set_1 = [
 	]
 
 newick_1 = "((Ant,Bee),((Cat,Dog),Eel));"
-(Right tree_1) = parseRoseTree newick_1
+(Right tree_1) = parseTree newick_1
 
 {-
 clssfr_1 = pairs2modelRTree pair_set_1 strict_nt tree_1
@@ -407,7 +408,7 @@ pair_set_3 = [
     ]
 
 newick_2 = "((Connochaetes,Gallus),Salmo);"
-(Right tree_2) = parseRoseTree newick_2
+(Right tree_2) = parseTree newick_2
 
 balmodtree = balancedModelRTree small_prob scale_factor pair_set_3 tree_2
 
