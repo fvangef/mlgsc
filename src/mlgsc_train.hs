@@ -3,6 +3,7 @@
 
 module Main where
 
+import Data.Tree
 import System.Environment (getArgs)
 import System.Console.GetOpt
 import System.IO
@@ -159,7 +160,7 @@ main = do
                 LeaveOneOut -> TIO.hPutStrLn stderr $ T.toStrict $
                     leftOutPairs2FastA $ fst $ leaveOneOut gen rawOtuSeqPairs
 
-defaultMode :: Options -> [(T.Text,T.Text)] -> RoseTree T.Text -> IO ()
+defaultMode :: Options -> [(T.Text,T.Text)] -> Tree T.Text -> IO ()
 defaultMode opts otuSeqPairs tree = do
     let classifier = (optBalanced opts) -- this is a _function_
                         (optSmallProb opts)
@@ -204,23 +205,23 @@ parseFastAFile fname = do
         let records = fastATextToRecords $ T.pack fasta
         return records
 
-getTree :: String -> IO (RoseTree T.Text)
+getTree :: String -> IO (Tree T.Text)
 getTree fname = do 
         fh <- openFile fname ReadMode
         newick <- hGetContents fh
-        let spcTree = parseRoseTree newick
+        let spcTree = parseTree newick
         case spcTree of 
                 Left err -> error $ show err
                 Right tree -> return tree
 
-emptyMatrices :: RoseTree Model -> Maybe T.Text
+emptyMatrices :: Tree Model -> Maybe T.Text
 emptyMatrices classifier
         | T.null list = Nothing
         | otherwise = Just list :: Maybe T.Text
         where list = T.intercalate (T.pack ", ") $ map name $ filter (null . matrix)
                      $ fringe classifier
 
-scoreDist :: RoseTree Model -> [(T.Text,Sequence)] -> EmpiricalCDF Int
+scoreDist :: Tree Model -> [(T.Text,Sequence)] -> EmpiricalCDF Int
 scoreDist classifier otuSeqPairs = empiricalCdf scores
         where scores = map (snd . tightModelRTreeScore classifier . snd) otuSeqPairs
 
