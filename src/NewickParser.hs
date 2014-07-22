@@ -2,8 +2,7 @@ module NewickParser where
 
 import Text.ParserCombinators.Parsec
 import qualified Data.Text.Lazy as T
-
-import Trees
+import Data.Tree
 
 
 identifier :: Parser String
@@ -21,6 +20,7 @@ semicolon = char ';' >> return ()
 comma :: Parser ()
 comma = char ',' >> return ()
 
+{-
 leaf :: Parser (BinaryTree String)
 leaf = do { i <- identifier
 			; return (Leaf i)
@@ -42,32 +42,35 @@ bifurcatingTree =
 			t <- node
 			semicolon
 			return t
+-}
 
-roseLeaf :: Parser (RoseTree T.Text)
-roseLeaf = do 
+leaf :: Parser (Tree T.Text)
+leaf = do 
 		i <- identifier
-		return (RoseTree (T.pack i) [])
+		return (Node (T.pack i) [])
 
-roseNode :: Parser (RoseTree T.Text)
-roseNode = do {
+node :: Parser (Tree T.Text)
+node = do {
 		oParen ;
-		l <-roseNode `sepBy1` (char ',') ;
+		l <-node `sepBy1` (char ',') ;
 		cParen ;
-		return (RoseTree (T.pack "") l)
+		return (Node (T.pack "") l)
 		}
-	      <|> roseLeaf
+	      <|> leaf
 
-roseTree :: Parser (RoseTree T.Text)
+roseTree :: Parser (Tree T.Text)
 roseTree = do
-		t <- roseNode
+		t <- node
 		semicolon
 		return t
 
+{-
 parseBifurcatingTree :: String -> Either ParseError (BinaryTree String)
 parseBifurcatingTree newick = (parse bifurcatingTree "" newick) 
+-}
 
-parseRoseTree :: String -> Either ParseError (RoseTree T.Text)
-parseRoseTree newick = (parse roseTree "" newick)
+parseTree :: String -> Either ParseError (Tree T.Text)
+parseTree newick = (parse roseTree "" newick)
 
 run :: Show a => Parser a -> String -> IO ()
 run p input 
