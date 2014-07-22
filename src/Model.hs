@@ -6,6 +6,7 @@ module Model where
 import Data.List 
 import Data.Map
 import Data.Set
+import Data.Tree
 import qualified Data.Text.Lazy as T
 
 import Trees
@@ -34,12 +35,12 @@ data RawModel   = RawModel {
                 } deriving (Show, Read)
 
 data Classifier = Classifier {
-        modelTree       :: RoseTree Model
+        modelTree       :: Tree Model
         , scoreCDF       :: EmpiricalCDF Int
         } deriving (Show, Read)
 
 type TreeBuilder    = 
-    Float -> Int -> [(T.Text,T.Text)] -> RoseTree T.Text -> RoseTree Model
+    Float -> Int -> [(T.Text,T.Text)] -> Tree T.Text -> Tree Model
 
 strict_nt   = Data.Set.fromList "ATGC-"
 nucleotides = Data.Set.fromList "ATGCMRWSYKVHDBN-"
@@ -211,7 +212,7 @@ pairs2modelRTree pairs resSet tree = fmap (pair2model resSet) whole_seq_tree
 -- same, tight models
 
 pairs2tightModelRTree :: Float -> Int ->
-        [(T.Text,T.Text)] -> RoseTree T.Text -> RoseTree Model
+        [(T.Text,T.Text)] -> Tree T.Text -> Tree Model
 pairs2tightModelRTree smallprob scale_factor pairs tree =
 		fmap (pair2tightModel smallprob scale_factor) whole_seq_tree
         where   whole_seq_tree = mergeR leaf_seq_tree
@@ -309,25 +310,25 @@ merge (Node (name, list) l r)   = Node (name, concat)  ml mr
 -}
 
 -- this version of merge is for Rose trees 
-mergeR :: RoseTree (T.Text, [a]) -> RoseTree (T.Text, [a])
-mergeR (RoseTree (name, seqlist) [])    = RoseTree (name, seqlist) []
-mergeR (RoseTree (name, seqlist) kids)  =
-        RoseTree (name, merged_seq_list) merged_kids
+mergeR :: Tree (T.Text, [a]) -> Tree (T.Text, [a])
+mergeR (Node (name, seqlist) [])    = Node (name, seqlist) []
+mergeR (Node (name, seqlist) kids)  =
+        Node (name, merged_seq_list) merged_kids
         where   merged_kids = Data.List.map mergeR kids
                 merged_seq_list = foldr1 (++) $
-                        Prelude.map (snd . rTreeData) merged_kids 
+                        Prelude.map (snd . rootLabel) merged_kids 
 
 -- Similar, but instead of merging trees of sequence lists (= OTU alignments)
 -- like mergeR does, this one merges _raw probability matrices_. The effect is
 -- that all OTUs have the same weight.
 
-mergeBalancedR :: RoseTree RawModel -> RoseTree RawModel
-mergeBalancedR leaf@(RoseTree _ []) = leaf
-mergeBalancedR (RoseTree rmod kids) =
-    RoseTree (RawModel (T.pack "") avg_mat) merged_kids
+mergeBalancedR :: Tree RawModel -> Tree RawModel
+mergeBalancedR leaf@(Node _ []) = leaf
+mergeBalancedR (Node rmod kids) =
+    Node (RawModel (T.pack "") avg_mat) merged_kids
     where   avg_mat = averageRPD merged_kid_mats
             merged_kids = Data.List.map mergeBalancedR kids
-            merged_kid_mats = Data.List.map (rawMatrix . rTreeData) merged_kids 
+            merged_kid_mats = Data.List.map (rawMatrix . rootLabel) merged_kids 
 
 -- Constructs a Model from a OTU name and a list of (aligned) sequences
 
@@ -360,8 +361,8 @@ rawModel2Model smallprob scale_factor (RawModel name mat) = Model name isl_mat
         where   isl_mat = matrixMap (round . (*scale) . (logBase 10)) mat
                 scale = fromIntegral scale_factor
 
-balancedModelRTree :: Float -> Int -> [(T.Text,T.Text)] -> RoseTree T.Text 
-    -> RoseTree Model
+balancedModelRTree :: Float -> Int -> [(T.Text,T.Text)] -> Tree T.Text 
+    -> Tree Model
 balancedModelRTree smallprob scale pairs otuname_tree =
     fmap (rawModel2Model smallprob scale) merged_mod_tree 
     where   merged_mod_tree = mergeBalancedR leaf_mod_tree 
@@ -382,7 +383,7 @@ modelTreeScore (Node mod left right) seq
 -}
 
 {-
-modelRTreeScore :: RoseTree Model -> Sequence -> (T.Text, Int)
+modelRTreeScore :: Tree Model -> Sequence -> (T.Text, Int)
 modelRTreeScore (RoseTree (Model name mat) []) seq =
         (name, matrixScoreLog mat seq)
 modelRTreeScore (RoseTree mod kids) seq = modelRTreeScore best seq
@@ -398,14 +399,14 @@ modelRTreeScore (RoseTree mod kids) seq = modelRTreeScore best seq
 
 -- Same, for tight matrices
 -- TODO: derive small prob score (-4000) from actual small prob
-tightModelRTreeScore :: RoseTree Model -> Sequence -> (T.Text, Int)
-tightModelRTreeScore (RoseTree (Model name mat) []) seq =
+tightModelRTreeScore :: Tree Model -> Sequence -> (T.Text, Int)
+tightModelRTreeScore (Node (Model name mat) []) seq =
         (name, tightMatrixScore (-4000) mat seq)
-tightModelRTreeScore (RoseTree mod kids) seq = tightModelRTreeScore best seq
+tightModelRTreeScore (Node mod kids) seq = tightModelRTreeScore best seq
         where   best = fst $ maximumBy cmpModScTuple kidsModScTuples
                 kidsModScTuples = zip kids kidsScoreTuples
                 kidsScoreTuples = Data.List.map scoreTuple kidsModels
-                kidsModels = Data.List.map rTreeData kids
+                kidsModels = Data.List.map rootLabel kids
                 scoreTuple mod = (name mod, tightMatrixScore (-4000) (matrix mod) seq)
                 cmpModScTuple (_, (_, a)) (_, (_, b))
                                 | a <= b = LT
@@ -441,7 +442,7 @@ maskMatrix scores pred mat = Prelude.map (mask pred) (zip scores mat)
 
 -- Functions for saving and loading classifiers (should perhaps not belong here)
 
-save :: RoseTree Model -> FilePath -> IO ()
+save :: Tree Model -> FilePath -> IO ()
 save hm f = writeFile f (show hm)
 
 loadClassifier :: FilePath -> IO Classifier
