@@ -1,16 +1,12 @@
 -- A type class for clade models, i.e., a conserved sequence regions that should
 -- be able to recognize a clade (be it a OTU, or a species, or whatever "rank").
 
-import Data.Text
+module CladeModel where
 
-module CladeModel
-(
-)
-where
-
-type Sequence = Data.Text
-type Residue = Char
+import MlgscTypes
 
 class CladeModel a where
-    scoreOf :: a -> Residue -> Position -> Numeric
-    scoreSeq :: a -> Sequence -> Numeric
+    -- The score of a residue at a position
+    scoreOf :: (Num s) => a -> Residue -> Position -> s
+    -- Thescore of a sequence according to the model
+    scoreSeq :: (Num s) => a -> Sequence -> s
