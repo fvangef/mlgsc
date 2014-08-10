@@ -14,9 +14,9 @@ test-suite	  mlgsc_types
   build-depends:  base, HUnit
   hs-source-dirs: src, test
 
-test-suite	  model
+test-suite	  nucmodel
   type:           exitcode-stdio-1.0
-  main-is:        TestModel.hs
+  main-is:        TestNucModel.hs
   build-depends:  base, HUnit
   hs-source-dirs: src, test
 
