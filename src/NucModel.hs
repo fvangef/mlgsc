@@ -49,8 +49,16 @@ alnToNucModel smallProb scale aln =
                                 . colToCountsMap ) $ T.transpose aln
             size = fromIntegral $ length aln   -- number of sequences
 
+-- (required by the CladeModel) type class - Remember: sequence positions start
+-- at 1, but vector indexes (sensibly) start at 0.
+
 probOf :: NucModel -> Residue -> Position -> Int
-probOf mod res pos = undefined
+probOf (NucModel mat) res pos
+    | res == 'A'    = (mat V.! 0) U.! (pos - 1)
+    | res == 'C'    = (mat V.! 1) U.! (pos - 1)
+    | res == 'G'    = (mat V.! 2) U.! (pos - 1)
+    | res == 'T'    = (mat V.! 3) U.! (pos - 1)
+    | res == '-'    = (mat V.! 4) U.! (pos - 1)
 
 -- TODO: convert to relative frequencies, then log thereof, then scale and
 -- round. Can maybe be done in another function
