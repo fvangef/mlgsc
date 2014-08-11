@@ -2,6 +2,7 @@
 
 import Test.HUnit
 
+import CladeModel
 import NucModel
 
 -- Numeric testing of NucModels:
@@ -20,66 +21,66 @@ test_aln1 = [
 aln1Mod = alnToNucModel small_prob scale_factor test_aln1 
 
 -- There are 5 out of 5 'A's in the first column, hence 5/5 ... 1
-test_1 = TestCase (assertEqual "A@1(aln1)" (round (scale_factor * (logBase 10 (5/5)))) (probOf aln1Mod 'A' 1))
+test_1 = TestCase (assertEqual "A@1(aln1)" (round (scale_factor * (logBase 10 (5/5)))) (scoreOf aln1Mod 'A' 1))
 -- There are 0 out of 5 'C's in the first column: use small_prob
-test_2 = TestCase (assertEqual "C@1(aln1)" (round (scale_factor * (logBase 10 small_prob))) (probOf aln1Mod 'C' 1))
+test_2 = TestCase (assertEqual "C@1(aln1)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln1Mod 'C' 1))
 -- and so on...
-test_3 = TestCase (assertEqual "G@1(aln1)" (round (scale_factor * (logBase 10 small_prob))) (probOf aln1Mod 'G' 1))
-test_4 = TestCase (assertEqual "T@1(aln1)" (round (scale_factor * (logBase 10 small_prob))) (probOf aln1Mod 'T' 1))
+test_3 = TestCase (assertEqual "G@1(aln1)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln1Mod 'G' 1))
+test_4 = TestCase (assertEqual "T@1(aln1)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln1Mod 'T' 1))
 -- 'D' is for 'dash'
-test_5 = TestCase (assertEqual "D@1(aln1)" (round (scale_factor * (logBase 10 small_prob))) (probOf aln1Mod '-' 1))
+test_5 = TestCase (assertEqual "D@1(aln1)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln1Mod '-' 1))
 
-test_6  = TestCase (assertEqual "A@2(aln1)" (round (scale_factor * (logBase 10 (2/5)))) (probOf aln1Mod 'A' 2))
-test_7  = TestCase (assertEqual "C@2(aln1)" (round (scale_factor * (logBase 10 small_prob))) (probOf aln1Mod 'C' 2))
-test_8  = TestCase (assertEqual "G@2(aln1)" (round (scale_factor * (logBase 10 small_prob))) (probOf aln1Mod 'G' 2))
-test_9  = TestCase (assertEqual "T@2(aln1)" (round (scale_factor * (logBase 10 (3/5)))) (probOf aln1Mod 'T' 2))
-test_10 = TestCase (assertEqual "D@2(aln1)" (round (scale_factor * (logBase 10 small_prob))) (probOf aln1Mod '-' 2))
+test_6  = TestCase (assertEqual "A@2(aln1)" (round (scale_factor * (logBase 10 (2/5)))) (scoreOf aln1Mod 'A' 2))
+test_7  = TestCase (assertEqual "C@2(aln1)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln1Mod 'C' 2))
+test_8  = TestCase (assertEqual "G@2(aln1)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln1Mod 'G' 2))
+test_9  = TestCase (assertEqual "T@2(aln1)" (round (scale_factor * (logBase 10 (3/5)))) (scoreOf aln1Mod 'T' 2))
+test_10 = TestCase (assertEqual "D@2(aln1)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln1Mod '-' 2))
 
-test_11 = TestCase (assertEqual "A@3(aln1)" (round (scale_factor * (logBase 10 (1/5)))) (probOf aln1Mod 'A' 3))
-test_12 = TestCase (assertEqual "C@3(aln1)" (round (scale_factor * (logBase 10 (2/5)))) (probOf aln1Mod 'C' 3))
-test_13 = TestCase (assertEqual "G@3(aln1)" (round (scale_factor * (logBase 10 (2/5)))) (probOf aln1Mod 'G' 3))
-test_14 = TestCase (assertEqual "T@3(aln1)" (round (scale_factor * (logBase 10 small_prob))) (probOf aln1Mod 'T' 3))
-test_15 = TestCase (assertEqual "D@3(aln1)" (round (scale_factor * (logBase 10 small_prob))) (probOf aln1Mod '-' 3))
+test_11 = TestCase (assertEqual "A@3(aln1)" (round (scale_factor * (logBase 10 (1/5)))) (scoreOf aln1Mod 'A' 3))
+test_12 = TestCase (assertEqual "C@3(aln1)" (round (scale_factor * (logBase 10 (2/5)))) (scoreOf aln1Mod 'C' 3))
+test_13 = TestCase (assertEqual "G@3(aln1)" (round (scale_factor * (logBase 10 (2/5)))) (scoreOf aln1Mod 'G' 3))
+test_14 = TestCase (assertEqual "T@3(aln1)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln1Mod 'T' 3))
+test_15 = TestCase (assertEqual "D@3(aln1)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln1Mod '-' 3))
 
-test_16 = TestCase (assertEqual "A@4(aln1)" (round (scale_factor * (logBase 10 (1/5)))) (probOf aln1Mod 'A' 4))
-test_17 = TestCase (assertEqual "C@4(aln1)" (round (scale_factor * (logBase 10 (1/5)))) (probOf aln1Mod 'C' 4))
-test_18 = TestCase (assertEqual "G@4(aln1)" (round (scale_factor * (logBase 10 (1/5)))) (probOf aln1Mod 'G' 4))
-test_19 = TestCase (assertEqual "T@4(aln1)" (round (scale_factor * (logBase 10 (1/5)))) (probOf aln1Mod 'T' 4))
-test_20 = TestCase (assertEqual "D@4(aln1)" (round (scale_factor * (logBase 10 (1/5)))) (probOf aln1Mod '-' 4))
+test_16 = TestCase (assertEqual "A@4(aln1)" (round (scale_factor * (logBase 10 (1/5)))) (scoreOf aln1Mod 'A' 4))
+test_17 = TestCase (assertEqual "C@4(aln1)" (round (scale_factor * (logBase 10 (1/5)))) (scoreOf aln1Mod 'C' 4))
+test_18 = TestCase (assertEqual "G@4(aln1)" (round (scale_factor * (logBase 10 (1/5)))) (scoreOf aln1Mod 'G' 4))
+test_19 = TestCase (assertEqual "T@4(aln1)" (round (scale_factor * (logBase 10 (1/5)))) (scoreOf aln1Mod 'T' 4))
+test_20 = TestCase (assertEqual "D@4(aln1)" (round (scale_factor * (logBase 10 (1/5)))) (scoreOf aln1Mod '-' 4))
 
-test_21 = TestCase (assertEqual "A@5(aln1)" (round (scale_factor * (logBase 10 small_prob))) (probOf aln1Mod 'A' 5))
-test_22 = TestCase (assertEqual "C@5(aln1)" (round (scale_factor * (logBase 10 small_prob))) (probOf aln1Mod 'C' 5))
-test_23 = TestCase (assertEqual "G@5(aln1)" (round (scale_factor * (logBase 10 small_prob))) (probOf aln1Mod 'G' 5))
+test_21 = TestCase (assertEqual "A@5(aln1)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln1Mod 'A' 5))
+test_22 = TestCase (assertEqual "C@5(aln1)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln1Mod 'C' 5))
+test_23 = TestCase (assertEqual "G@5(aln1)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln1Mod 'G' 5))
 -- we _always_ divide by the number of sequences in the aln, even when non-{ATGC-} residues occur (like N)
-test_24 = TestCase (assertEqual "T@5(aln1)" (round (scale_factor * (logBase 10 (1/5)))) (probOf aln1Mod 'T' 5))
-test_25 = TestCase (assertEqual "D@5(aln1)" (round (scale_factor * (logBase 10 (3/5)))) (probOf aln1Mod '-' 5))
+test_24 = TestCase (assertEqual "T@5(aln1)" (round (scale_factor * (logBase 10 (1/5)))) (scoreOf aln1Mod 'T' 5))
+test_25 = TestCase (assertEqual "D@5(aln1)" (round (scale_factor * (logBase 10 (3/5)))) (scoreOf aln1Mod '-' 5))
 
 tests = TestList [
-		    TestLabel "probOf" test_1
-		    , TestLabel "probOf" test_2
-		    , TestLabel "probOf" test_3
-		    , TestLabel "probOf" test_4
-		    , TestLabel "probOf" test_5
-		    , TestLabel "probOf" test_6
-		    , TestLabel "probOf" test_7
-		    , TestLabel "probOf" test_8
-		    , TestLabel "probOf" test_9
-		    , TestLabel "probOf" test_10
-		    , TestLabel "probOf" test_11
-		    , TestLabel "probOf" test_12
-		    , TestLabel "probOf" test_13
-		    , TestLabel "probOf" test_14
-		    , TestLabel "probOf" test_15
-		    , TestLabel "probOf" test_16
-		    , TestLabel "probOf" test_17
-		    , TestLabel "probOf" test_18
-		    , TestLabel "probOf" test_19
-		    , TestLabel "probOf" test_20
-		    , TestLabel "probOf" test_21
-		    , TestLabel "probOf" test_22
-		    , TestLabel "probOf" test_23
-		    , TestLabel "probOf" test_24
-		    , TestLabel "probOf" test_25
+		    TestLabel "scoreOf" test_1
+		    , TestLabel "scoreOf" test_2
+		    , TestLabel "scoreOf" test_3
+		    , TestLabel "scoreOf" test_4
+		    , TestLabel "scoreOf" test_5
+		    , TestLabel "scoreOf" test_6
+		    , TestLabel "scoreOf" test_7
+		    , TestLabel "scoreOf" test_8
+		    , TestLabel "scoreOf" test_9
+		    , TestLabel "scoreOf" test_10
+		    , TestLabel "scoreOf" test_11
+		    , TestLabel "scoreOf" test_12
+		    , TestLabel "scoreOf" test_13
+		    , TestLabel "scoreOf" test_14
+		    , TestLabel "scoreOf" test_15
+		    , TestLabel "scoreOf" test_16
+		    , TestLabel "scoreOf" test_17
+		    , TestLabel "scoreOf" test_18
+		    , TestLabel "scoreOf" test_19
+		    , TestLabel "scoreOf" test_20
+		    , TestLabel "scoreOf" test_21
+		    , TestLabel "scoreOf" test_22
+		    , TestLabel "scoreOf" test_23
+		    , TestLabel "scoreOf" test_24
+		    , TestLabel "scoreOf" test_25
 		]
 
 main = do

@@ -19,7 +19,7 @@
  -}
 
 -- TODO: once it works, restrict exports to this:
--- module NucModel (NucModel, alnToNucModel, probOf) where
+-- module NucModel (NucModel, alnToNucModel, scoreOf) where
 
 module  NucModel where -- 
 
@@ -27,6 +27,8 @@ import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as U
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
+import Data.Binary
+import Data.Vector.Binary
 
 
 import MlgscTypes
@@ -35,6 +37,24 @@ import CladeModel
 data NucModel = NucModel {
                     matrix :: V.Vector (U.Vector Int)
                 }
+
+instance CladeModel NucModel where
+    --Remember: sequence positions start -- at 1, but vector indexes (sensibly)
+    -- start at 0.
+    scoreOf (NucModel mat) res pos
+        | res == 'A'    = (mat V.! 0) U.! (pos - 1)
+        | res == 'C'    = (mat V.! 1) U.! (pos - 1)
+        | res == 'G'    = (mat V.! 2) U.! (pos - 1)
+        | res == 'T'    = (mat V.! 3) U.! (pos - 1)
+        | res == '-'    = (mat V.! 4) U.! (pos - 1)
+
+    scoreSeq (NucModel mat) seq = undefined
+
+instance Binary NucModel where
+    put nm = put $ matrix nm
+    get = do
+        mat <- get :: Get (V.Vector (U.Vector Int))
+        return $ NucModel mat
 
 -- Builds a NucMOdel from a list of aligned sequences. Residues other than A, C,
 -- G, T are ignored, but gaps (-) are modelled.
@@ -48,17 +68,6 @@ alnToNucModel smallProb scale aln =
                                 . countsMapToRelFreqMap size
                                 . colToCountsMap ) $ T.transpose aln
             size = fromIntegral $ length aln   -- number of sequences
-
--- (required by the CladeModel) type class - Remember: sequence positions start
--- at 1, but vector indexes (sensibly) start at 0.
-
-probOf :: NucModel -> Residue -> Position -> Int
-probOf (NucModel mat) res pos
-    | res == 'A'    = (mat V.! 0) U.! (pos - 1)
-    | res == 'C'    = (mat V.! 1) U.! (pos - 1)
-    | res == 'G'    = (mat V.! 2) U.! (pos - 1)
-    | res == 'T'    = (mat V.! 3) U.! (pos - 1)
-    | res == '-'    = (mat V.! 4) U.! (pos - 1)
 
 -- TODO: convert to relative frequencies, then log thereof, then scale and
 -- round. Can maybe be done in another function

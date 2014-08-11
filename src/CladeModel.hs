@@ -6,7 +6,8 @@ module CladeModel where
 import MlgscTypes
 
 class CladeModel a where
-    -- The score of a residue at a position
-    scoreOf :: (Num s) => a -> Residue -> Position -> s
-    -- Thescore of a sequence according to the model
-    scoreSeq :: (Num s) => a -> Sequence -> s
+    -- The score of a residue at a position. This is the log observed frequency
+    -- of said residue at that position, scaled and rounded.
+    scoreOf ::  a -> Residue -> Position -> Int
+    -- The score of a sequence according to the model
+    scoreSeq :: a -> Sequence -> Int
