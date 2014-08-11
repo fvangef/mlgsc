@@ -18,7 +18,10 @@
  -  >
  -}
 
-module NucModel (NucModel, alnToNucModel, probOf, colToMap) where
+-- TODO: once it works, restrict exports to this:
+-- module NucModel (NucModel, alnToNucModel, probOf) where
+
+module  NucModel where -- 
 
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as U
@@ -38,12 +41,13 @@ data NucModel = NucModel {
 
 -- TODO: transpose alignment into columns, map colToMap to each col, then make 5
 -- lists of 
-alnToNucModel :: Double -> Int -> Alignment -> NucModel
-alnToNucModel smallProb scale aln = undefined
+alnToNucModel :: Double -> Double -> Alignment -> NucModel
+alnToNucModel smallProb scale aln = 
+    NucModel $ scoreMapListToVectors smallProb scale scoreMapList
     where   scoreMapList = fmap (freqMapToScoreMap scale
                                 . countsMapToRelFreqMap size
                                 . colToCountsMap ) $ T.transpose aln
-            size = length aln   -- number of sequences
+            size = fromIntegral $ length aln   -- number of sequences
 
 probOf :: NucModel -> Residue -> Position -> Int
 probOf mod res pos = undefined
@@ -53,8 +57,9 @@ probOf mod res pos = undefined
 
 -- NOTE: functions below here should not be exported.
 
--- Takes a Column (the residues of each sequence at a given position) and
--- returns a map of absolute frequency (i.e., counts) of each residue.
+-- Takes a Column (a vertical slice through an alignment, IOW the residues of
+-- each sequence at a given single position) and returns a map of absolute
+-- frequency (i.e., counts) of each residue.
 
 colToCountsMap :: Column -> M.Map Residue Int
 colToCountsMap col = M.fromListWith (+) [(res, 1) | res <- (T.unpack col)] 
@@ -62,12 +67,36 @@ colToCountsMap col = M.fromListWith (+) [(res, 1) | res <- (T.unpack col)]
 -- Scales the absolute frequency into a relative frequency, using the "height"
 -- of the alignment (= number of sequences).
 
-countsMapToRelFreqMap :: Int -> M.Map Residue Int -> M.Map Residue Double
+countsMapToRelFreqMap :: Double -> M.Map Residue Int -> M.Map Residue Double
 countsMapToRelFreqMap size = fmap (\n -> (fromIntegral n) / size)
 
 -- Transforms a Residue -> Relative frequency map into a Residue -> Score map,
 -- where the score is a rounded, scaled logarithm of the relative frequency.
 
-freqMapToScoreMap :: Int -> M.Map Residue Double -> M.Map Residue Int
+freqMapToScoreMap :: Double -> M.Map Residue Double -> M.Map Residue Int
 freqMapToScoreMap scale = fmap (round . (* scale) . logBase 10)
 
+-- scoreMapListToVectors :: [M.Map Residue Int] -> undefined
+scoreMapListToVectors smallProb scale sml = V.fromList [vA, vC, vG, vT, vD] 
+    where   vA = U.fromList $ map (M.findWithDefault smallProbScore 'A') sml
+            vC = U.fromList $ map (M.findWithDefault smallProbScore 'C') sml
+            vG = U.fromList $ map (M.findWithDefault smallProbScore 'G') sml
+            vT = U.fromList $ map (M.findWithDefault smallProbScore 'T') sml
+            vD = U.fromList $ map (M.findWithDefault smallProbScore '-') sml
+            smallProbScore = round $ scale * (logBase 10 smallProb)
+
+-- Some data to play around with in GHCi.
+-- TODO: remove this when tests ok.
+
+
+aln1 = [
+    T.pack "ATGC-G",
+    T.pack "AACG-G",
+    T.pack "AACGGG",
+    T.pack "ATG--G",
+    T.pack "ATAATT"
+    ]
+
+sml = fmap (freqMapToScoreMap 1000.0 . countsMapToRelFreqMap 5 . colToCountsMap) $ T.transpose aln1
+
+nm1 = alnToNucModel 0.0001 1000 aln1

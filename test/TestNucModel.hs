@@ -7,7 +7,7 @@ import NucModel
 -- Numeric testing of NucModels:
 
 small_prob = 0.0001 :: Double -- need to be specific, else logBase complains
-scale_factor = 1000 :: Int
+scale_factor = 1000 :: Double
 
 aln1 = [
 	"ATGC-",
