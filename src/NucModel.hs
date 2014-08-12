@@ -36,7 +36,7 @@ import CladeModel
 
 data NucModel = NucModel {
                     matrix :: V.Vector (U.Vector Int)
-                }
+                } deriving (Show, Eq)
 
 instance CladeModel NucModel where
     --Remember: sequence positions start -- at 1, but vector indexes (sensibly)

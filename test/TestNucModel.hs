@@ -1,9 +1,20 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import Test.HUnit
+import Data.Binary
+import System.Directory
+import Control.Exception
+import System.IO.Error hiding (catch)
 
 import CladeModel
 import NucModel
+
+-- see http://stackoverflow.com/questions/8502201/remove-file-if-it-exists-in-haskell
+removeIfExists :: FilePath -> IO ()
+removeIfExists fileName = removeFile fileName `catch` handleExists
+  where handleExists e
+          | isDoesNotExistError e = return ()
+          | otherwise = throwIO e
 
 -- Numeric testing of NucModels:
 
@@ -55,6 +66,49 @@ test_23 = TestCase (assertEqual "G@5(aln1)" (round (scale_factor * (logBase 10 s
 test_24 = TestCase (assertEqual "T@5(aln1)" (round (scale_factor * (logBase 10 (1/5)))) (scoreOf aln1Mod 'T' 5))
 test_25 = TestCase (assertEqual "D@5(aln1)" (round (scale_factor * (logBase 10 (3/5)))) (scoreOf aln1Mod '-' 5))
 
+-- Test Binary functions, i.e. storage as binary file to disk, and reading from
+-- it, then check every single value in the model, just as above. These cases
+-- are all under the same test, because I don't want to write and read the file
+-- every time.
+
+test_26 = TestCase (do
+                        removeIfExists "aln1Mod.bmod"
+                        encodeFile "aln1Mod.bmod" aln1Mod
+                        aln2Mod <- decodeFile "aln1Mod.bmod"
+                        assertEqual "store-read" aln1Mod aln2Mod
+
+                        assertEqual "A@1(aln2)" (round (scale_factor * (logBase 10 (5/5)))) (scoreOf aln2Mod 'A' 1)
+                        assertEqual "C@1(aln2)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln2Mod 'C' 1)
+                        assertEqual "G@1(aln2)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln2Mod 'G' 1)
+                        assertEqual "T@1(aln2)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln2Mod 'T' 1)
+                        assertEqual "D@1(aln2)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln2Mod '-' 1)
+                        
+                        assertEqual "A@2(aln2)" (round (scale_factor * (logBase 10 (2/5)))) (scoreOf aln2Mod 'A' 2)
+                        assertEqual "C@2(aln2)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln2Mod 'C' 2)
+                        assertEqual "G@2(aln2)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln2Mod 'G' 2)
+                        assertEqual "T@2(aln2)" (round (scale_factor * (logBase 10 (3/5)))) (scoreOf aln2Mod 'T' 2)
+                        assertEqual "D@2(aln2)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln2Mod '-' 2)
+                        
+                        assertEqual "A@3(aln2)" (round (scale_factor * (logBase 10 (1/5)))) (scoreOf aln2Mod 'A' 3)
+                        assertEqual "C@3(aln2)" (round (scale_factor * (logBase 10 (2/5)))) (scoreOf aln2Mod 'C' 3)
+                        assertEqual "G@3(aln2)" (round (scale_factor * (logBase 10 (2/5)))) (scoreOf aln2Mod 'G' 3)
+                        assertEqual "T@3(aln2)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln2Mod 'T' 3)
+                        assertEqual "D@3(aln2)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln2Mod '-' 3)
+                        
+                        assertEqual "A@4(aln2)" (round (scale_factor * (logBase 10 (1/5)))) (scoreOf aln2Mod 'A' 4)
+                        assertEqual "C@4(aln2)" (round (scale_factor * (logBase 10 (1/5)))) (scoreOf aln2Mod 'C' 4)
+                        assertEqual "G@4(aln2)" (round (scale_factor * (logBase 10 (1/5)))) (scoreOf aln2Mod 'G' 4)
+                        assertEqual "T@4(aln2)" (round (scale_factor * (logBase 10 (1/5)))) (scoreOf aln2Mod 'T' 4)
+                        assertEqual "D@4(aln2)" (round (scale_factor * (logBase 10 (1/5)))) (scoreOf aln2Mod '-' 4)
+                        
+                        assertEqual "A@5(aln2)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln2Mod 'A' 5)
+                        assertEqual "C@5(aln2)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln2Mod 'C' 5)
+                        assertEqual "G@5(aln2)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln2Mod 'G' 5)
+                        assertEqual "T@5(aln2)" (round (scale_factor * (logBase 10 (1/5)))) (scoreOf aln2Mod 'T' 5)
+                        assertEqual "D@5(aln2)" (round (scale_factor * (logBase 10 (3/5)))) (scoreOf aln2Mod '-' 5)
+
+                        )
+
 tests = TestList [
 		    TestLabel "scoreOf" test_1
 		    , TestLabel "scoreOf" test_2
@@ -81,7 +135,8 @@ tests = TestList [
 		    , TestLabel "scoreOf" test_23
 		    , TestLabel "scoreOf" test_24
 		    , TestLabel "scoreOf" test_25
+		    , TestLabel "scoreOf" test_26
 		]
 
 main = do
-	runTestTT tests
+    runTestTT tests
