@@ -2,10 +2,9 @@ module Align where
 
 import Data.Array
 import Data.List
-import qualified Data.Map as Map
-import qualified Data.ByteString.Char8 as B
-import qualified Data.Text.Encoding as E
-import qualified Data.Text.Lazy as T
+import qualified Data.Map as M
+import qualified Data.Text as T
+import qualified Data.Vector.Unboxed as U
 import Text.Printf
 
 import MlgscTypes
@@ -30,14 +29,16 @@ dirSym c = case (dir c) of
 	Down -> '|'
 	Righ -> '-'
 
+type VSequence = U.Vector Char
+
 type DPMatrix = Array (Int,Int) DPCell
 
-type ScoreFunction = (CladeModel mod) => (mod -> Sequence -> Int -> Int -> Int)
 type GapPenalty = Int
 
 data ScoringScheme = ScoringScheme {
-		scoreFunction 	:: ScoreFunction,
-		gapOPenalty	    :: GapPenalty
+		scoreFunction 	:: (CladeModel mod) =>
+            (mod -> VSequence -> Int -> Int -> Int) 
+		, gapOPenalty	    :: GapPenalty
 	}
 
 defScoring :: ScoringScheme
@@ -52,11 +53,11 @@ defScoring = ScoringScheme {
 -- 0 instead of (i * insertion penalty), etc. -- think of the ISLProbMatrix as
 -- horizontal, and of the sequence as vertical.
 
-msdpmat :: ScoringScheme -> ISLProbMatrix -> PackedSeq -> DPMatrix
+msdpmat :: (CladeModel mod) => ScoringScheme -> mod -> Sequence -> DPMatrix
 msdpmat scs mat seq  = dpmat
 	where	dpmat = array ((0,0), (seq_len, mat_len)) 
 			[((i,j), cell i j) | i <- [0..seq_len], j <- [0..mat_len]]
-		seq_len = B.length $ bs seq
+		seq_len = T.length seq
 		mat_len = length mat
 		cell i j
 			| i == 0 && j == 0	= DPCell 0 None
@@ -81,17 +82,22 @@ msdpmat scs mat seq  = dpmat
 -- It might be better to take gap penalties into account when designing these
 -- score functions.
 
-seqISLMatScore :: ScoreFunction
-seqISLMatScore hmat vseq i j
-	| prob == -4000 = -1	-- not found at that position
-	| prob == 0 	= 3
-	| prob > -300 	= 2	-- ~ 1000 * log10(0.5)
-	| prob > -600 	= 1	-- ~ 1000 * log10(0.25)
-	| otherwise	= 0
-	where 	prob = Map.findWithDefault (-4000) res dist
-		dist = hmat !! (j-1)
-		res = B.index (bs vseq) (i-1)
+-- I prefix 'mod' with 'h' for 'horizontal', and 'seq' with 'v', which stands
+-- for both 'vertical' and 'vector'. This reminds us that the DP is asymmetric,
+-- with the model horizontally (on top) and the sequence vertically (on the left
+-- side), when visualizing the process. This also reflects the fact that the
+-- sequence has O(1) indexing (and so should the model).
 
+seqISLMatScore :: (CladeModel mod) => mod -> VSequence -> Position -> Position -> Int
+seqISLMatScore hmod vseq i j
+    | prob == -4000 = -1	-- not found at that position
+    | prob == 0 	= 3
+    | prob > -300 	= 2	-- ~ 1000 * log10(0.5)
+    | prob > -600 	= 1	-- ~ 1000 * log10(0.25)
+    | otherwise	= 0
+    where   prob    = scoreOf hmod res j
+            res     = vseq ! (i-1)
+                        
 {-
 topCell :: Array (Int,Int) DPCell -> (Int,Int)
 topCell mat = fst $ maximumBy cellCmp (assocs mat)
@@ -100,9 +106,9 @@ topCell mat = fst $ maximumBy cellCmp (assocs mat)
 		| otherwise	= LT
 -}
 
-msalign :: ScoringScheme -> ISLProbMatrix -> Sequence -> T.Text
-msalign scs mat seq = T.pack $ nwMatBacktrack (msdpmat scs mat pseq) pseq
-	where pseq = PackedSeq $ E.encodeUtf8 $ T.toStrict seq
+msalign :: (CladeModel mod) => ScoringScheme -> mod -> Sequence -> Sequence
+msalign scs mat seq = T.pack $ nwMatBacktrack (msdpmat scs mat vseq) vseq
+	where vseq = U.fromList $ T.unpack seq 
 
 {-
 nwMatPath :: RawProbMatrix -> String -> String
@@ -129,26 +135,26 @@ topCellInLastCol mat = fst $ maximumBy cellCmp $
 -- "sequence" is a matrix (the vertical sequence is still a sequence, though);
 -- yields only the aligned sequence (not the matrix).
 
-nwMatBacktrack :: DPMatrix -> PackedSeq -> String
+nwMatBacktrack :: DPMatrix -> VSequence -> String
 nwMatBacktrack mat v = reverse va
 	where  	va = nwMatBacktrack' mat topLastCol v
 		topLastCol = topCellInLastCol mat
 
-nwMatBacktrack' :: DPMatrix -> (Int,Int) -> PackedSeq -> String
+nwMatBacktrack' :: DPMatrix -> (Int,Int) -> VSequence -> String
 nwMatBacktrack' _ (0,0) _ = ""
 -- These two cases may actually be covered by the general case
-nwMatBacktrack' mat (0,j) v = '-':vRest
-	where vRest = nwMatBacktrack' mat (0,j-1) v
-nwMatBacktrack' mat (i,0) v = ""
-	where vRest = nwMatBacktrack' mat (i-1,0) v
-nwMatBacktrack' mat (i,j) v = 
+nwMatBacktrack' mat (0,j) vseq = '-':vRest
+	where vRest = nwMatBacktrack' mat (0,j-1) vseq
+nwMatBacktrack' mat (i,0) vseq = ""
+	where vRest = nwMatBacktrack' mat (i-1,0) vseq
+nwMatBacktrack' mat (i,j) vseq = 
 	case dir (mat!(i,j)) of
-		Diag -> (B.index (bs v) (i-1)):vRest
-			where vRest = nwMatBacktrack' mat (i-1,j-1) v
+		Diag -> (vseq ! (i-1)):vRest
+			where vRest = nwMatBacktrack' mat (i-1,j-1) vseq
 		Righ -> '-':vRest
-			where vRest = nwMatBacktrack' mat (i, j-1) v
+			where vRest = nwMatBacktrack' mat (i, j-1) vseq
 		Down -> vRest
-			where vRest = nwMatBacktrack' mat (i-1, j) v
+			where vRest = nwMatBacktrack' mat (i-1, j) vseq
 --
 -- These are for debugging
 -- TODO: uncomment (and adapt) when switch to ByteString works
