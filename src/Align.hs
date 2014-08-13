@@ -9,7 +9,8 @@ import qualified Data.Text.Lazy as T
 import Text.Printf
 
 import MlgscTypes
-import Model
+import CladeModel
+
 
 data Direction 	= None | Diag | Down | Righ	-- 'Right' is defined by Either
 	deriving (Show, Eq)
@@ -29,16 +30,14 @@ dirSym c = case (dir c) of
 	Down -> '|'
 	Righ -> '-'
 
-newtype PackedSeq = PackedSeq { bs :: B.ByteString }
-
 type DPMatrix = Array (Int,Int) DPCell
 
-type ScoreFunction = (ISLProbMatrix -> PackedSeq -> Int -> Int -> Int)
+type ScoreFunction = (CladeModel mod) => (mod -> Sequence -> Int -> Int -> Int)
 type GapPenalty = Int
 
 data ScoringScheme = ScoringScheme {
 		scoreFunction 	:: ScoreFunction,
-		gapOPenalty	:: GapPenalty
+		gapOPenalty	    :: GapPenalty
 	}
 
 defScoring :: ScoringScheme
