@@ -5,6 +5,7 @@ import Data.Binary
 import System.Directory
 import Control.Exception
 import System.IO.Error hiding (catch)
+import qualified Data.Text as T
 
 import CladeModel
 import NucModel
@@ -109,6 +110,19 @@ test_26 = TestCase (do
 
                         )
 
+-- Test the scoring function. Here I use the short versions of assertEqual,
+-- TestCase, etc (namely, -?=, etc.)
+--
+-- Computes the expected score from the list of positional frequencies. Short
+-- name to save some space.
+--
+es ps = sum $ map (round . (scale_factor *) . (logBase 10)) ps
+
+test_27 = "AAAAA" ~: (scoreSeq aln1Mod "AAAAA") ~?= (es [5/5, 2/5, 1/5, 1/5, small_prob])
+test_28 = "-----" ~: (scoreSeq aln1Mod "-----") ~?= (es [small_prob, small_prob, small_prob, 1/5, 3/5])
+test_29 = "ATCG-" ~: (scoreSeq aln1Mod "ATCG-") ~?= (es [5/5, 3/5, 2/5, 1/5, 3/5])
+test_30 = "ATCGN" ~: (scoreSeq aln1Mod "ATCGN") ~?= (es [5/5, 3/5, 2/5, 1/5, small_prob])
+                             
 tests = TestList [
 		    TestLabel "scoreOf" test_1
 		    , TestLabel "scoreOf" test_2
@@ -136,6 +150,10 @@ tests = TestList [
 		    , TestLabel "scoreOf" test_24
 		    , TestLabel "scoreOf" test_25
 		    , TestLabel "scoreOf" test_26
+            , TestLabel "scoreSeq" test_27
+            , TestLabel "scoreSeq" test_28
+            , TestLabel "scoreSeq" test_29
+            , TestLabel "scoreSeq" test_30
 		]
 
 main = do

@@ -19,9 +19,9 @@
  -}
 
 -- TODO: once it works, restrict exports to this:
--- module NucModel (NucModel, alnToNucModel, scoreOf) where
+module NucModel (NucModel, alnToNucModel) where
 
-module  NucModel where -- 
+-- module  NucModel where -- 
 
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as U
@@ -36,25 +36,33 @@ import CladeModel
 
 data NucModel = NucModel {
                     matrix :: V.Vector (U.Vector Int)
+                    , smallScore :: Int
                 } deriving (Show, Eq)
 
 instance CladeModel NucModel where
     --Remember: sequence positions start -- at 1, but vector indexes (sensibly)
     -- start at 0.
-    scoreOf (NucModel mat) res pos
+    scoreOf nm res pos
         | res == 'A'    = (mat V.! 0) U.! (pos - 1)
         | res == 'C'    = (mat V.! 1) U.! (pos - 1)
         | res == 'G'    = (mat V.! 2) U.! (pos - 1)
         | res == 'T'    = (mat V.! 3) U.! (pos - 1)
         | res == '-'    = (mat V.! 4) U.! (pos - 1)
+        | otherwise     = smallScore nm
+        where mat = matrix nm
 
-    scoreSeq (NucModel mat) seq = undefined
+    scoreSeq nm seq = sum $ map (\(c,i) -> scoreOf nm c i) seqWithPos
+        where seqWithPos = zip (T.unpack seq) [1..] -- eg [('A',1), ...], etc.
 
 instance Binary NucModel where
-    put nm = put $ matrix nm
+    put nm = do
+        put $ matrix nm
+        put $ smallScore nm
+
     get = do
         mat <- get :: Get (V.Vector (U.Vector Int))
-        return $ NucModel mat
+        smallScore <- get :: Get Int
+        return $ NucModel mat smallScore
 
 -- Builds a NucMOdel from a list of aligned sequences. Residues other than A, C,
 -- G, T are ignored, but gaps (-) are modelled.
@@ -63,16 +71,21 @@ instance Binary NucModel where
 -- lists of 
 alnToNucModel :: Double -> Double -> Alignment -> NucModel
 alnToNucModel smallProb scale aln = 
-    NucModel $ scoreMapListToVectors smallProb scale scoreMapList
+    NucModel (scoreMapListToVectors smallScore scoreMapList) smallScore
     where   scoreMapList = fmap (freqMapToScoreMap scale
                                 . countsMapToRelFreqMap size
                                 . colToCountsMap ) $ T.transpose aln
             size = fromIntegral $ length aln   -- number of sequences
+            smallScore = round (scale * (logBase 10 smallProb))
 
--- TODO: convert to relative frequencies, then log thereof, then scale and
--- round. Can maybe be done in another function
 
 -- NOTE: functions below here should not be exported.
+
+-- Converts a residue probability (estimated by its relative frequency) to a
+-- rounded, scaled, logarithm.
+
+probToScore :: Double -> Double -> Int
+probToScore scale prob = round (scale * (logBase 10 prob))
 
 -- Takes a Column (a vertical slice through an alignment, IOW the residues of
 -- each sequence at a given single position) and returns a map of absolute
@@ -91,16 +104,15 @@ countsMapToRelFreqMap size = fmap (\n -> (fromIntegral n) / size)
 -- where the score is a rounded, scaled logarithm of the relative frequency.
 
 freqMapToScoreMap :: Double -> M.Map Residue Double -> M.Map Residue Int
-freqMapToScoreMap scale = fmap (round . (* scale) . logBase 10)
+freqMapToScoreMap scale = fmap $ probToScore scale
 
--- scoreMapListToVectors :: [M.Map Residue Int] -> undefined
-scoreMapListToVectors smallProb scale sml = V.fromList [vA, vC, vG, vT, vD] 
-    where   vA = U.fromList $ map (M.findWithDefault smallProbScore 'A') sml
-            vC = U.fromList $ map (M.findWithDefault smallProbScore 'C') sml
-            vG = U.fromList $ map (M.findWithDefault smallProbScore 'G') sml
-            vT = U.fromList $ map (M.findWithDefault smallProbScore 'T') sml
-            vD = U.fromList $ map (M.findWithDefault smallProbScore '-') sml
-            smallProbScore = round $ scale * (logBase 10 smallProb)
+-- TODO: uncomment scoreMapListToVectors :: Int -> [M.Map Residue Int] -> undefined
+scoreMapListToVectors smallScore sml = V.fromList [vA, vC, vG, vT, vD] 
+    where   vA = U.fromList $ map (M.findWithDefault smallScore 'A') sml
+            vC = U.fromList $ map (M.findWithDefault smallScore 'C') sml
+            vG = U.fromList $ map (M.findWithDefault smallScore 'G') sml
+            vT = U.fromList $ map (M.findWithDefault smallScore 'T') sml
+            vD = U.fromList $ map (M.findWithDefault smallScore '-') sml
 
 -- Some data to play around with in GHCi.
 -- TODO: remove this when tests ok.
