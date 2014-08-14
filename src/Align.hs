@@ -2,7 +2,7 @@ module Align where
 
 import Data.Array
 import Data.List
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import qualified Data.Vector.Unboxed as U
 import Text.Printf
@@ -35,16 +35,7 @@ type DPMatrix = Array (Int,Int) DPCell
 
 type GapPenalty = Int
 
-data ScoringScheme = ScoringScheme {
-		scoreFunction 	:: (CladeModel mod) =>
-            (mod -> VSequence -> Int -> Int -> Int) 
-		, gapOPenalty	    :: GapPenalty
-	}
-
-defScoring :: ScoringScheme
-defScoring = ScoringScheme {
-	scoreFunction = seqISLMatScore,
-	gapOPenalty = -2 }
+gapOPenalty = -2
 
 -- First step of sequence-to-prob-matrix alignment.  Fills a dynamic programming
 -- matrix (DPMatrix), with a scoring scheme, an ISLProbMatrix and a Sequence as
@@ -53,8 +44,11 @@ defScoring = ScoringScheme {
 -- 0 instead of (i * insertion penalty), etc. -- think of the ISLProbMatrix as
 -- horizontal, and of the sequence as vertical.
 
-msdpmat :: (CladeModel mod) => ScoringScheme -> mod -> Sequence -> DPMatrix
-msdpmat scs mat seq  = dpmat
+-- TODO: the gap opening penalty and scoring map for scoreModVseq should be
+-- parameters, not hard-coded.
+
+msdpmat :: (CladeModel mod) => mod -> VSequence -> DPMatrix
+msdpmat mat seq  = dpmat
 	where	dpmat = array ((0,0), (seq_len, mat_len)) 
 			[((i,j), cell i j) | i <- [0..seq_len], j <- [0..mat_len]]
 		seq_len = T.length seq
@@ -71,9 +65,9 @@ msdpmat scs mat seq  = dpmat
 				match = val (dpmat!(i-1,j-1)) + match_score
 				hGap  = val (dpmat!(i-1,  j)) + penalty
 				vGap  = val (dpmat!(i  ,j-1)) + penalty
-				penalty = gapOPenalty scs
+				penalty = gapOPenalty 
 				match_score = score i j
-				score = (scoreFunction scs) mat seq
+				score = scoreModVseq mat seq
 
 -- A score function for seq-vs-mat (ISLProbMatrix)
 
@@ -98,6 +92,21 @@ seqISLMatScore hmod vseq i j
     where   prob    = scoreOf hmod res j
             res     = vseq ! (i-1)
                         
+-- A new version of the above, which simply uses a Map. TODO: the map values
+-- should at least depend on the CladeModel, e.g. the model's smallScore should
+-- be the lowest in the map (with zero the highest).
+
+scoreModVseq :: (CladeModel mod)
+    => mod -> VSequence -> Position -> Position -> Int
+scoreModVseq hmod vseq i j =
+    case M.lookupGE modScore scheme of
+        Nothing -> 0    -- shouldn't happen
+        Just (k, v) -> v
+    where   modScore    = scoreOf hmod res j
+            res         = vseq ! (i-1)
+            scheme = M.fromList [(-4000,-1),(-600,1),(-300,2),(0,3)]
+                        
+
 {-
 topCell :: Array (Int,Int) DPCell -> (Int,Int)
 topCell mat = fst $ maximumBy cellCmp (assocs mat)
@@ -106,7 +115,7 @@ topCell mat = fst $ maximumBy cellCmp (assocs mat)
 		| otherwise	= LT
 -}
 
-msalign :: (CladeModel mod) => ScoringScheme -> mod -> Sequence -> Sequence
+msalign :: (CladeModel mod) => mod -> Sequence -> Sequence
 msalign scs mat seq = T.pack $ nwMatBacktrack (msdpmat scs mat vseq) vseq
 	where vseq = U.fromList $ T.unpack seq 
 
