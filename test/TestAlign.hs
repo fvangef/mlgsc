@@ -175,9 +175,9 @@ isl5 = matrixMap (round . (*scale_factor) . (logBase 10)) rpm5
 
 tests = TestList [
 		TestLabel "msalign" test1
-		-- , TestLabel "msalign" test2
-		-- , TestLabel "msalign" test3
-		-- , TestLabel "msalign" test4
+		, TestLabel "msalign" test2
+		, TestLabel "msalign" test3
+		, TestLabel "msalign" test4
 		-- , TestLabel "msalign" test5
 		-- , TestLabel "msalign" test6
 		-- , TestLabel "msalign" test7
