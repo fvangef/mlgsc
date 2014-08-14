@@ -48,11 +48,11 @@ gapOPenalty = -2
 -- parameters, not hard-coded.
 
 msdpmat :: (CladeModel mod) => mod -> VSequence -> DPMatrix
-msdpmat mat vseq  = dpmat
+msdpmat hmod vseq  = dpmat
 	where	dpmat = array ((0,0), (seq_len, mat_len)) 
 			[((i,j), cell i j) | i <- [0..seq_len], j <- [0..mat_len]]
 		seq_len = U.length vseq
-		mat_len = length mat
+		mat_len = modLength hmod
 		cell i j
 			| i == 0 && j == 0	= DPCell 0 None
 			| i == 0		= DPCell (j * penalty) Righ
@@ -67,7 +67,7 @@ msdpmat mat vseq  = dpmat
 				vGap  = val (dpmat!(i  ,j-1)) + penalty
 				penalty = gapOPenalty 
 				match_score = score i j
-				score = scoreModVseq mat vseq
+				score = scoreModVseq hmod vseq
 
 -- A score function for seq-vs-mat (ISLProbMatrix)
 
@@ -82,6 +82,7 @@ msdpmat mat vseq  = dpmat
 -- side), when visualizing the process. This also reflects the fact that the
 -- sequence has O(1) indexing (and so should the model).
 
+{-
 seqISLMatScore :: (CladeModel mod) => mod -> VSequence -> Position -> Position -> Int
 seqISLMatScore hmod vseq i j
     | prob == -4000 = -1	-- not found at that position
@@ -91,7 +92,8 @@ seqISLMatScore hmod vseq i j
     | otherwise	= 0
     where   prob    = scoreOf hmod res j
             res     = vseq ! (i-1)
-                        
+-}
+
 -- A new version of the above, which simply uses a Map. TODO: the map values
 -- should at least depend on the CladeModel, e.g. the model's smallScore should
 -- be the lowest in the map (with zero the highest).
@@ -103,7 +105,7 @@ scoreModVseq hmod vseq i j =
         Nothing -> 0    -- shouldn't happen
         Just (k, v) -> v
     where   modScore    = scoreOf hmod res j
-            res         = vseq ! (i-1)
+            res         = vseq U.! (i-1)
             scheme = M.fromList [(-4000,-1),(-600,1),(-300,2),(0,3)]
                         
 
@@ -116,7 +118,7 @@ topCell mat = fst $ maximumBy cellCmp (assocs mat)
 -}
 
 msalign :: (CladeModel mod) => mod -> Sequence -> Sequence
-msalign scs mat seq = T.pack $ nwMatBacktrack (msdpmat scs mat vseq) vseq
+msalign mat seq = T.pack $ nwMatBacktrack (msdpmat mat vseq) vseq
 	where vseq = U.fromList $ T.unpack seq 
 
 {-
@@ -158,7 +160,7 @@ nwMatBacktrack' mat (i,0) vseq = ""
 	where vRest = nwMatBacktrack' mat (i-1,0) vseq
 nwMatBacktrack' mat (i,j) vseq = 
 	case dir (mat!(i,j)) of
-		Diag -> (vseq ! (i-1)):vRest
+		Diag -> (vseq U.! (i-1)):vRest
 			where vRest = nwMatBacktrack' mat (i-1,j-1) vseq
 		Righ -> '-':vRest
 			where vRest = nwMatBacktrack' mat (i, j-1) vseq
