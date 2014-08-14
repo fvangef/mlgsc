@@ -123,6 +123,10 @@ test_28 = "-----" ~: (scoreSeq aln1Mod "-----") ~?= (es [small_prob, small_prob,
 test_29 = "ATCG-" ~: (scoreSeq aln1Mod "ATCG-") ~?= (es [5/5, 3/5, 2/5, 1/5, 3/5])
 test_30 = "ATCGN" ~: (scoreSeq aln1Mod "ATCGN") ~?= (es [5/5, 3/5, 2/5, 1/5, small_prob])
                              
+-- Test model length
+
+test_31 = "modLength" ~: (modLength aln1Mod) ~?= 5
+
 tests = TestList [
 		    TestLabel "scoreOf" test_1
 		    , TestLabel "scoreOf" test_2
@@ -154,6 +158,7 @@ tests = TestList [
             , TestLabel "scoreSeq" test_28
             , TestLabel "scoreSeq" test_29
             , TestLabel "scoreSeq" test_30
+            , TestLabel "scoreSeq" test_31
 		]
 
 main = do

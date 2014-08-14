@@ -11,3 +11,5 @@ class CladeModel a where
     scoreOf ::  a -> Residue -> Position -> Int
     -- The score of a sequence according to the model
     scoreSeq :: a -> Sequence -> Int
+    -- The length (in aligned positions) of the model
+    modLength :: a -> Int

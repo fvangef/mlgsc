@@ -54,6 +54,12 @@ instance CladeModel NucModel where
     scoreSeq nm seq = sum $ map (\(c,i) -> scoreOf nm c i) seqWithPos
         where seqWithPos = zip (T.unpack seq) [1..] -- eg [('A',1), ...], etc.
 
+    -- just return the length of the 'A' vector (they're all the same length
+    -- anyway)
+    modLength nm = U.length vA
+        where   vA = mat V.! 0
+                mat = matrix nm
+
 instance Binary NucModel where
     put nm = do
         put $ matrix nm

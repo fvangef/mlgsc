@@ -48,10 +48,10 @@ gapOPenalty = -2
 -- parameters, not hard-coded.
 
 msdpmat :: (CladeModel mod) => mod -> VSequence -> DPMatrix
-msdpmat mat seq  = dpmat
+msdpmat mat vseq  = dpmat
 	where	dpmat = array ((0,0), (seq_len, mat_len)) 
 			[((i,j), cell i j) | i <- [0..seq_len], j <- [0..mat_len]]
-		seq_len = T.length seq
+		seq_len = U.length vseq
 		mat_len = length mat
 		cell i j
 			| i == 0 && j == 0	= DPCell 0 None
@@ -67,7 +67,7 @@ msdpmat mat seq  = dpmat
 				vGap  = val (dpmat!(i  ,j-1)) + penalty
 				penalty = gapOPenalty 
 				match_score = score i j
-				score = scoreModVseq mat seq
+				score = scoreModVseq mat vseq
 
 -- A score function for seq-vs-mat (ISLProbMatrix)
 
