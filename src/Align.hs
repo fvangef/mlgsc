@@ -39,7 +39,7 @@ data ScoringScheme = ScoringScheme {
                             gapOP :: Int
                             , scThresholds :: M.Map Int Int
                             }
-defScScheme = ScoringScheme (-2) (M.fromList [(-4000,-1),(-600,1),(-300,2),(0,3)])
+defScScheme = ScoringScheme (-2) (M.fromList [(-4000,-1),(-800,1),(-400,2),(0,3)])
 
 -- First step of sequence-to-prob-matrix alignment.  Fills a dynamic programming
 -- matrix (DPMatrix), with a scoring scheme, an ISLProbMatrix and a Sequence as
