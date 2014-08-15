@@ -1,4 +1,4 @@
-module Align where
+module Align (msalign, defScScheme) where
 
 import Data.Array
 import Data.List
@@ -35,7 +35,11 @@ type DPMatrix = Array (Int,Int) DPCell
 
 type GapPenalty = Int
 
-gapOPenalty = -2
+data ScoringScheme = ScoringScheme {
+                            gapOP :: Int
+                            , scThresholds :: M.Map Int Int
+                            }
+defScScheme = ScoringScheme (-2) (M.fromList [(-4000,-1),(-600,1),(-300,2),(0,3)])
 
 -- First step of sequence-to-prob-matrix alignment.  Fills a dynamic programming
 -- matrix (DPMatrix), with a scoring scheme, an ISLProbMatrix and a Sequence as
@@ -47,8 +51,8 @@ gapOPenalty = -2
 -- TODO: the gap opening penalty and scoring map for scoreModVseq should be
 -- parameters, not hard-coded.
 
-msdpmat :: (CladeModel mod) => mod -> VSequence -> DPMatrix
-msdpmat hmod vseq  = dpmat
+msdpmat :: (CladeModel mod) => ScoringScheme -> mod -> VSequence -> DPMatrix
+msdpmat scsc hmod vseq  = dpmat
 	where	dpmat = array ((0,0), (seq_len, mat_len)) 
 			[((i,j), cell i j) | i <- [0..seq_len], j <- [0..mat_len]]
 		seq_len = U.length vseq
@@ -65,9 +69,8 @@ msdpmat hmod vseq  = dpmat
 				match = val (dpmat!(i-1,j-1)) + match_score
 				hGap  = val (dpmat!(i-1,  j)) + penalty
 				vGap  = val (dpmat!(i  ,j-1)) + penalty
-				penalty = gapOPenalty 
-				match_score = score i j
-				score = scoreModVseq hmod vseq
+				penalty = gapOP scsc
+				match_score = scoreModVseq (scThresholds scsc) hmod vseq i j 
 
 -- A score function for seq-vs-mat (ISLProbMatrix)
 
@@ -99,14 +102,13 @@ seqISLMatScore hmod vseq i j
 -- be the lowest in the map (with zero the highest).
 
 scoreModVseq :: (CladeModel mod)
-    => mod -> VSequence -> Position -> Position -> Int
-scoreModVseq hmod vseq i j =
-    case M.lookupGE modScore scheme of
+    => (M.Map Int Int) -> mod -> VSequence -> Position -> Position -> Int
+scoreModVseq scThr hmod vseq i j =
+    case M.lookupGE modScore scThr of
         Nothing -> 0    -- shouldn't happen
         Just (k, v) -> v
     where   modScore    = scoreOf hmod res j
             res         = vseq U.! (i-1)
-            scheme = M.fromList [(-4000,-1),(-600,1),(-300,2),(0,3)]
                         
 
 {-
@@ -117,8 +119,8 @@ topCell mat = fst $ maximumBy cellCmp (assocs mat)
 		| otherwise	= LT
 -}
 
-msalign :: (CladeModel mod) => mod -> Sequence -> Sequence
-msalign mat seq = T.pack $ nwMatBacktrack (msdpmat mat vseq) vseq
+msalign :: (CladeModel mod) => ScoringScheme -> mod -> Sequence -> Sequence
+msalign scsc mat seq = T.pack $ nwMatBacktrack (msdpmat scsc mat vseq) vseq
 	where vseq = U.fromList $ T.unpack seq 
 
 {-
