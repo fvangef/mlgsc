@@ -60,6 +60,8 @@ instance CladeModel NucModel where
         where   vA = mat V.! 0
                 mat = matrix nm
 
+    absentResScore = smallScore
+
 instance Binary NucModel where
     put nm = do
         put $ matrix nm

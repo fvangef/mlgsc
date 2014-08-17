@@ -13,3 +13,5 @@ class CladeModel a where
     scoreSeq :: a -> Sequence -> Int
     -- The length (in aligned positions) of the model
     modLength :: a -> Int
+    -- Score of a residue not found at some position
+    absentResScore :: a -> Int

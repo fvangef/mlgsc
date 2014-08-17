@@ -3,6 +3,7 @@
 import Test.HUnit
 
 import Align
+import CladeModel
 import NucModel
 import MlgscTypes
 
@@ -15,25 +16,25 @@ aln1 = [
         "AAATTTAAA"
         ]
 
+
 aln1Mod = alnToNucModel small_prob scale_factor aln1
+scsc = ScoringScheme (-2) (scoringSchemeMap (absentResScore aln1Mod))
 
 input1 = "AAATTTAAA"
 exp1 = input1
-test1 = TestCase (assertEqual "ident" exp1 (msalign defScScheme aln1Mod input1))
+test1 = TestCase (assertEqual "ident" exp1 (msalign scsc aln1Mod input1))
 
 input2 = "AAATTAAA"
 exp2 = "AAATT-AAA"
-test2 = TestCase (assertEqual "1 gap" exp2 
-    (msalign defScScheme aln1Mod input2))
+test2 = TestCase (assertEqual "1 gap" exp2 (msalign scsc aln1Mod input2))
 
 input3 = "GGGGGGGGGAAATTTAAACCCCCCCCCC"
 exp3 = input1
-test3 = TestCase (assertEqual "overhangs" exp3
-    (msalign defScScheme aln1Mod input3))
+test3 = TestCase (assertEqual "overhangs" exp3 (msalign scsc aln1Mod input3))
 
 input4 = "GGGGGGGGGAAATAAACCCCCCCCCC"
 exp4 = "AAAT--AAA"
-test4 = TestCase (assertEqual "gap+overhangs" exp4 (msalign defScScheme aln1Mod input4))
+test4 = TestCase (assertEqual "gap+overhangs" exp4 (msalign scsc aln1Mod input4))
 
 -- Small, real example (protein)
 

@@ -1,4 +1,4 @@
-module Align (msalign, defScScheme) where
+module Align (msalign, ScoringScheme(..), defScScheme, scoringSchemeMap) where
 
 import Data.Array
 import Data.List
@@ -35,11 +35,29 @@ type DPMatrix = Array (Int,Int) DPCell
 
 type GapPenalty = Int
 
+-- A ScoringScheme has two components: a gap opening penality (gap penalties are
+-- linear, so there is no distinct gap extension penalty); and a -(model score,
+-- -> alignment score) map. A residue's positional score according to a
+-- CladeModel is translated into an alignment score using Map.lookupGE. In the
+-- 'defScheme' below, for instance, a model score of -4000 yields a score of -1,
+-- between -3999 (included) and -800, the score is 1, etc, until the score is 3
+-- from -199 to 0. Note: these particular values have been tested (see
+-- TestAlign.hs) and found to work, but better ones may exist; in particular the
+-- best vales clearly depend on the model's score for an absent residue
+-- (smallProb). This is the purpose of the scoringSchemeMap function
+
 data ScoringScheme = ScoringScheme {
                             gapOP :: Int
                             , scThresholds :: M.Map Int Int
                             }
 defScScheme = ScoringScheme (-2) (M.fromList [(-4000,-1),(-800,1),(-400,2),(0,3)])
+
+-- With a smallScore of -4000, yields same threshold map as in defScScheme.
+
+scoringSchemeMap :: Int -> M.Map Int Int
+scoringSchemeMap smallScore = M.fromList $ zip thresholds [-1, 1, 2, 3]
+    where   thresholds = (map (round . (sscFrac /)) [1.0, 5.0, 10.0]) ++ [0]
+            sscFrac = fromIntegral smallScore
 
 -- First step of sequence-to-prob-matrix alignment.  Fills a dynamic programming
 -- matrix (DPMatrix), with a scoring scheme, an ISLProbMatrix and a Sequence as
