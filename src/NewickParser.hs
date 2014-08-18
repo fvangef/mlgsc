@@ -1,4 +1,4 @@
-module NewickParser where
+module NewickParser (parseNewickTree) where
 
 -- Hm, for now it will parse String, not Data.Text (but the trees should be very
 -- small compared to the alignments, so it should make no difference).

@@ -1,7 +1,14 @@
-module NewickDumper (toNewick) where
+module NewickDumper (treeToNewick) where
 
-import qualified Data.Text.Lazy as T
+import qualified Data.Text as T
+import qualified Data.List as L
 import Data.Tree
 
-toNewick :: Tree T.Text -> T.Text
-toNewick = undefined
+treeToNewick :: Tree T.Text -> T.Text
+treeToNewick tree = T.snoc (nodeToNewick tree) ';'
+
+nodeToNewick :: Tree T.Text -> T.Text
+nodeToNewick (Node label [])    = label
+nodeToNewick (Node _ children)  = T.cons '(' $ T.snoc innerNw ')'
+    where   innerNw     = T.intercalate (T.pack ",") childrenNw
+            childrenNw  = L.map nodeToNewick children
