@@ -25,62 +25,21 @@ nwLeaf = do
     id <- identifier
     return $ Node id []
 
--- TODO: write parser for group of nodes
-nwNode = Parser (Tree String)
-nwNode = do nwLeaf
-            <|> 
-    
-{-
-leaf :: Parser (BinaryTree String)
-leaf = do { i <- identifier
-			; return (Leaf i)
-		}
-
-node :: Parser (BinaryTree String)
-node = do 	{ oParen
-			; left <- node
-			; comma
-			; right <- node
-			; cParen
-			; return (Node "" left right)
+nwNode :: Parser (Tree String)
+nwNode = do	{ oParen
+			  ; children <- nwNode `sepBy` comma
+			  ; cParen
+			  ; return $ Node "" children
 			}
-		<|> leaf
+		 <|> nwLeaf
 
-bifurcatingTree :: Parser (BinaryTree String)
-bifurcatingTree =
-		do
-			t <- node
-			semicolon
-			return t
+newickTree :: Parser (Tree String)
+newickTree = do
+    tree <- nwNode
+    semicolon
+    return tree
 
-roseLeaf :: Parser (RoseTree T.Text)
-roseLeaf = do 
-		i <- identifier
-		return (RoseTree (T.pack i) [])
-
-roseNode :: Parser (RoseTree T.Text)
-roseNode = do {
-		oParen ;
-		l <-roseNode `sepBy1` (char ',') ;
-		cParen ;
-		return (RoseTree (T.pack "") l)
-		}
-	      <|> roseLeaf
-
-roseTree :: Parser (RoseTree T.Text)
-roseTree = do
-		t <- roseNode
-		semicolon
-		return t
-
-parseBifurcatingTree :: String -> Either ParseError (BinaryTree String)
-parseBifurcatingTree newick = (parse bifurcatingTree "" newick) 
--}
-
-newickTree :: Parser (Tree T.Text)
-newickTree = undefined
-
-parseNewickTree :: String -> Either ParseError (Tree T.Text)
+parseNewickTree :: String -> Either ParseError (Tree String)
 parseNewickTree newick = (parse newickTree "" newick)
 
 run :: Show a => Parser a -> String -> IO ()
