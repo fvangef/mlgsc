@@ -1,4 +1,4 @@
-module FastA where
+module FastA (FastA(..), fastATextToRecords) where
 
 import qualified Data.Text.Lazy as T
 
