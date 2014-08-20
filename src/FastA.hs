@@ -10,7 +10,7 @@ import MlgscTypes
 data FastA = FastA { header :: LT.Text, sequence :: LT.Text } deriving (Show)
 
 -- takes a FastA input (one or more records) and returns a list of FastA
--- records.
+-- records. This uses lazy text.
 
 fastATextToRecords :: LT.Text -> [FastA]
 fastATextToRecords fasta = map chunk2FastA chunks 
@@ -23,8 +23,33 @@ chunk2FastA chunk = FastA hdr seq
             chunk_lines = LT.lines chunk
 
 
+-- Produces a (otu -> alignment) map. This map is strict, also in values (maps
+-- are always strict in keys, as I understand).
+
+-- This works as follows: a list of (otu-name, [sequence]) tuples (hsTuples) is
+-- folded over by the updateMap function, using an initial (otu-name -> []) map
+-- (initMap). That is, the initial map is updated for each of the tuples. The
+-- updating results in the new tuples's sequence member being cons'ed (:) onto
+-- the existing value in the map (which is empty in the initial map). Note that
+-- the tuples have the sequence as a singleton list, because the insertWith
+-- function wants its two arguments to have the same type as its result, which
+-- is a list. Therefore, I just call head on the new singleton and cons (:) it
+-- onto the existing list, yielding the new value. 
+
+-- It is possible to build the map in fewer steps using (++) instead of (:), but
+-- it seems that head and (:) work in constant time, while (++) is O(n).
+
+-- Note also that due to the cons'ing, the _last_ sequence in the FastA records
+-- list is the head of the list that constitutes the alignment of any given OTU. 
+
 fastARecordsToAlnMap :: [FastA] -> M.Map  SciName Alignment
-fastARecordsToAlnMap = undefined
+fastARecordsToAlnMap fastaRecs = L.foldl updateMap initMap hsTuples
+    where   initMap = L.foldl (\map otu -> M.insert otu [] map) M.empty headers
+            headers = L.map (LT.toStrict . header) fastaRecs
+            hsTuples = L.map (\r -> (LT.toStrict $ header r, [LT.toStrict $ FastA.sequence r])) fastaRecs
+            updateMap map (otu, singleton) =
+                M.insertWith prepend otu singleton map
+                where prepend new acc = (head new):acc
 
 -- Some data to play around with in GHCi
 
@@ -53,76 +78,4 @@ fasta = unlines [
 
 fastaRecs = fastATextToRecords $ LT.pack fasta
 
-headers = map (LT.toStrict . header) fastaRecs
 
--- initial map, with one empty list per genus:
-
-initMap = L.foldl (\map otu -> M.insert otu [] map) M.empty headers
-
--- how to insert one element into the map, using Cons (:) instead of (++), i.e.
--- O(+)
-
-mapw1 = M.insertWith (\s a -> (head s):a) (ST.pack "Genus_A") [ST.pack "XAGT"] initMap
-
-hsTuples = L.map (\r -> (LT.toStrict $ header r, [LT.toStrict $ FastA.sequence r])) fastaRecs
-
--- TODO: produce final map by folding hsTuples on initMap. Abstract the line
--- with insertWith above into a function
-
-finalMap = L.foldl f initMap hsTuples
-
-f :: (M.Map SciName Alignment) -> (SciName, [Sequence]) -> (M.Map SciName Alignment)
-f map (otu, singleton) = M.insertWith g otu singleton map
-    where g new acc = (head new):acc
-
-
--- To test in GHCi, e.g.:
---
--- parse fastaRawRecord "(unknown)" fasta
---
-
-{-
--- Fault-tolerant parameters. Only assumes that the first char is a '>'.
-
-toFastARecords :: String -> [FastA]
-toFastARecords fasta = toFastaRecords' "\n>" laxStr2list ('\n':fasta)
-
-{-
- - Takes a FastA input (usually file contents) and returns a list of FastA data
- - objects (see above). 'delim' is what separates records: usually '>' works,
- - but then the '>' character must never appear elsewhere than as the first
- - char of a header line (e.g. ">myId 56->57" would not parse, due to another
- - '>' within the header). Otherwise, use "\n>", but then prefix the whole
- - input with '\n' (because presumably it starts with '>').  The contents of
- - the records (i.e., the strings between delimiters) is further split into
- - lists of lines using one of strictStr2list or laxStr2list. The former is
- - faster but expects all lines to be '\n' - terminated, while the latter is
- - slower but will accept that the _last_ line has no '\n'.
- -}
-
-toFastaRecords' :: String -> (String -> [String]) -> String -> [FastA]
-toFastaRecords' delim str2list text =
-	map (strToRecord str2list) $ (tail . splitOn delim) text
-
-{- Takes a string representing a FastA record, and returns a FastA object. The
- - string (i.e., what's between the headers' '>'), is split into lines. The
- - first line becomes the 'header' field of the FastA record, while all other
- - lines are concatenated to become the 'sequence' field). --}
-
-strToRecord :: (String -> [String]) -> String -> FastA
-strToRecord str2list str = FastA header sequence
-		where	header		= head list
-			sequence	= foldr1 (++) $ tail list
-			list		= str2list str
-
--- Splits a FastA string into lines, assuming ALL lines are '\n' - terminated.
-
-strictStr2list :: String -> [String]
-strictStr2list str = init $ splitOn "\n" str
-
--- Splits a FastA string into lines - does NOT assume ALL lines are '\n' -
--- terminated, but has to filter the empty lines.
-
-laxStr2list :: String -> [String]
-laxStr2list str = filter (/= "") $ splitOn "\n" str
--}
