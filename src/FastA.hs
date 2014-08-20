@@ -1,4 +1,4 @@
-module FastA (FastA(..), fastATextToRecords) where
+module FastA (FastA(..), fastATextToRecords, fastARecordsToAlnMap) where
 
 import qualified Data.Map.Strict as M -- most likely going to use all values
 import qualified Data.Text.Lazy as LT
