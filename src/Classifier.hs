@@ -1,5 +1,8 @@
 module Classifier (fastARecordsToAlnMap) where
 
+import Data.Tree
+
+import MlgscTypes
 import CladeModel
 
-data Classifier mod = (CladeModel mod) => Tree mod
+buildClassifier :: OTUToAlnMap -> OTUTree -> Tree mod
