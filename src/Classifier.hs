@@ -1,8 +1,13 @@
-module Classifier (fastARecordsToAlnMap) where
+module Classifier (buildNucClassifier) where
 
 import Data.Tree
 
 import MlgscTypes
-import CladeModel
+import NucModel
 
-buildClassifier :: OTUToAlnMap -> OTUTree -> Tree mod
+buildNucClassifier :: OTUToAlnMap -> OTUTree -> Tree NucModel
+buildNucClassifier map tree = undefined
+
+otuLookup :: OTUToAlnMap -> OTUName -> Alignment
+otuLookup map otu = undefined
+

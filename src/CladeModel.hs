@@ -15,5 +15,3 @@ class CladeModel a where
     modLength :: a -> Int
     -- Score of a residue not found at some position
     absentResScore :: a -> Int
-
-type CladeModelConstructor = CladeModel mod => (Double -> Double -> Alignment -> mod)

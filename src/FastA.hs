@@ -42,7 +42,7 @@ chunk2FastA chunk = FastA hdr seq
 -- Note also that due to the cons'ing, the _last_ sequence in the FastA records
 -- list is the head of the list that constitutes the alignment of any given OTU. 
 
-fastARecordsToAlnMap :: [FastA] -> M.Map  SciName Alignment
+fastARecordsToAlnMap :: [FastA] -> M.Map  OTUName Alignment
 fastARecordsToAlnMap fastaRecs = L.foldl updateMap initMap hsTuples
     where   initMap = L.foldl (\map otu -> M.insert otu [] map) M.empty headers
             headers = L.map (LT.toStrict . header) fastaRecs
