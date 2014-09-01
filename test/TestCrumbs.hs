@@ -19,10 +19,38 @@ arbf "Z" = 5
 objs = ["Z", "r", "a", "r", "c"]
 
 
-test1 = "bestByWithIndex" ~: (bestByWithIndex objs arbf) ~?= ("r", 1)
+test01 = "bestByWithIndex" ~: (bestByWithIndex objs arbf) ~?= ("r", 1)
+test02 = "bestByWithIndex []" ~: (bestByWithIndex [] arbf) ~?= Crumbs.empty
+
+-- Test dropCrumbs
+-- Here is a tree of integers. We'll use the values themselves to drop the
+-- crumbs, i.e. we pass the identity function as metric.
+
+intTree =   Node 0 [
+                Node 1 [
+                    Node 3 [
+                        Node 9 [],
+                        Node 10 []
+                    ],
+                    Node 4 []
+                ],
+                Node 2 [
+                    Node 5 [],
+                    Node 6 [],
+                    Node 7 [
+                        Node 12 [],
+                        Node 11 []
+                    ]
+                ]
+            ]
+
+
+test10 = "drop, int tree" ~: (dropCrumbs intTree id) ~?= [2,7,12] 
 
 tests = TestList [
-            TestLabel "bestByWithIndex" test1
+            TestLabel "bestByWithIndex" test01
+            , TestLabel "bestByWithIndex" test02
+            , TestLabel "dropCrumbs" test10
 		]
 
 main = do
