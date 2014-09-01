@@ -69,11 +69,21 @@ stringTree =   Node "zero" [
                 ]
             ]
 
-test11 = "drop, str tree, length" ~: (dropCrumbs length stringTree) ~?= (4,[0,0,0])
+test11 = "drop, str tree, length" ~: (dropCrumbs length stringTree)
+                                  ~?= (4,[0,0,0])
 
 -- this time, use the second character of the string, using the ordering of Char
 
-test12 = "drop, str tree, (!! 1)" ~: (dropCrumbs (!! 1) stringTree) ~?= ('i',[1,0])
+test12 = "drop, str tree, (!! 1)" ~: (dropCrumbs (!! 1) stringTree)
+                                  ~?= ('i',[1,0])
+
+-- followCrumbs is the "opposite" of dropCrumbs
+
+test20 = "follow, int tree" ~: (followCrumbs [1,2,0] intTree) ~?= 12
+test21 = "follow, str tree, length" ~: (followCrumbs [0,0,0] stringTree)
+                                    ~?= "nine"
+test22 = "follow, str tree, (!! 1)" ~: (followCrumbs [1,0] stringTree)
+                                    ~?= "five"
 
 tests = TestList [
             TestLabel "bestByWithIndex" test01
@@ -81,6 +91,9 @@ tests = TestList [
             , TestLabel "dropCrumbs" test10
             , TestLabel "dropCrumbs" test11
             , TestLabel "dropCrumbs" test12
+            , TestLabel "followCrumbs" test20
+            , TestLabel "followCrumbs" test21
+            , TestLabel "followCrumbs" test22
 		]
 
 -- Test followCrumbs, using the above cases "the other way around"
