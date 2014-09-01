@@ -5,6 +5,8 @@ import Test.HUnit
 --import qualified Data.Map.Strict as M
 
 import Data.Tree
+import Control.Monad.Writer
+
 import Crumbs
 
 -- An arbitrary function of Strings to Int
@@ -44,13 +46,44 @@ intTree =   Node 0 [
                 ]
             ]
 
+res1 = dropCrumbsM id intTree 
+test10 = "drop, int tree" ~: (runWriter res1) ~?= (12,[1,2,0])
 
-test10 = "drop, int tree" ~: (dropCrumbs intTree id) ~?= [2,7,12] 
+-- Same idea, but with a tree of strings, and using the string's length as
+-- metric
+
+stringTree =   Node "zero" [
+                Node "one" [
+                     Node "three" [
+                         Node "nine" [],
+                         Node "ten" []
+                     ],
+                     Node "four" []
+                ],
+                Node "two" [
+                    Node "five" [],
+                    Node "six" [],
+                    Node "seven" [
+                        Node "twelve" [],
+                        Node "eleven" []
+                    ]
+                ]
+            ]
+
+res2 = dropCrumbsM length stringTree 
+test11 = "drop, str tree, length" ~: (runWriter res2) ~?= (4,[0,0,0])
+
+-- this time, use the second character of the string, using the ordering of Char
+
+res3 = dropCrumbsM (!! 1) stringTree
+test12 = "drop, str tree, (!! 1)" ~: (runWriter res3) ~?= ('i',[1,0])
 
 tests = TestList [
             TestLabel "bestByWithIndex" test01
-            , TestLabel "bestByWithIndex" test02
+            -- , TestLabel "bestByWithIndex" test02
             , TestLabel "dropCrumbs" test10
+            , TestLabel "dropCrumbs" test11
+            , TestLabel "dropCrumbs" test12
 		]
 
 main = do

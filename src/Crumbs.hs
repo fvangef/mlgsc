@@ -33,6 +33,8 @@ dropCrumbs' (Node _ kids) m crumbs = dropCrumbs' bestKid m (bestKidIdx:crumbs)
     where   (bestKid, bestKidIdx) = bestByWithIndex kids m'
             m' (Node rl _) = m rl
 
+-- Another version, using a Writer monad.
+
 dropCrumbsM :: (Ord b) => (a -> b) -> Tree a -> Writer [Int] b
 dropCrumbsM m (Node rl []) = return $ m rl
 dropCrumbsM m (Node rl kids) = do
