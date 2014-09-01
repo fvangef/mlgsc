@@ -46,8 +46,7 @@ intTree =   Node 0 [
                 ]
             ]
 
-res1 = dropCrumbsM id intTree 
-test10 = "drop, int tree" ~: (runWriter res1) ~?= (12,[1,2,0])
+test10 = "drop, int tree" ~: (dropCrumbs id intTree) ~?= (12,[1,2,0])
 
 -- Same idea, but with a tree of strings, and using the string's length as
 -- metric
@@ -70,13 +69,11 @@ stringTree =   Node "zero" [
                 ]
             ]
 
-res2 = dropCrumbsM length stringTree 
-test11 = "drop, str tree, length" ~: (runWriter res2) ~?= (4,[0,0,0])
+test11 = "drop, str tree, length" ~: (dropCrumbs length stringTree) ~?= (4,[0,0,0])
 
 -- this time, use the second character of the string, using the ordering of Char
 
-res3 = dropCrumbsM (!! 1) stringTree
-test12 = "drop, str tree, (!! 1)" ~: (runWriter res3) ~?= ('i',[1,0])
+test12 = "drop, str tree, (!! 1)" ~: (dropCrumbs (!! 1) stringTree) ~?= ('i',[1,0])
 
 tests = TestList [
             TestLabel "bestByWithIndex" test01
@@ -85,6 +82,8 @@ tests = TestList [
             , TestLabel "dropCrumbs" test11
             , TestLabel "dropCrumbs" test12
 		]
+
+-- Test followCrumbs, using the above cases "the other way around"
 
 main = do
 	runTestTT tests

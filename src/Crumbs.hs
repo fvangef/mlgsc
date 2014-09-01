@@ -2,7 +2,6 @@
 module Crumbs (
     followCrumbs,
     dropCrumbs,
-    dropCrumbsM,
     bestByWithIndex, 
     empty
     ) where
@@ -22,18 +21,15 @@ followCrumbs :: Crumbs -> Tree a -> a
 followCrumbs (c:cs) (Node _ kids) = followCrumbs cs (kids !! c)
 followCrumbs [] node = rootLabel node
 
--- Produces a Crumbs trail, given a tree and a metric m for scoring nodes
+-- A wrapper around the monadic dropCrumbsM below
 
-dropCrumbs :: Tree a -> (a -> Int) -> Crumbs
-dropCrumbs tree m = dropCrumbs' tree m []
+dropCrumbs :: (Ord b) => (a -> b) -> Tree a -> (b, Crumbs)
+dropCrumbs m tree = runWriter $ dropCrumbsM m tree
 
-dropCrumbs' :: Tree a -> (a -> Int) -> Crumbs -> Crumbs
-dropCrumbs' (Node _ []) m crumbs = crumbs
-dropCrumbs' (Node _ kids) m crumbs = dropCrumbs' bestKid m (bestKidIdx:crumbs)
-    where   (bestKid, bestKidIdx) = bestByWithIndex kids m'
-            m' (Node rl _) = m rl
-
--- Another version, using a Writer monad.
+-- Given a tree and some metric m, generates a list of crumbs by recursively
+-- applying m to a node's children and calling itself on the best-scoring child,
+-- until a leaf is reached. Returns the score of that leaf, as well as a list of
+-- crumbs followed to reach it, as a Writer monad.
 
 dropCrumbsM :: (Ord b) => (a -> b) -> Tree a -> Writer [Int] b
 dropCrumbsM m (Node rl []) = return $ m rl
