@@ -12,3 +12,5 @@ type Position       = Int
 type OTUName        = Text
 type OTUToAlnMap    = M.Map OTUName Alignment
 type OTUTree        = Tree OTUName
+type ScaleFactor    = Double
+type SmallProb      = Double

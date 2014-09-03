@@ -77,7 +77,7 @@ instance Binary NucModel where
 
 -- TODO: transpose alignment into columns, map colToMap to each col, then make 5
 -- lists of 
-alnToNucModel :: Double -> Double -> Alignment -> NucModel
+alnToNucModel :: SmallProb -> ScaleFactor -> Alignment -> NucModel
 alnToNucModel smallProb scale aln = 
     NucModel (scoreMapListToVectors smallScore scoreMapList) smallScore
     where   scoreMapList = fmap (freqMapToScoreMap scale
