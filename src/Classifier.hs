@@ -1,4 +1,4 @@
-module Classifier (buildNucClassifier, scoreCrumbs) where
+module Classifier (NucClassifier, buildNucClassifier, scoreCrumbs) where
 
 import Data.Tree
 import qualified Data.Map.Strict as M
@@ -8,16 +8,23 @@ import MlgscTypes
 import CladeModel
 import NucModel
 
+data NucClassifier = NucClassifier {
+                        otuTree :: OTUTree,
+                        modTree :: Tree NucModel
+                        }
+                    
+-- TODO: make NucClassifier and instance of Data.Binary.
+--
 buildNucClassifier  :: SmallProb -> ScaleFactor
                     -> OTUToAlnMap -> OTUTree -> Tree NucModel
-buildNucClassifier smallprob scale map tree =
-    fmap (alnToNucModel smallprob scale) treeOfAlns
-    where   treeOfAlns      = mergeAlns treeOfLeafAlns
+buildNucClassifier smallprob scale map otuTree = NucClassifier otuTree modTree
+    where   modTree         = fmap (alnToNucModel smallprob scale) treeOfAlns
+            treeOfAlns      = mergeAlns treeOfLeafAlns
             treeOfLeafAlns  = fmap (\k -> M.findWithDefault [] k map) tree
 
 -- TODO: is this ever used?
-otuLookup :: OTUToAlnMap -> OTUName -> Alignment
-otuLookup map otu = undefined
+--otuLookup :: OTUToAlnMap -> OTUName -> Alignment
+--otuLookup map otu = undefined
 
 scoreCrumbs :: (CladeModel mod) => Sequence -> mod -> Int
 scoreCrumbs seq mod = scoreSeq mod seq -- isn't this flip scoreSeq?
