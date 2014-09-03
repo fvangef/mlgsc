@@ -3,6 +3,8 @@ module Classifier (NucClassifier, buildNucClassifier, scoreCrumbs) where
 import Data.Tree
 import qualified Data.Map.Strict as M
 import qualified Data.List as L
+import Data.Binary (Binary, put, get, Get)
+import Data.Text.Binary
 
 import MlgscTypes
 import CladeModel
@@ -12,15 +14,25 @@ data NucClassifier = NucClassifier {
                         otuTree :: OTUTree,
                         modTree :: Tree NucModel
                         }
-                    
+
+instance Binary NucClassifier where
+    put classifier = do
+        put $ otuTree classifier
+        put $ modTree classifier
+    
+    get = do
+        otuTree <- get :: Get OTUTree
+        modTree <- get :: Get (Tree NucModel)
+        return $ NucClassifier otuTree modTree
+        
 -- TODO: make NucClassifier and instance of Data.Binary.
 --
 buildNucClassifier  :: SmallProb -> ScaleFactor
-                    -> OTUToAlnMap -> OTUTree -> Tree NucModel
+                    -> OTUToAlnMap -> OTUTree -> NucClassifier
 buildNucClassifier smallprob scale map otuTree = NucClassifier otuTree modTree
     where   modTree         = fmap (alnToNucModel smallprob scale) treeOfAlns
             treeOfAlns      = mergeAlns treeOfLeafAlns
-            treeOfLeafAlns  = fmap (\k -> M.findWithDefault [] k map) tree
+            treeOfLeafAlns  = fmap (\k -> M.findWithDefault [] k map) otuTree
 
 -- TODO: is this ever used?
 --otuLookup :: OTUToAlnMap -> OTUName -> Alignment
