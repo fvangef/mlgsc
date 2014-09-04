@@ -50,9 +50,9 @@ clssfr1 = buildNucClassifier smallprob scale fastAMap1 tree1
 
 -- Now score sequences according to the classifier, e.g.
 
-(s1, c1) = dropCrumbs (scoreCrumbs $ ST.pack "ACGTACGT") clssfr1 
-(s2, c2) = dropCrumbs (scoreCrumbs $ ST.pack "CCGTACGT") clssfr1
-(s3, c3) = dropCrumbs (scoreCrumbs $ ST.pack "CCGTACGG") clssfr1
+(s1, c1) = scoreSequenceWithCrumbs clssfr1 $ ST.pack "ACGTACGT"
+(s2, c2) = scoreSequenceWithCrumbs clssfr1 $ ST.pack "CCGTACGT"
+(s3, c3) = scoreSequenceWithCrumbs clssfr1 $ ST.pack "CCGTACGG"
 
 test01 = "clssfr1 ACGTACGT score" ~: s1 ~?= 0
 test02 = "clssfr1 CCGTACGT score" ~: s2 ~?= 0
@@ -75,9 +75,9 @@ test21 = TestCase (do
     encodeFile "clssfr1.bcls" clssfr1
     clssfr2 <- decodeFile "clssfr1.bcls"
     assertEqual "store-read" clssfr1 clssfr2
-    let (sc21, cr21) = dropCrumbs (scoreCrumbs $ ST.pack "ACGTACGT") clssfr2 
-    let (sc22, cr22) = dropCrumbs (scoreCrumbs $ ST.pack "CCGTACGT") clssfr2
-    let (sc23, cr23) = dropCrumbs (scoreCrumbs $ ST.pack "CCGTACGG") clssfr2
+    let (sc21, cr21) = scoreSequenceWithCrumbs clssfr2 $ ST.pack "ACGTACGT"
+    let (sc22, cr22) = scoreSequenceWithCrumbs clssfr2 $ ST.pack "CCGTACGT"
+    let (sc23, cr23) = scoreSequenceWithCrumbs clssfr2 $ ST.pack "CCGTACGG"
     sc21 @?= 0
     sc22 @?= 0
     sc23 @?= (-4000)

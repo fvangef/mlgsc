@@ -1,5 +1,6 @@
 -- module Crumbs (followCrumbs) where
 module Crumbs (
+    Crumbs,
     followCrumbs,
     dropCrumbs,
     bestByWithIndex, 
