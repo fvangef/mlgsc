@@ -9,35 +9,40 @@ cabal-version:  >= 1.2
 -- module tests
 
 test-suite	  classifier
-  type:           exitcode-stdio-1.0
-  main-is:        TestClassifier.hs
-  build-depends:  HUnit, mtl, directory
-  hs-source-dirs: src, test
+  type:             exitcode-stdio-1.0
+  main-is:          TestClassifier.hs
+  build-depends:    HUnit, mtl, directory
+  hs-source-dirs:   src, test
 
 test-suite	  nucmodel
   type:           exitcode-stdio-1.0
   main-is:        TestNucModel.hs
-  build-depends:  base, HUnit
+  build-depends:  HUnit
   hs-source-dirs: src, test
 
 test-suite	  align
   type:           exitcode-stdio-1.0
   main-is:        TestAlign.hs
-  build-depends:  base, HUnit, array
+  build-depends:  HUnit, array
   hs-source-dirs: src, test
 
 test-suite	  fasta
   type:           exitcode-stdio-1.0
   main-is:        TestFastA.hs
-  build-depends:  base, HUnit, array
+  build-depends:  HUnit
   hs-source-dirs: src, test
 
--- Disabled - tree scoring is currently not used.
--- test-suite	  treescore
---   type:           exitcode-stdio-1.0
---   main-is:        TestTreeScore.hs
---   build-depends:  base, HUnit, MissingH
---   hs-source-dirs: src, test
+test-suite	  newick
+  type:           exitcode-stdio-1.0
+  main-is:        TestNewick.hs
+  build-depends:  HUnit
+  hs-source-dirs: src, test
+
+test-suite	  crumbs
+  type:           exitcode-stdio-1.0
+  main-is:        TestCrumbs.hs
+  build-depends:  HUnit
+  hs-source-dirs: src, test
 
 -- test-suite	  cdf
 --   type:           exitcode-stdio-1.0
@@ -74,7 +79,7 @@ test-suite	  fasta
 -- executables
 
 executable mlgsc_train
-  build-depends:  text, containers, parsec, vector, binary, vector-binary,
+  build-depends:  base, text, containers, parsec, vector, binary, vector-binary,
                   text-binary
   main-is:        mlgsc_train.hs
   hs-source-dirs: src
