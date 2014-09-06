@@ -109,10 +109,12 @@ test_26 = TestCase (do
 --
 es ps = sum $ map (round . (scale_factor *) . (logBase 10)) ps
 
-test_27 = "AAAAA" ~: (scoreSeq aln1Mod "AAAAA") ~?= (es [5/5, 2/5, 1/5, 1/5, small_prob])
-test_28 = "-----" ~: (scoreSeq aln1Mod "-----") ~?= (es [small_prob, small_prob, small_prob, 1/5, 3/5])
-test_29 = "ATCG-" ~: (scoreSeq aln1Mod "ATCG-") ~?= (es [5/5, 3/5, 2/5, 1/5, 3/5])
-test_30 = "ATCGN" ~: (scoreSeq aln1Mod "ATCGN") ~?= (es [5/5, 3/5, 2/5, 1/5, small_prob])
+def = es $ replicate 5 small_prob
+
+test_27 = "AAAAA" ~: (scoreSeq def aln1Mod "AAAAA") ~?= (es [5/5, 2/5, 1/5, 1/5, small_prob])
+test_28 = "-----" ~: (scoreSeq def aln1Mod "-----") ~?= (es [small_prob, small_prob, small_prob, 1/5, 3/5])
+test_29 = "ATCG-" ~: (scoreSeq def aln1Mod "ATCG-") ~?= (es [5/5, 3/5, 2/5, 1/5, 3/5])
+test_30 = "ATCGN" ~: (scoreSeq def aln1Mod "ATCGN") ~?= (es [5/5, 3/5, 2/5, 1/5, small_prob])
                              
 -- Test model length
 

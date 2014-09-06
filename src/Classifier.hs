@@ -1,4 +1,8 @@
-module Classifier (NucClassifier, buildNucClassifier, scoreCrumbs) where
+module Classifier (
+    NucClassifier,
+    otuTree, modTree,
+    buildNucClassifier,
+    scoreSequenceWithCrumbs) where
 
 import Data.Tree
 import qualified Data.Map.Strict as M
@@ -9,11 +13,12 @@ import Data.Text.Binary
 import MlgscTypes
 import CladeModel
 import NucModel
+import Crumbs
 
 data NucClassifier = NucClassifier {
                         otuTree :: OTUTree,
                         modTree :: Tree NucModel
-                        }
+                        } deriving (Show, Eq)
 
 instance Binary NucClassifier where
     put classifier = do
@@ -34,9 +39,15 @@ buildNucClassifier smallprob scale map otuTree = NucClassifier otuTree modTree
             treeOfAlns      = mergeAlns treeOfLeafAlns
             treeOfLeafAlns  = fmap (\k -> M.findWithDefault [] k map) otuTree
 
--- TODO: is this ever used?
---otuLookup :: OTUToAlnMap -> OTUName -> Alignment
---otuLookup map otu = undefined
+
+scoreSequenceWithCrumbs :: NucClassifier -> Sequence -> (Int, Crumbs)
+scoreSequenceWithCrumbs classifier seq =
+    dropCrumbs (scoreCrumbs seq) $ modTree classifier
+
+-- Passsed a Sequence, returns a function (CladeModel mod) => mod -> int that
+-- can itelf be passed to dropCrumbs, thereby scoring said sequence according to
+-- a classifier and obtaining a crumbs trail. IOW, this is _meant_ to be called
+-- with only one argument.
 
 scoreCrumbs :: (CladeModel mod) => Sequence -> mod -> Int
 scoreCrumbs seq mod = scoreSeq mod seq -- isn't this flip scoreSeq?
