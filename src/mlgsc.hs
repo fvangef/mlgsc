@@ -32,7 +32,7 @@ main = do
     queryFastA <- LTIO.readFile queriesFname
     let queryRecs = fastATextToRecords queryFastA
     classifier <- (decodeFile classifierFname) :: IO NucClassifier
-    let query = LT.toStrict $ FastA.sequence $ head queryRecs
+    let query = LT.toStrict $ FastA.sequence $ queryRecs !! 2
     let (score, crumbs) = scoreSequenceWithCrumbs classifier query  
     let otu = followCrumbs crumbs $ otuTree classifier
     STIO.putStrLn otu
