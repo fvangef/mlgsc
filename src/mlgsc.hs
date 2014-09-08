@@ -4,12 +4,14 @@
 
 -- module Main where
 
---import System.Environment (getArgs)
+import System.Environment (getArgs)
 --import System.Console.GetOpt
 --import System.IO
 --
 import qualified Data.Text.Lazy.IO as LTIO
 import qualified Data.Text.Lazy as LT
+import qualified Data.Text.IO as STIO
+
 import Data.Binary (decodeFile)
 import Data.Tree
 --import System.Directory
@@ -18,19 +20,20 @@ import Data.Tree
 import FastA
 import Crumbs (dropCrumbs, followCrumbs)
 import NucModel
-import Classifier (scoreCrumbs)
+import Classifier (NucClassifier, otuTree, modTree, scoreSequenceWithCrumbs)
+
 --import Trees
 --import Align
 --import Cdf
 
 main :: IO ()
 main = do
-    queryFastA <- LTIO.readFile "../data/firmicutes_gt1.aln"
+    [queriesFname, classifierFname] <- getArgs   
+    queryFastA <- LTIO.readFile queriesFname
     let queryRecs = fastATextToRecords queryFastA
-    classifier <- (decodeFile "classifier.bcls") :: IO (Tree NucModel)
+    classifier <- (decodeFile classifierFname) :: IO NucClassifier
     let query = LT.toStrict $ FastA.sequence $ head queryRecs
-    let (score, crumbs) = dropCrumbs (scoreCrumbs $ query) classifier
-    let otu = followCrumbs 
-    -- TODO: add original newick tree to the model
-    return ()
+    let (score, crumbs) = scoreSequenceWithCrumbs classifier query  
+    let otu = followCrumbs crumbs $ otuTree classifier
+    STIO.putStrLn otu
 

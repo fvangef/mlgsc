@@ -83,8 +83,8 @@ executable mlgsc_train
                   text-binary
   main-is:        mlgsc_train.hs
   hs-source-dirs: src
---
---executable mlgsc
---  build-depends: base, split, parsec, containers, directory, array, bytestring
---  main-is:        mlgsc.hs
---  hs-source-dirs: src
+
+executable mlgsc
+  build-depends: base
+  main-is:        mlgsc.hs
+  hs-source-dirs: src

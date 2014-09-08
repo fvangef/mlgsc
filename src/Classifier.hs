@@ -1,7 +1,8 @@
 module Classifier (
     NucClassifier,
-        buildNucClassifier,
-        scoreSequenceWithCrumbs) where
+    otuTree, modTree,
+    buildNucClassifier,
+    scoreSequenceWithCrumbs) where
 
 import Data.Tree
 import qualified Data.Map.Strict as M
