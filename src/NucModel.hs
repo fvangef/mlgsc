@@ -51,7 +51,9 @@ instance CladeModel NucModel where
         | otherwise     = smallScore nm
         where mat = matrix nm
 
-    scoreSeq nm seq = sum $ map (\(c,i) -> scoreOf nm c i) seqWithPos
+    scoreSeq nm seq
+        | (U.null $ V.head $ matrix nm)   = minBound :: Int
+        | otherwise = sum $ map (\(c,i) -> scoreOf nm c i) seqWithPos
         where seqWithPos = zip (T.unpack seq) [1..] -- eg [('A',1), ...], etc.
 
     -- just return the length of the 'A' vector (they're all the same length
@@ -114,7 +116,7 @@ countsMapToRelFreqMap size = fmap (\n -> (fromIntegral n) / size)
 freqMapToScoreMap :: Double -> M.Map Residue Double -> M.Map Residue Int
 freqMapToScoreMap scale = fmap $ probToScore scale
 
--- TODO: uncomment scoreMapListToVectors :: Int -> [M.Map Residue Int] -> undefined
+scoreMapListToVectors :: Int -> [M.Map Residue Int] -> V.Vector (U.Vector Int)
 scoreMapListToVectors smallScore sml = V.fromList [vA, vC, vG, vT, vD] 
     where   vA = U.fromList $ map (M.findWithDefault smallScore 'A') sml
             vC = U.fromList $ map (M.findWithDefault smallScore 'C') sml
@@ -137,3 +139,9 @@ aln1 = [
 sml = fmap (freqMapToScoreMap 1000.0 . countsMapToRelFreqMap 5 . colToCountsMap) $ T.transpose aln1
 
 nm1 = alnToNucModel 0.0001 1000 aln1
+
+aln2 = [ ]
+
+sml2 = fmap (freqMapToScoreMap 1000.0 . countsMapToRelFreqMap 5 . colToCountsMap) $ T.transpose aln2
+
+nm2 = alnToNucModel 0.0001 1000 aln2
