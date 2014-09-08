@@ -2,6 +2,7 @@
 import Test.HUnit
 
 import Data.Text 
+import Data.Tree
 
 import NewickParser
 import NewickDumper
@@ -28,7 +29,28 @@ newicks = [
     ]
 
 testCases = Prelude.map makeNewickTestCase newicks
-tests = TestList $ Prelude.map (TestLabel "Newick R/W" ) testCases
+rwtests = TestList $ Prelude.map (TestLabel "Newick R/W" ) testCases
+
+-- tests the fringe of a tree (set of leaves)
+
+nw02 = "(Aeromonas,(Bacillus,Clostridium));"
+(Right tree2) = parseNewickTree nw02
+expectedFringe = Prelude.map pack ["Aeromonas", "Bacillus", "Clostridium"]
+test20 = "fringe, simple" ~: expectedFringe @=? fringe tree2
+
+-- inner node labels are not part of the fringe: this tree's fringe is the same
+-- as the previous one's.
+
+-- TODO: add this when the parser can parse inner node labels
+nw03 = "(Aeromonas,(Bacillus,Clostridium)innode_lbl);"
+(Right tree3) = parseNewickTree nw03
+test21 = "fringe, w/innodes" ~: expectedFringe @=? fringe tree3
+
+fringetests = TestList $ Prelude.map (TestLabel "fringe") [test20]
+
+-- tests = rwtests ++ fringetests
+
+tests = TestList ([rwtests] ++ [fringetests])
 
 main = do
 	runTestTT tests

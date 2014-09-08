@@ -41,3 +41,8 @@ dumpAlnMap otuAlnMap = map f $ M.assocs otuAlnMap
     where f (k, v) = otu ++ " (" ++ num ++ " seq)"
             where   otu = ST.unpack k
                     num = show $ length v 
+
+-- compares OTU names in the tree to those in the FastA map
+checkOtuNames :: OTUTree -> OTUToAlnMap -> [ST.Text]
+    
+

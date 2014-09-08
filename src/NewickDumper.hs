@@ -1,4 +1,6 @@
-module NewickDumper (treeToNewick) where
+module NewickDumper (treeToNewick, fringe) where
+
+-- functions for dumping trees or extracting data from them
 
 import qualified Data.Text as T
 import qualified Data.List as L
@@ -12,3 +14,8 @@ nodeToNewick (Node label [])    = label
 nodeToNewick (Node _ children)  = T.cons '(' $ T.snoc innerNw ')'
     where   innerNw     = T.intercalate (T.pack ",") childrenNw
             childrenNw  = L.map nodeToNewick children
+
+fringe :: Tree a -> [a]
+fringe (Node a []) = [a]
+fringe (Node _ kids) = Prelude.concatMap fringe kids
+
