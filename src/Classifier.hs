@@ -1,6 +1,6 @@
 module Classifier (
     NucClassifier,
-    otuTree, modTree,
+    scoreCrumbs,
     buildNucClassifier,
     scoreSequenceWithCrumbs) where
 

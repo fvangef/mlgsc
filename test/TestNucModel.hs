@@ -118,6 +118,12 @@ test_30 = "ATCGN" ~: (scoreSeq aln1Mod "ATCGN") ~?= (es [5/5, 3/5, 2/5, 1/5, sma
 
 test_31 = "modLength" ~: (modLength aln1Mod) ~?= 5
 
+-- Tests for empty alignments
+--
+aln2Mod = alnToNucModel small_prob scale_factor []
+
+test_32 = "emptyAln score" ~: (scoreSeq aln2Mod "AATGC") ~?= (minBound :: Int)
+
 tests = TestList [
 		    TestLabel "scoreOf" test_1
 		    , TestLabel "scoreOf" test_2
@@ -150,6 +156,7 @@ tests = TestList [
             , TestLabel "scoreSeq" test_29
             , TestLabel "scoreSeq" test_30
             , TestLabel "scoreSeq" test_31
+            , TestLabel "scoreSeq" test_32
 		]
 
 main = do

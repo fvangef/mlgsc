@@ -18,8 +18,8 @@
  -  >
  -}
 
--- TODO: once it works, restrict exports to this:
-module NucModel (NucModel, alnToNucModel) where
+-- TODO: once it works, restrict exports to the minimal needed set.
+module NucModel (NucModel, matrix, alnToNucModel) where
 
 -- module  NucModel where -- 
 

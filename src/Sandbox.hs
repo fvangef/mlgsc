@@ -1,6 +1,7 @@
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text as ST
 import qualified Data.Map.Strict as M
+import Data.Binary (decodeFile)
 import Data.Tree
 
 import MlgscTypes
@@ -84,3 +85,5 @@ scoreCrumbs seq mod = scoreSeq mod seq -- isn't this flip scoreSeq?
 otu1 = followCrumbs c1 tree
 otu2 = followCrumbs c2 tree
 otu3 = followCrumbs c3 tree
+
+classifier = (decodeFile "classifier.bcls") :: IO NucClassifier
