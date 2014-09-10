@@ -5,6 +5,7 @@
 -- module Main where
 
 import System.Environment (getArgs)
+import System.Random
 --import System.Console.GetOpt
 --import System.IO
 --
@@ -44,12 +45,17 @@ main = do
     let (Right tree) = parseNewickTree newickString
     fastAInput <-  LTIO.readFile alnFname
     let fastARecs = Sq.fromList $ fastATextToRecords fastAInput
-    putStrLn $ leaveOneOut tree fastARecs 10
+    let bounds = (0, Sq.length fastARecs)
+    gen <- getStdGen
+    let randomIndices = take 10 $ randomRs bounds gen
+    putStrLn ("Performing LOO X-val on indices " ++ (show randomIndices))
+    mapM_ (putStrLn . leaveOneOut tree fastARecs) randomIndices
 
 
 scoreQuery :: NucClassifier -> FastA -> String
 scoreQuery classifier query =
-    (LT.unpack $ FastA.header query) ++ " -> " ++ (ST.unpack otu)
+    (LT.unpack $ FastA.header query) ++ " -> " ++ (ST.unpack otu) ++ "(" 
+    ++ (show score) ++ ")"
     where   otu = followCrumbs crumbs $ otuTree classifier
             (score, crumbs) = scoreSequenceWithCrumbs classifier querySeq 
             querySeq = LT.toStrict $ FastA.sequence query
