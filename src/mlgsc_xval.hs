@@ -47,14 +47,14 @@ main = do
     let fastARecs = Sq.fromList $ fastATextToRecords fastAInput
     let bounds = (0, Sq.length fastARecs)
     gen <- getStdGen
-    let randomIndices = take 10 $ randomRs bounds gen
+    let randomIndices = take 100 $ randomRs bounds gen
     putStrLn ("Performing LOO X-val on indices " ++ (show randomIndices))
     mapM_ (putStrLn . leaveOneOut tree fastARecs) randomIndices
 
 
 scoreQuery :: NucClassifier -> FastA -> String
 scoreQuery classifier query =
-    (LT.unpack $ FastA.header query) ++ " -> " ++ (ST.unpack otu) ++ "(" 
+    (LT.unpack $ FastA.header query) ++ " -> " ++ (ST.unpack otu) ++ " (" 
     ++ (show score) ++ ")"
     where   otu = followCrumbs crumbs $ otuTree classifier
             (score, crumbs) = scoreSequenceWithCrumbs classifier querySeq 
