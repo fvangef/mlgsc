@@ -19,7 +19,8 @@
  -}
 
 -- TODO: once it works, restrict exports to the minimal needed set.
-module NucModel (NucModel, matrix, alnToNucModel) where
+module NucModel (NucModel, matrix, alnToNucModel,
+    weightedAlnToNucModel) where
 
 -- module  NucModel where -- 
 
@@ -77,8 +78,6 @@ instance Binary NucModel where
 -- Builds a NucMOdel from a list of aligned sequences. Residues other than A, C,
 -- G, T are ignored, but gaps (-) are modelled.
 
--- TODO: transpose alignment into columns, map colToMap to each col, then make 5
--- lists of 
 alnToNucModel :: SmallProb -> ScaleFactor -> Alignment -> NucModel
 alnToNucModel smallProb scale aln = 
     NucModel (scoreMapListToVectors smallScore scoreMapList) smallScore
@@ -87,6 +86,20 @@ alnToNucModel smallProb scale aln =
                                 . colToCountsMap ) $ T.transpose aln
             size = fromIntegral $ length aln   -- number of sequences
             smallScore = round (scale * (logBase 10 smallProb))
+
+-- Same thing, but with a _weighted_alignment
+
+weightedAlnToNucModel :: SmallProb -> ScaleFactor -> WeightedAln -> NucModel
+weightedAlnToNucModel smallProb scale waln = 
+    NucModel (scoreMapListToVectors smallScore scoreMapList) smallScore
+    where   scoreMapList = fmap (freqMapToScoreMap scale
+                                . countsMapToRelFreqMap wsize
+                                . weightedColToCountsMap weights)
+                                $ T.transpose sequences
+            smallScore = round (scale * (logBase 10 smallProb))
+            wsize = fromIntegral $ sum weights
+            sequences = map fst waln
+            weights = map snd waln
 
 
 -- NOTE: functions below here should not be exported.
@@ -104,8 +117,14 @@ probToScore scale prob = round (scale * (logBase 10 prob))
 colToCountsMap :: Column -> M.Map Residue Int
 colToCountsMap col = M.fromListWith (+) [(res, 1) | res <- (T.unpack col)] 
 
--- Scales the absolute frequency into a relative frequency, using the "height"
--- of the alignment (= number of sequences).
+-- Same thing, but with a weighted column, using a list of weights.
+
+weightedColToCountsMap :: [Int] -> Column -> M.Map Residue Int
+weightedColToCountsMap weights col =
+    M.fromListWith (+) $ zip (T.unpack col) weights
+
+-- Scales the absolute frequency into a relative frequency, by dividing the
+-- (possibly weighted) counts by the (posibly weighted) number of sequences
 
 countsMapToRelFreqMap :: Double -> M.Map Residue Int -> M.Map Residue Double
 countsMapToRelFreqMap size = fmap (\n -> (fromIntegral n) / size)

@@ -41,7 +41,7 @@ test-suite	  newick
 test-suite	  crumbs
   type:           exitcode-stdio-1.0
   main-is:        TestCrumbs.hs
-  build-depends:  HUnit
+  build-depends:  HUnit, mtl
   hs-source-dirs: src, test
 
 -- test-suite	  cdf
@@ -80,7 +80,7 @@ test-suite	  crumbs
 
 executable mlgsc_train
   build-depends:  base, text, containers, parsec, vector, binary, vector-binary,
-                  text-binary
+                  text-binary, mtl
   main-is:        mlgsc_train.hs
   hs-source-dirs: src
 

@@ -6,6 +6,7 @@ import qualified Data.Map.Strict as M
 
 type Sequence       = Text
 type Alignment      = [Sequence]
+type WeightedAln    = [(Sequence, Int)]
 type Column         = Text
 type Residue        = Char
 type Position       = Int

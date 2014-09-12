@@ -124,6 +124,83 @@ aln2Mod = alnToNucModel small_prob scale_factor []
 
 test_32 = "emptyAln score" ~: (scoreSeq aln2Mod "AATGC") ~?= (minBound :: Int)
 
+-- Tests models with weighted sequences
+--
+
+-- This is exactly the same as aln1, so we can happiliy re-use those tests.
+
+test_aln3 = [
+	("ATGC-", 1),
+	("AACG-", 1),
+	("AACTN", 1),
+	("ATG--", 1),
+	("ATAAT", 1)
+	]
+
+aln3Mod = weightedAlnToNucModel small_prob scale_factor test_aln3 
+
+test_40 = TestCase (assertEqual "A@1(aln3)" (round (scale_factor * (logBase 10 (5/5)))) (scoreOf aln3Mod 'A' 1))
+test_41 = TestCase (assertEqual "C@1(aln3)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln3Mod 'C' 1))
+test_42 = TestCase (assertEqual "G@1(aln3)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln3Mod 'G' 1))
+test_43 = TestCase (assertEqual "T@1(aln3)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln3Mod 'T' 1))
+test_44 = TestCase (assertEqual "D@1(aln3)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln1Mod '-' 1))
+
+-- Now, we use non-unit weights.
+
+test_aln4 = [
+	("ATGC-", 2),
+	("AACG-", 1),
+	("AACTN", 3),
+	("ATG--", 2),
+	("ATAAT", 1)
+	]
+
+aln4Mod = weightedAlnToNucModel small_prob scale_factor test_aln4 
+
+
+test_51 = TestCase (assertEqual "A@1(aln4)" (round (scale_factor * (logBase 10 (9/9)))) (scoreOf aln4Mod 'A' 1))
+test_52 = TestCase (assertEqual "C@1(aln4)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln4Mod 'C' 1))
+test_53 = TestCase (assertEqual "G@1(aln4)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln4Mod 'G' 1))
+test_54 = TestCase (assertEqual "T@1(aln4)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln4Mod 'T' 1))
+test_55 = TestCase (assertEqual "D@1(aln4)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln4Mod '-' 1))
+
+test_56  = TestCase (assertEqual "A@2(aln4)" (round (scale_factor * (logBase 10 (4/9)))) (scoreOf aln4Mod 'A' 2))
+test_57  = TestCase (assertEqual "C@2(aln4)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln4Mod 'C' 2))
+test_58  = TestCase (assertEqual "G@2(aln4)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln4Mod 'G' 2))
+test_59  = TestCase (assertEqual "T@2(aln4)" (round (scale_factor * (logBase 10 (5/9)))) (scoreOf aln4Mod 'T' 2))
+test_60 = TestCase (assertEqual "D@2(aln4)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln4Mod '-' 2))
+
+test_61 = TestCase (assertEqual "A@3(aln4)" (round (scale_factor * (logBase 10 (1/9)))) (scoreOf aln4Mod 'A' 3))
+test_62 = TestCase (assertEqual "C@3(aln4)" (round (scale_factor * (logBase 10 (4/9)))) (scoreOf aln4Mod 'C' 3))
+test_63 = TestCase (assertEqual "G@3(aln4)" (round (scale_factor * (logBase 10 (4/9)))) (scoreOf aln4Mod 'G' 3))
+test_64 = TestCase (assertEqual "T@3(aln4)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln4Mod 'T' 3))
+test_65 = TestCase (assertEqual "D@3(aln4)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln4Mod '-' 3))
+
+test_66 = TestCase (assertEqual "A@4(aln4)" (round (scale_factor * (logBase 10 (1/9)))) (scoreOf aln4Mod 'A' 4))
+test_67 = TestCase (assertEqual "C@4(aln4)" (round (scale_factor * (logBase 10 (2/9)))) (scoreOf aln4Mod 'C' 4))
+test_68 = TestCase (assertEqual "G@4(aln4)" (round (scale_factor * (logBase 10 (1/9)))) (scoreOf aln4Mod 'G' 4))
+test_69 = TestCase (assertEqual "T@4(aln4)" (round (scale_factor * (logBase 10 (3/9)))) (scoreOf aln4Mod 'T' 4))
+test_70 = TestCase (assertEqual "D@4(aln4)" (round (scale_factor * (logBase 10 (2/9)))) (scoreOf aln4Mod '-' 4))
+
+test_71 = TestCase (assertEqual "A@5(aln4)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln4Mod 'A' 5))
+test_72 = TestCase (assertEqual "C@5(aln4)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln4Mod 'C' 5))
+test_73 = TestCase (assertEqual "G@5(aln4)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln4Mod 'G' 5))
+test_74 = TestCase (assertEqual "T@5(aln4)" (round (scale_factor * (logBase 10 (1/9)))) (scoreOf aln4Mod 'T' 5))
+test_75 = TestCase (assertEqual "D@5(aln4)" (round (scale_factor * (logBase 10 (5/9)))) (scoreOf aln4Mod '-' 5))
+
+
+-- Test the scoring function on a model made from a weighted alignment. 
+--
+-- Computes the expected score from the list of positional frequencies. Short
+-- name to save some space.
+
+test_80 = "AAAAA" ~: (scoreSeq aln4Mod "AAAAA") ~?= (es [9/9, 4/9, 1/9, 1/9, small_prob])
+test_81 = "-----" ~: (scoreSeq aln4Mod "-----") ~?= (es [small_prob, small_prob, small_prob, 2/9, 5/9])
+test_82 = "ATCG-" ~: (scoreSeq aln4Mod "ATCG-") ~?= (es [9/9, 5/9, 4/9, 1/9, 5/9])
+test_83 = "ATCGN" ~: (scoreSeq aln4Mod "ATCGN") ~?= (es [9/9, 5/9, 4/9, 1/9, small_prob])
+                             
+-- Test model length
+
 tests = TestList [
 		    TestLabel "scoreOf" test_1
 		    , TestLabel "scoreOf" test_2
@@ -157,6 +234,40 @@ tests = TestList [
             , TestLabel "scoreSeq" test_30
             , TestLabel "scoreSeq" test_31
             , TestLabel "scoreSeq" test_32
+            , TestLabel "wgt scoreOf" test_40
+            , TestLabel "wgt scoreOf" test_41
+            , TestLabel "wgt scoreOf" test_42
+            , TestLabel "wgt scoreOf" test_43
+            , TestLabel "wgt scoreOf" test_44
+            , TestLabel "wgt scoreOf" test_51
+            , TestLabel "wgt scoreOf" test_52
+            , TestLabel "wgt scoreOf" test_53
+            , TestLabel "wgt scoreOf" test_54
+            , TestLabel "wgt scoreOf" test_55
+            , TestLabel "wgt scoreOf" test_56
+            , TestLabel "wgt scoreOf" test_57
+            , TestLabel "wgt scoreOf" test_58
+            , TestLabel "wgt scoreOf" test_59
+            , TestLabel "wgt scoreOf" test_60
+            , TestLabel "wgt scoreOf" test_61
+            , TestLabel "wgt scoreOf" test_62
+            , TestLabel "wgt scoreOf" test_63
+            , TestLabel "wgt scoreOf" test_64
+            , TestLabel "wgt scoreOf" test_65
+            , TestLabel "wgt scoreOf" test_66
+            , TestLabel "wgt scoreOf" test_67
+            , TestLabel "wgt scoreOf" test_68
+            , TestLabel "wgt scoreOf" test_69
+            , TestLabel "wgt scoreOf" test_70
+            , TestLabel "wgt scoreOf" test_71
+            , TestLabel "wgt scoreOf" test_72
+            , TestLabel "wgt scoreOf" test_73
+            , TestLabel "wgt scoreOf" test_74
+            , TestLabel "wgt scoreOf" test_75
+            , TestLabel "scoreSeq" test_80
+            , TestLabel "scoreSeq" test_81
+            , TestLabel "scoreSeq" test_82
+            , TestLabel "scoreSeq" test_83
 		]
 
 main = do
