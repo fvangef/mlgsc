@@ -9,11 +9,6 @@ import Control.Applicative
 import MlgscTypes
 import Alignment
 
--- This example is taken from
--- http://www.cs.umd.edu/class/fall2011/cmsc858s/Weights.pdf.
--- The code below was checked against the weights given in that document.
--- Everything is ok.
-
 henikoffWeightAln :: Alignment -> Alignment
 henikoffWeightAln aln = liftA2 updateWeight aln normWeights
     where   normWeights = normalize $ alnRawWeights aln 

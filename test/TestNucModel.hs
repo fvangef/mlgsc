@@ -7,6 +7,7 @@ import qualified Data.Text as T
 import TestFileUtils
 import CladeModel
 import NucModel
+import Alignment
 
 -- Numeric testing of NucModels:
 
@@ -14,11 +15,11 @@ small_prob = 0.0001 :: Double -- need to be specific, else logBase complains
 scale_factor = 1000 :: Double
 
 test_aln1 = [
-	"ATGC-",
-	"AACG-",
-	"AACTN",
-	"ATG--",
-	"ATAAT"
+	AlnRow "my-OTU" "ATGC-" 1,
+	AlnRow "my-OTU" "AACG-" 1,
+	AlnRow "my-OTU" "AACTN" 1,
+	AlnRow "my-OTU" "ATG--" 1,
+	AlnRow "my-OTU" "ATAAT" 1
 	]
 
 aln1Mod = alnToNucModel small_prob scale_factor test_aln1 
@@ -128,16 +129,18 @@ test_32 = "emptyAln score" ~: (scoreSeq aln2Mod "AATGC") ~?= (minBound :: Int)
 --
 
 -- This is exactly the same as aln1, so we can happiliy re-use those tests.
+-- TODO: once the test pass, remove this aln - aln1 and aln3 are now of the same
+-- type, apart from having the same value.
 
 test_aln3 = [
-	("ATGC-", 1),
-	("AACG-", 1),
-	("AACTN", 1),
-	("ATG--", 1),
-	("ATAAT", 1)
+	AlnRow "my_OTU" "ATGC-" 1,
+	AlnRow "my_OTU" "AACG-" 1,
+	AlnRow "my_OTU" "AACTN" 1,
+	AlnRow "my_OTU" "ATG--" 1,
+	AlnRow "my_OTU" "ATAAT" 1
 	]
 
-aln3Mod = weightedAlnToNucModel small_prob scale_factor test_aln3 
+aln3Mod = alnToNucModel small_prob scale_factor test_aln3 
 
 test_40 = TestCase (assertEqual "A@1(aln3)" (round (scale_factor * (logBase 10 (5/5)))) (scoreOf aln3Mod 'A' 1))
 test_41 = TestCase (assertEqual "C@1(aln3)" (round (scale_factor * (logBase 10 small_prob))) (scoreOf aln3Mod 'C' 1))
@@ -148,14 +151,14 @@ test_44 = TestCase (assertEqual "D@1(aln3)" (round (scale_factor * (logBase 10 s
 -- Now, we use non-unit weights.
 
 test_aln4 = [
-	("ATGC-", 2),
-	("AACG-", 1),
-	("AACTN", 3),
-	("ATG--", 2),
-	("ATAAT", 1)
+	AlnRow "my_OTU_wght" "ATGC-" 2,
+	AlnRow "my_OTU_wght" "AACG-" 1,
+	AlnRow "my_OTU_wght" "AACTN" 3,
+	AlnRow "my_OTU_wght" "ATG--" 2,
+	AlnRow "my_OTU_wght" "ATAAT" 1
 	]
 
-aln4Mod = weightedAlnToNucModel small_prob scale_factor test_aln4 
+aln4Mod = alnToNucModel small_prob scale_factor test_aln4 
 
 
 test_51 = TestCase (assertEqual "A@1(aln4)" (round (scale_factor * (logBase 10 (9/9)))) (scoreOf aln4Mod 'A' 1))

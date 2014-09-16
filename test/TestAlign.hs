@@ -3,6 +3,7 @@
 import Test.HUnit
 
 import Align
+import Alignment
 import CladeModel
 import NucModel
 import MlgscTypes
@@ -11,9 +12,9 @@ scale_factor = 1000.0
 small_prob = 0.0001
 
 aln1 = [
-        "AAATTTAAA",
-        "AAATTTAAA",
-        "AAATTTAAA"
+        AlnRow "my-OTU" "AAATTTAAA" 1,
+        AlnRow "my-OTU" "AAATTTAAA" 1,
+        AlnRow "my-OTU" "AAATTTAAA" 1
         ]
 
 

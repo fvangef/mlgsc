@@ -11,7 +11,7 @@ data AlnRow = AlnRow {
                 rowLabel    :: ST.Text, -- e.g., OTU name
                 rowSeq      :: ST.Text,
                 rowWeight   :: Int
-                }
+                } deriving (Show)
 
 type Alignment = [AlnRow]
 
