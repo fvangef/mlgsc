@@ -7,23 +7,30 @@ import qualified Data.Text.Lazy as T
 
 import MlgscTypes
 
+-- TODO: introduce a new Alignment type, being more than just a list of Sequence
+-- but rather a list of AlnRow, which should be something like:
+
+data AlnRow = SimpleAlnRow OTUName Sequence
+              | WeightedAlnRow OTUName Ssequence Int
+-- or in fact just use weighted rows, and set a weight of 1 for unweighted ones.
+
 -- This example is taken from
 -- http://www.cs.umd.edu/class/fall2011/cmsc858s/Weights.pdf.
 -- The code below was checked against the weights given in that document.
 -- Everything is ok.
 
-xpl_aln = [
-    "GCGTTAGC",
-    "GAGTTGGA",
-    "CGGACTAA"
-    ]
+henikoffWeightAln :: Alignment -> WeightedAln
+henikoffWeightAln aln = zip aln roundNormweights
+    where   roundNormWeights = normalize weights
+            weights = map (weightSeq aln) aln
 
-cols = L.transpose xpl_aln
+normalize :: [Double] -> [Int]
+normalize rawWts = L.map (round . (/ minw)) rawWts
+    where   minw = minimum rawWts
 
-col = head cols
+weightSeq :: Alignment -> Sequence -> Float
+weightSeq aln seq = sum $ map (weightMap !) $ T.unpack seq 
 
-res_count_map :: M.Map Char Int
-res_count_map = M.fromListWith (+) $ zip col $ repeat 1
 
 -- The Henikoff weight of a residue R (in a given column) is 1 / n s, where n is
 -- the number of _different_ residues in the column, and s is the number of
@@ -33,8 +40,8 @@ res_count_map = M.fromListWith (+) $ zip col $ repeat 1
 -- the column. The weight of G at that column is therefore 1 / (2 * 2) = 1/4,
 -- and that for C is 1 / (2 * 1) = 1/2.
 
-res_weight :: Int -> Int -> Float
-res_weight num_res num_seq_with_res = 1.0 / (n * s)
+resWeight :: Int -> Int -> Float
+resWeight num_res num_seq_with_res = 1.0 / (n * s)
     where   s = fromIntegral num_seq_with_res
             n = fromIntegral num_res 
 
