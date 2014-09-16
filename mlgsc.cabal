@@ -44,6 +44,19 @@ test-suite	  crumbs
   build-depends:  HUnit, mtl
   hs-source-dirs: src, test
 
+
+test-suite	  alignment
+  type:           exitcode-stdio-1.0
+  main-is:        TestAlignment.hs
+  build-depends:  HUnit
+  hs-source-dirs: src, test
+
+test-suite	  weights
+  type:           exitcode-stdio-1.0
+  main-is:        TestWeights.hs
+  build-depends:  HUnit
+  hs-source-dirs: src, test
+
 -- test-suite	  cdf
 --   type:           exitcode-stdio-1.0
 --   main-is:        TestCdf.hs
