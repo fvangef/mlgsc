@@ -3,6 +3,7 @@ import qualified Data.Text as ST
 import qualified Data.Map.Strict as M
 import Data.Binary (decodeFile)
 import Data.Tree
+import Control.Applicative
 
 import MlgscTypes
 import NewickParser
@@ -11,79 +12,16 @@ import NucModel
 import Classifier
 import FastA
 import Crumbs
+import Weights
+import Alignment
 
--- Toy data for ghci
-
-fastaInput = unlines [
-    ">Aeromonas", 
-    "ACGTACGT",
-    ">Aeromonas", 
-    "ACGTACGT",
-    ">Aeromonas", 
-    "ACGTACGT",
-    ">Aeromonas", 
-    "ACGTACGT",
-    ">Aeromonas", 
-    "ACGTACGT",
-    ">Bacillus", 
-    "BCGTACGT",
-    ">Bacillus", 
-    "BCGTACGT",
-    ">Bacillus", 
-    "BCGTACGT",
-    ">Clostridium", 
-    "CCGTACGT",
-    ">Clostridium", 
-    "CCGTACGT",
-    ">Clostridium", 
-    "CCGTACGT",
-    ">Clostridium", 
-    "CCGTACGT"
+aln = [
+    AlnRow (ST.pack "myOTU") (ST.pack "GCGTTAGC") 1,
+    AlnRow (ST.pack "myOTU") (ST.pack "GAGTTGGA") 1,
+    AlnRow (ST.pack "myOTU") (ST.pack "CGGACTAA") 1
     ]
 
-newick = "(Aeromonas,(Bacillus,Clostridium));"
-(Right tree) = parseNewickTree newick
+nw = normalize $ alnRawWeights aln
 
-fastaRecs2 = fastATextToRecords $ LT.pack fastaInput
-fastAMap = fastARecordsToAlnMap fastaRecs2
+updateWeight row weight = row {rowWeight = weight}
 
--- maps alignments to OTU names within a tree
-treeOfLeafAlns = fmap (\k -> M.findWithDefault [] k fastAMap) tree
-
--- produces a new tree of which each node's data is a concatenation of its
--- children node's data. Meant to be called on a Tree Alignment  whose inner
--- nodes are empty. To see it in action, do
---   putStrLn $ drawTree $ fmap show $ mergeAlns treeOfLeafAlns
--- in GHCi.
-
-mergeAlns :: Tree Alignment -> Tree Alignment
-mergeAlns leaf@(Node _ []) = leaf
-mergeAlns (Node _ kids) = Node mergedKidAlns mergedKids
-    where   mergedKids = map mergeAlns kids
-            mergedKidAlns = concatMap rootLabel mergedKids
-
-
-treeOfAlns = mergeAlns treeOfLeafAlns
-
--- TODO: covert treeOfAlns into a tree of NucModels, by fmapping the NucModel
--- constructor. Them it should be possible to score a sequence by using
--- dropCrumbs.
-
-treeOfNucModels = fmap (alnToNucModel 0.0001 1000) treeOfAlns
-
-scoreCrumbs :: (CladeModel mod) => Sequence -> mod -> Int
-scoreCrumbs seq mod = scoreSeq mod seq -- isn't this flip scoreSeq?
-
--- Now score sequences according to the classifier, e.g.
---
-(s1, c1) = dropCrumbs (scoreCrumbs $ ST.pack "ACGTACGT") treeOfNucModels 
-(s2, c2) = dropCrumbs (scoreCrumbs $ ST.pack "CCGTACGT") treeOfNucModels 
-(s3, c3) = dropCrumbs (scoreCrumbs $ ST.pack "CCGTACGG") treeOfNucModels 
-
--- And recover the OTU name from the original tree:
-
-otu1 = followCrumbs c1 tree
-otu2 = followCrumbs c2 tree
-otu3 = followCrumbs c3 tree
-
-classifier = (decodeFile "classifier.bcls") :: IO NucClassifier

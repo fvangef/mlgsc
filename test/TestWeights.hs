@@ -19,7 +19,7 @@ aln = [
     AlnRow (S.pack "myOTU") (S.pack "CGGACTAA") 1
     ]
 
-[AlnRow _ _ wt1, AlnRow _ _ wt2, AlnRow _ _ wt3] = henikoffWeightAln aln
+[wt1, wt2, wt3] = map rowWeight $ henikoffWeightAln aln
 
 -- The alignment weights are integral, so I normalize the ones from the website:
 test01 = "H wght seq1" ~: wt1 ~?= round (0.31250 / 0.28125)

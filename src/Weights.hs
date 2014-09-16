@@ -10,13 +10,13 @@ import MlgscTypes
 import Alignment
 
 henikoffWeightAln :: Alignment -> Alignment
-henikoffWeightAln aln = liftA2 updateWeight aln normWeights
+henikoffWeightAln aln = getZipList $
+    updateWeight <$> ZipList aln <*> ZipList normWeights
     where   normWeights = normalize $ alnRawWeights aln 
             updateWeight row weight = row {rowWeight = weight} 
 
 normalize :: [Double] -> [Int]
-normalize rawWts = L.map (round . (/ minw)) rawWts
-    where   minw = minimum rawWts
+normalize rawWts = L.map (round . (/ (minimum rawWts))) rawWts
 
 -- The raw sequence weights are the sum of the residue weights over the
 -- sequence. This fuction returns the raw weights of each sequence in an
@@ -53,3 +53,4 @@ colToWeightsMap col = M.map (resWeight $ M.size res_count_map) res_count_map
 resColToWeightCol :: Column -> [Double]
 resColToWeightCol col = L.map ((M.!) weightsMap) (T.unpack col)
     where weightsMap = colToWeightsMap col
+
