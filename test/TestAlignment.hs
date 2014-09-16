@@ -47,14 +47,14 @@ test06 = "aln row label" ~: (rowLabel $ aln !! 5) ~?= (S.pack "Genus_C")
 test07 = "aln row label" ~: (rowLabel $ aln !! 6) ~?= (S.pack "Genus_C")
 test08 = "aln row label" ~: (rowLabel $ aln !! 7) ~?= (S.pack "Genus_D")
 
-test11 = "aln row seq" ~: (rowSeq $ aln !! 0) ~?= (S.pack "AYGCATGCGTGC")
-test12 = "aln row seq" ~: (rowSeq $ aln !! 1) ~?= (S.pack "AXGCATGCGTGT")
-test13 = "aln row seq" ~: (rowSeq $ aln !! 2) ~?= (S.pack "BXGCATGCGTGC")
-test14 = "aln row seq" ~: (rowSeq $ aln !! 3) ~?= (S.pack "AYGCATGCGTGC")
-test15 = "aln row seq" ~: (rowSeq $ aln !! 4) ~?= (S.pack "CXGCATGCATGC")
-test16 = "aln row seq" ~: (rowSeq $ aln !! 5) ~?= (S.pack "BYGCATGCATAC")
-test17 = "aln row seq" ~: (rowSeq $ aln !! 6) ~?= (S.pack "CYGCATGCATGC")
-test18 = "aln row seq" ~: (rowSeq $ aln !! 7) ~?= (S.pack "CZGCTTGCATGC")
+test11 = "aln row seq" ~: (rowSeq $ aln !! 0) ~?= (S.pack "AXGCATGCGTGT")
+test12 = "aln row seq" ~: (rowSeq $ aln !! 1) ~?= (S.pack "BXGCATGCGTGC")
+test13 = "aln row seq" ~: (rowSeq $ aln !! 2) ~?= (S.pack "AYGCATGCGTGC")
+test14 = "aln row seq" ~: (rowSeq $ aln !! 3) ~?= (S.pack "CXGCATGCATGC")
+test15 = "aln row seq" ~: (rowSeq $ aln !! 4) ~?= (S.pack "BYGCATGCATAC")
+test16 = "aln row seq" ~: (rowSeq $ aln !! 5) ~?= (S.pack "CYGCATGCATGC")
+test17 = "aln row seq" ~: (rowSeq $ aln !! 6) ~?= (S.pack "CZGCTTGCATGC")
+test18 = "aln row seq" ~: (rowSeq $ aln !! 7) ~?= (S.pack "DXGCTTGCATGC")
 
 test21 = "aln row weight" ~: (rowWeight $ aln !! 0) ~?= 1
 test22 = "aln row weight" ~: (rowWeight $ aln !! 1) ~?= 1
@@ -70,13 +70,13 @@ test28 = "aln row weight" ~: (rowWeight $ aln !! 7) ~?= 1
 (Just aln_C) = M.lookup (S.pack "Genus_C") alnMap
 (Just aln_D) = M.lookup (S.pack "Genus_D") alnMap
 
-test31 = "Genus A; seq 1" ~: (rowSeq $ aln_A !! 0) ~?= (S.pack "AXGCATGCGTGT")
-test32 = "Genus A; seq 2" ~: (rowSeq $ aln_A !! 1) ~?= (S.pack "AYGCATGCGTGC")
-test33 = "Genus B; seq 1" ~: (rowSeq $ aln_B !! 0) ~?= (S.pack "BXGCATGCGTGC")
-test34 = "Genus B; seq 2" ~: (rowSeq $ aln_B !! 1) ~?= (S.pack "BYGCATGCATAC")
-test35 = "Genus C; seq 1" ~: (rowSeq $ aln_C !! 0) ~?= (S.pack "CXGCATGCATGC")
+test31 = "Genus A; seq 1" ~: (rowSeq $ aln_A !! 0) ~?= (S.pack "AYGCATGCGTGC")
+test32 = "Genus A; seq 2" ~: (rowSeq $ aln_A !! 1) ~?= (S.pack "AXGCATGCGTGT")
+test33 = "Genus B; seq 1" ~: (rowSeq $ aln_B !! 0) ~?= (S.pack "BYGCATGCATAC")
+test34 = "Genus B; seq 2" ~: (rowSeq $ aln_B !! 1) ~?= (S.pack "BXGCATGCGTGC")
+test35 = "Genus C; seq 1" ~: (rowSeq $ aln_C !! 0) ~?= (S.pack "CZGCTTGCATGC")
 test36 = "Genus C; seq 2" ~: (rowSeq $ aln_C !! 1) ~?= (S.pack "CYGCATGCATGC")
-test37 = "Genus C; seq 3" ~: (rowSeq $ aln_C !! 2) ~?= (S.pack "CZGCTTGCATGC")
+test37 = "Genus C; seq 3" ~: (rowSeq $ aln_C !! 2) ~?= (S.pack "CXGCATGCATGC")
 test38 = "Genus D; seq 1" ~: (rowSeq $ aln_D !! 0) ~?= (S.pack "DXGCTTGCATGC")
 
 tests = TestList [
