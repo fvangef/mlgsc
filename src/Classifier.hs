@@ -12,6 +12,7 @@ import Data.Text.Binary
 
 import MlgscTypes
 import CladeModel
+import Alignment
 import NucModel
 import Crumbs
 
@@ -33,7 +34,7 @@ instance Binary NucClassifier where
 -- TODO: make NucClassifier and instance of Data.Binary.
 --
 buildNucClassifier  :: SmallProb -> ScaleFactor
-                    -> OTUToAlnMap -> OTUTree -> NucClassifier
+                    -> AlnMap -> OTUTree -> NucClassifier
 buildNucClassifier smallprob scale map otuTree = NucClassifier otuTree modTree
     where   modTree         = fmap (alnToNucModel smallprob scale) treeOfAlns
             treeOfAlns      = mergeAlns treeOfLeafAlns

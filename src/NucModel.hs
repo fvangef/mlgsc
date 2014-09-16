@@ -19,8 +19,7 @@
  -}
 
 -- TODO: once it works, restrict exports to the minimal needed set.
-module NucModel (NucModel, matrix, alnToNucModel,
-    weightedAlnToNucModel) where
+module NucModel (NucModel, matrix, alnToNucModel) where
 
 -- module  NucModel where -- 
 
@@ -33,6 +32,7 @@ import Data.Vector.Binary
 
 
 import MlgscTypes
+import Alignment
 import CladeModel
 
 data NucModel = NucModel {
@@ -78,19 +78,21 @@ instance Binary NucModel where
 -- Builds a NucMOdel from a list of aligned sequences. Residues other than A, C,
 -- G, T are ignored, but gaps (-) are modelled.
 
-alnToNucModel :: SmallProb -> ScaleFactor -> Alignment -> NucModel
-alnToNucModel smallProb scale aln = 
-    NucModel (scoreMapListToVectors smallScore scoreMapList) smallScore
-    where   scoreMapList = fmap (freqMapToScoreMap scale
-                                . countsMapToRelFreqMap size
-                                . colToCountsMap ) $ T.transpose aln
-            size = fromIntegral $ length aln   -- number of sequences
-            smallScore = round (scale * (logBase 10 smallProb))
+-- TODO: remove when transition to weighted alns is complete.
+
+-- alnToNucModel :: SmallProb -> ScaleFactor -> [Sequence] -> NucModel
+-- alnToNucModel smallProb scale aln = 
+--     NucModel (scoreMapListToVectors smallScore scoreMapList) smallScore
+--     where   scoreMapList = fmap (freqMapToScoreMap scale
+--                                 . countsMapToRelFreqMap size
+--                                 . colToCountsMap ) $ T.transpose aln
+--             size = fromIntegral $ length aln   -- number of sequences
+--             smallScore = round (scale * (logBase 10 smallProb))
 
 -- Same thing, but with a _weighted_alignment
 
-weightedAlnToNucModel :: SmallProb -> ScaleFactor -> WeightedAln -> NucModel
-weightedAlnToNucModel smallProb scale waln = 
+alnToNucModel :: SmallProb -> ScaleFactor -> Alignment -> NucModel
+alnToNucModel smallProb scale aln = 
     NucModel (scoreMapListToVectors smallScore scoreMapList) smallScore
     where   scoreMapList = fmap (freqMapToScoreMap scale
                                 . countsMapToRelFreqMap wsize
@@ -98,8 +100,8 @@ weightedAlnToNucModel smallProb scale waln =
                                 $ T.transpose sequences
             smallScore = round (scale * (logBase 10 smallProb))
             wsize = fromIntegral $ sum weights
-            sequences = map fst waln
-            weights = map snd waln
+            sequences = map rowSeq aln
+            weights = map rowWeight aln
 
 
 -- NOTE: functions below here should not be exported.
@@ -142,25 +144,3 @@ scoreMapListToVectors smallScore sml = V.fromList [vA, vC, vG, vT, vD]
             vG = U.fromList $ map (M.findWithDefault smallScore 'G') sml
             vT = U.fromList $ map (M.findWithDefault smallScore 'T') sml
             vD = U.fromList $ map (M.findWithDefault smallScore '-') sml
-
--- Some data to play around with in GHCi.
--- TODO: remove this when tests ok.
-
-
-aln1 = [
-    T.pack "ATGC-G",
-    T.pack "AACG-G",
-    T.pack "AACGGG",
-    T.pack "ATG--G",
-    T.pack "ATAATT"
-    ]
-
-sml = fmap (freqMapToScoreMap 1000.0 . countsMapToRelFreqMap 5 . colToCountsMap) $ T.transpose aln1
-
-nm1 = alnToNucModel 0.0001 1000 aln1
-
-aln2 = [ ]
-
-sml2 = fmap (freqMapToScoreMap 1000.0 . countsMapToRelFreqMap 5 . colToCountsMap) $ T.transpose aln2
-
-nm2 = alnToNucModel 0.0001 1000 aln2

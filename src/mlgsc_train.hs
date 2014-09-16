@@ -13,15 +13,12 @@ import qualified Data.Text.Lazy.IO as LTIO
 --
 --
 import MlgscTypes
---import Trees
---import Model
 import NewickParser
 import NewickDumper
 import FastA
 import Classifier
---import Cdf
---import Weights
---import Shuffle
+import Weights
+import Alignment
 
 main :: IO ()
 main = do
@@ -32,7 +29,8 @@ main = do
     let (Right tree) = parseNewickTree newickString
     fastAInput <-  LTIO.readFile alnFname
     let fastaRecs = fastATextToRecords fastAInput
-    let otuAlnMap = fastARecordsToAlnMap fastaRecs
+    let otuAln = fastARecordsToAln fastaRecs
+    let otuAlnMap = alnToAlnMap otuAln
     -- Show this if verbose
     -- mapM_ putStrLn $ dumpAlnMap otuAlnMap
     -- Show this unless quiet or list is empty
@@ -42,13 +40,13 @@ main = do
                     otuAlnMap tree
     encodeFile "classifier.bcls" classifier
 
-dumpAlnMap :: OTUToAlnMap -> [String]
+dumpAlnMap :: AlnMap -> [String]
 dumpAlnMap otuAlnMap = map f $ M.assocs otuAlnMap
     where f (k, v) = otu ++ " (" ++ num ++ " seq)"
             where   otu = ST.unpack k
                     num = show $ length v 
 
 -- compares OTU names in the tree to those in the FastA map
-checkOtuNames :: OTUTree -> OTUToAlnMap -> [ST.Text]
+checkOtuNames :: OTUTree -> AlnMap -> [ST.Text]
 checkOtuNames otuTree otuAlnMap =
     filter (\otu -> M.notMember otu otuAlnMap) $ fringe otuTree
