@@ -6,6 +6,7 @@ import Data.Binary
 import TestFileUtils
 import NewickParser
 import FastA
+import Alignment
 import Classifier
 import Crumbs
 
@@ -43,9 +44,10 @@ newick1 = "(Aeromonas,(Bacillus,Clostridium));"
 (Right tree1) = parseNewickTree newick1
 
 fastaRecs1 = fastATextToRecords $ LT.pack fastaInput1
-fastAMap1 = fastARecordsToAlnMap fastaRecs1
+aln1 = fastARecordsToAln fastaRecs1
+map1 = alnToAlnMap aln1
 
-clssfr1 = buildNucClassifier smallprob scale fastAMap1 tree1
+clssfr1 = buildNucClassifier smallprob scale map1 tree1
 
 
 -- Now score sequences according to the classifier, e.g.
