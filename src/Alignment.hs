@@ -1,5 +1,4 @@
-module Alignment (Alignment, AlnRow, rowLabel,
-    rowSeq, rowWeight, fastARecordsToAln, alnToAlnMap, AlnMap) where
+module Alignment (Alignment, AlnRow(..), fastARecordsToAln, alnToAlnMap, AlnMap) where
 
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text as ST
