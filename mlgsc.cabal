@@ -97,6 +97,12 @@ executable mlgsc_train
   main-is:        mlgsc_train.hs
   hs-source-dirs: src
 
+executable mlgsc_xval
+  build-depends:  base, text, containers, parsec, vector, binary, vector-binary,
+                  text-binary, mtl, random
+  main-is:        mlgsc_xval.hs
+  hs-source-dirs: src
+
 executable mlgsc
   build-depends: base
   main-is:        mlgsc.hs

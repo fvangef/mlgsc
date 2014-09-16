@@ -25,6 +25,7 @@ import Data.Tree
 --
 import MlgscTypes
 import FastA
+import Alignment
 import Crumbs (dropCrumbs, followCrumbs)
 import NucModel
 import Classifier (NucClassifier, otuTree, 
@@ -81,7 +82,8 @@ leaveOneOut tree fastaRecs n = scoreQuery classifier testRec
     where   classifier = buildNucClassifier smallProb scaleFactor otuAlnMap tree
             smallProb = 0.0001
             scaleFactor = 1000
-            otuAlnMap = fastARecordsToAlnMap trainSet
+            otuAlnMap = alnToAlnMap otuAln
+            otuAln = fastARecordsToAln trainSet
             trainSet = Data.Foldable.toList trainSetSeq
             (testRec, trainSetSeq) = spliceElemAt fastaRecs n
 
