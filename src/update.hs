@@ -2,7 +2,10 @@
 
 import System.IO
 
+import Data.Char
 import Data.Array.IO
+import Data.Array.Unboxed
+import Control.Monad
 
 import qualified Data.Map.Strict as SM
 import qualified Data.Map as LM
@@ -52,26 +55,100 @@ foldlAccumA :: IO ()
 foldlAccumA = do
     string <- hGetContents stdin
     let map = L.foldl' (flip $ SM.alter increment) (SM.empty) string
-    putStrLn $ show $ map SM.! 'a'
+    putStrLn $ show $ map SM.! 'A'
 
 increment :: Maybe Int -> Maybe Int
 increment Nothing = Just 1
 increment (Just a) = Just (a + 1)
 
--- Mutable array in the IO monad. Again, memory usage is imperceptible by top,
--- and this is no slower than the above.
+-- Mutable array in the IO monad. Interestingly, this is NOT better than the
+-- strict left fold of foldlAccumA: memory increases linearly, and the run is
+-- longer. Profiling shows that most of the memory is taken up by Int, which
+-- makes me suppose that the array is accumulating Ints. I tried to make it
+-- strict by using seq, but to no avail. NOTE: should try with an unboxed array,
+-- as these cannot hold thunks and are therefore, if I understood correctly,
+-- strict.
 
 ioArray :: IO ()
 ioArray = do
     string <- hGetContents stdin
     array <- newArray ('A', 'z') 0 :: IO (IOArray Char Int)
     mapM_ (increment' array) string
-    count_a <- readArray array 'a'
+    count_a <- readArray array 'A'
     putStrLn $ show $ count_a
 
 increment' :: (IOArray Char Int) -> Char -> IO ()
-increment' array c = do
-    count <- readArray array c
-    writeArray array c (count + 1)
+increment' array c
+    | (c >= 'A' && c <= 'z') = do
+        count <- readArray array c
+        writeArray array c (count `seq` count + 1)
+    | otherwise = return ()
 
-main = ioArray
+
+-- 2D problem: several strings of the same length (say L), count frequencies at
+-- each position
+
+-- use lines, transpose, and build a list of char -> count maps. Warning: this
+-- is straightforward, but does not scale well! I suppose transposition is the
+-- problem.
+
+listOfMapsTranspose :: IO ()
+listOfMapsTranspose = do
+    columns <- liftM (L.transpose . L.lines) $ hGetContents stdin
+    let mapList = L.map buildCounts columns
+    putStrLn $ show $ (last mapList) SM.! 'C'
+
+buildCounts :: String -> SM.Map Char Int
+buildCounts column = SM.fromListWith (+) $ zip column $ repeat 1
+
+-- use a single map, indexed by character and position. Fold over chars in a
+-- a line, and over the lines in the file (no transposition). Memory consumption
+-- is kept at a few percent, but takes more than a minute to process 12,000
+-- lines of 8 kb each (which in fact is acceptable).
+
+singleMap :: IO ()
+singleMap = do
+    lines <- liftM L.lines $ hGetContents stdin
+    let map = L.foldl' addLine SM.empty lines
+    putStrLn $ show $ map SM.! ('-', 5000)
+
+addLine :: SM.Map (Char, Int) Int -> [Char] -> SM.Map (Char, Int) Int 
+addLine map line = L.foldl' addChar map $ zip line [0..]
+
+addChar :: SM.Map (Char, Int) Int -> (Char, Int) -> SM.Map (Char, Int) Int
+addChar map (c, i) = SM.insertWith (+) (c, i) 1 map    
+
+-- use a mutable, unboxed array in the IO monad. This is the best strategy so
+-- far: almost no memory consumption (according to top), does the 12,000, 8kb
+-- sequences in about 15" (with -O2).
+
+iouArray :: IO ()
+iouArray = do
+    lines <- liftM L.lines $ hGetContents stdin
+    let lineLength = length $ head lines
+    array <- newArray ((0,0), (4, lineLength)) 0 :: IO (IOUArray (Int, Int) Int)
+    forM_ lines $ \line -> do
+        let lwi = zip line [0..]
+        forM_ lwi $ \(c,i) -> do
+            let ci = charIndex c
+            count <- readArray array (ci, i)
+            writeArray array (ci, i) (count + 1)
+            return ()
+        return()
+    a <- readArray array (charIndex 'a', 5000)
+    c <- readArray array (charIndex 'c', 5000)
+    g <- readArray array (charIndex 'g', 5000)
+    t <- readArray array (charIndex 't', 5000)
+    d <- readArray array (charIndex '-', 5000)
+    putStrLn ("A: " ++ (show a) ++ ", C: " ++ (show c) ++ ", G: " ++ (show g) ++ ", T: " ++ (show t) ++ ", -:" ++ (show d))
+
+charIndex :: Char -> Int
+charIndex c = case toUpper c of
+    'A' -> 0
+    'C' -> 1
+    'G' -> 2
+    'T' -> 3
+    otherwise -> 4
+
+main :: IO ()
+main = iouArray

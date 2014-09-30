@@ -2,7 +2,7 @@ import System.Environment (getArgs)
 --import System.Console.GetOpt
 --import System.IO
 --import System.Random
---import qualified Data.List as L
+import qualified Data.List as L
 import qualified Data.Map.Strict as M
 import Data.Binary (encodeFile)
 import qualified Data.Text as ST
@@ -29,7 +29,9 @@ main = do
     let (Right tree) = parseNewickTree newickString
     fastAInput <-  LTIO.readFile alnFname
     let fastaRecs = fastATextToRecords fastAInput
-    let otuAln = fastARecordsToAln fastaRecs
+    -- putStrLn "Weight dump (short)"
+    -- mapM_ (STIO.putStrLn . dumpAlnRow) $ take 10 rawOtuAln
+    let otuAln = (henikoffWeightAln . fastARecordsToAln) fastaRecs
     let otuAlnMap = alnToAlnMap otuAln
     -- Show this if verbose
     -- mapM_ putStrLn $ dumpAlnMap otuAlnMap
@@ -45,6 +47,9 @@ dumpAlnMap otuAlnMap = map f $ M.assocs otuAlnMap
     where f (k, v) = otu ++ " (" ++ num ++ " seq)"
             where   otu = ST.unpack k
                     num = show $ length v 
+
+dumpAlnRow :: AlnRow -> ST.Text
+dumpAlnRow (AlnRow lbl seq wt) = ST.unwords [lbl, ST.pack $ show wt]
 
 -- compares OTU names in the tree to those in the FastA map
 checkOtuNames :: OTUTree -> AlnMap -> [ST.Text]
