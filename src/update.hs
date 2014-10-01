@@ -4,6 +4,8 @@ import System.IO
 
 import Data.Char
 import Data.Array.IO
+import Control.Monad.ST
+import Data.Array.ST
 import Data.Array.Unboxed
 import Control.Monad
 
@@ -150,5 +152,32 @@ charIndex c = case toUpper c of
     'T' -> 3
     otherwise -> 4
 
+-- Same idea, but using the ST monad.
+
+freqArray :: [String] -> UArray (Int, Int) Int
+freqArray lines = runSTUArray $ do
+    let lineLen = length $ head lines
+    array <- newArray ((0,0), (4, lineLen)) 0 :: ST s (STUArray s (Int, Int) Int)
+    forM_ lines $ \line -> do
+        let lwi = zip line [0..]
+        forM_ lwi $ \(c,i) -> do
+            let ci = charIndex c
+            count <- readArray array (ci, i)
+            writeArray array (ci, i) (count + 1)
+            return ()
+        return()
+    return array
+
+stuArray :: IO ()
+stuArray = do
+    lines <- liftM L.lines $ hGetContents stdin
+    let array = freqArray lines
+    let a = array ! (charIndex 'a', 5000)
+    let c = array ! (charIndex 'c', 5000)
+    let g = array ! (charIndex 'g', 5000)
+    let t = array ! (charIndex 't', 5000)
+    let d = array ! (charIndex '-', 5000)
+    putStrLn ("A: " ++ (show a) ++ ", C: " ++ (show c) ++ ", G: " ++ (show g) ++ ", T: " ++ (show t) ++ ", -:" ++ (show d))
+
 main :: IO ()
-main = iouArray
+main = stuArray
