@@ -12,6 +12,8 @@ import Control.Monad
 import qualified Data.Map.Strict as SM
 import qualified Data.Map as LM
 import qualified Data.List as L
+import qualified Data.Text.Lazy as LT
+import qualified Data.Text.Lazy.IO as LTIO
 
 -- 1D problem: take a string, and count every character
 
@@ -152,7 +154,10 @@ charIndex c = case toUpper c of
     'T' -> 3
     otherwise -> 4
 
--- Same idea, but using the ST monad.
+-- Same idea, but using the ST monad. The advantage is that we can "escape" from
+-- the ST monad (via runSTUArray, in this case) while we can't escape from IO.
+-- The following function is therefore pure, even though some heavy updating is
+-- going on in the ST monad.
 
 freqArray :: [String] -> UArray (Int, Int) Int
 freqArray lines = runSTUArray $ do
@@ -172,6 +177,35 @@ stuArray :: IO ()
 stuArray = do
     lines <- liftM L.lines $ hGetContents stdin
     let array = freqArray lines
+    let a = array ! (charIndex 'a', 5000)
+    let c = array ! (charIndex 'c', 5000)
+    let g = array ! (charIndex 'g', 5000)
+    let t = array ! (charIndex 't', 5000)
+    let d = array ! (charIndex '-', 5000)
+    putStrLn ("A: " ++ (show a) ++ ", C: " ++ (show c) ++ ", G: " ++ (show g) ++ ", T: " ++ (show t) ++ ", -:" ++ (show d))
+
+-- As above, but with lazy Data.Text instead of Strings
+
+lazyTextFreqArray :: [LT.Text] -> UArray (Int, Int) Int
+lazyTextFreqArray lines = runSTUArray $ do
+    let lineLen = fromIntegral $ LT.length $ head lines
+    array <- newArray ((0,0), (4, lineLen)) 0 :: ST s (STUArray s (Int, Int) Int)
+    forM_ lines $ \line -> do
+        countChar array line 0 
+    return array
+
+countChar _ [] _ = return ()
+countChar array line index = do
+    let c = LT.head line
+    let ci = charIndex c
+    count <- readArray array (ci, index)
+    writeArray array (ci, index) (count + 1)
+    return $ countChar array (LT.tail line) (index + 1)
+
+lazyTextSTUArray :: IO ()
+lazyTextSTUArray = do
+    lines <- liftM LT.lines $ LTIO.hGetContents stdin
+    let array = lazyTextSTUArray lines
     let a = array ! (charIndex 'a', 5000)
     let c = array ! (charIndex 'c', 5000)
     let g = array ! (charIndex 'g', 5000)
