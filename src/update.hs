@@ -184,7 +184,9 @@ stuArray = do
     let d = array ! (charIndex '-', 5000)
     putStrLn ("A: " ++ (show a) ++ ", C: " ++ (show c) ++ ", G: " ++ (show g) ++ ", T: " ++ (show t) ++ ", -:" ++ (show d))
 
--- As above, but with lazy Data.Text instead of Strings
+-- As above, but with lazy Data.Text instead of Strings. This is roughly 30%
+-- faster than the String version (on my laptop it does in 12s what the other
+-- does in 18s).
 
 lazyTextFreqArray :: [LT.Text] -> UArray (Int, Int) Int
 lazyTextFreqArray lines = runSTUArray $ do
@@ -194,18 +196,19 @@ lazyTextFreqArray lines = runSTUArray $ do
         countChar array line 0 
     return array
 
-countChar _ [] _ = return ()
-countChar array line index = do
-    let c = LT.head line
-    let ci = charIndex c
-    count <- readArray array (ci, index)
-    writeArray array (ci, index) (count + 1)
-    return $ countChar array (LT.tail line) (index + 1)
+countChar array line index
+    | line == LT.empty  = return ()
+    | otherwise = do
+        let c = LT.head line
+        let ci = charIndex c
+        count <- readArray array (ci, index)
+        writeArray array (ci, index) (count + 1)
+        countChar array (LT.tail line) (index + 1)
 
 lazyTextSTUArray :: IO ()
 lazyTextSTUArray = do
     lines <- liftM LT.lines $ LTIO.hGetContents stdin
-    let array = lazyTextSTUArray lines
+    let array = lazyTextFreqArray lines
     let a = array ! (charIndex 'a', 5000)
     let c = array ! (charIndex 'c', 5000)
     let g = array ! (charIndex 'g', 5000)
