@@ -1,4 +1,5 @@
--- exploring ways of updating an array or map-like structure.
+-- A little code kata, exploring ways of updating an array or map-like
+-- structure.
 
 import System.IO
 
