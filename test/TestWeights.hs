@@ -49,6 +49,19 @@ aln2 = [
     AlnRow (S.pack "myOTU") (S.pack "TTTTTTTT") 1
     ]
 
+-- The rounded weights should be 1, 1, 1, 1, 2, 2, 4
+
+[wt21, wt22, wt23, wt24, wt25, wt26, wt27] = map rowWeight $ henikoffWeightAln aln2
+
+test21 = "H wght seq31" ~: wt21 ~?= 1 
+test22 = "H wght seq32" ~: wt22 ~?= 1
+test23 = "H wght seq33" ~: wt23 ~?= 1 
+test24 = "H wght seq34" ~: wt24 ~?= 1 
+test25 = "H wght seq35" ~: wt25 ~?= 2 
+test26 = "H wght seq36" ~: wt26 ~?= 2 
+test27 = "H wght seq37" ~: wt27 ~?= 4 
+
+
 -- Check the raw weights
 [rawWt31, rawWt32, rawWt33, rawWt34, rawWt35, rawWt36, rawWt37] = alnRawWeights aln2
 
@@ -69,6 +82,13 @@ tests = TestList [
             , TestLabel "Henikoff weights" test11
             , TestLabel "Henikoff weights" test12
             , TestLabel "Henikoff weights" test13
+            , TestLabel "Henikoff weights" test21
+            , TestLabel "Henikoff weights" test22
+            , TestLabel "Henikoff weights" test23
+            , TestLabel "Henikoff weights" test24
+            , TestLabel "Henikoff weights" test25
+            , TestLabel "Henikoff weights" test26
+            , TestLabel "Henikoff weights" test27
             , TestLabel "Henikoff weights" test31
             , TestLabel "Henikoff weights" test32
             , TestLabel "Henikoff weights" test33
