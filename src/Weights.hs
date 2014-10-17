@@ -28,9 +28,9 @@ henikoffWeightAln aln = getZipList $
 normalize :: [Double] -> [Int]
 normalize rawWts = L.map (round . (/ (minimum rawWts))) rawWts
 
--- The raw sequence weights are the sum of the residue weights over the
--- sequence. This fuction returns the raw weights of each sequence in an
--- alignment.
+-- The raw sequence weights are the sum of the residue weights (as stored in the
+-- Henikoff weight matrix, see below) over the sequence. This fuction returns
+-- the raw weights of each sequence in an alignment.
 
 alnRawWeights :: Alignment -> [Double]
 alnRawWeights aln = L.map (henikoffWeightRow hMat) aln
@@ -42,6 +42,13 @@ henikoffWeightRow hMat (AlnRow _ seq _) = henikoffWeightSeq hMat seq
 henikoffWeightSeq :: HenikoffMatrix -> Sequence -> Double
 henikoffWeightSeq hMat seq = henikoffWeightSeq' hMat seq 0
 
+-- This is essentially a zipWith of the sequence and the Henikoff weight matrix,
+-- using a lookup as the "with" function, combined with a fold (+). The problem
+-- is that neither the sequence nor the matrix is a list - one is an Array, and
+-- the other is a Data.Text. The Array is only accessible by index (but this is
+-- fast), while only the head and tail of the sequence can be accessed in
+-- constant time.
+
 henikoffWeightSeq' :: HenikoffMatrix -> Sequence -> Int -> Double
 henikoffWeightSeq' hMat seq pos
     | ST.empty == seq    = 0
@@ -49,11 +56,20 @@ henikoffWeightSeq' hMat seq pos
     where   headWeight = hMat ! (charIndex $ ST.head seq, pos)
             restWeight = henikoffWeightSeq' hMat (ST.tail seq) (pos + 1)
 
+-- Produces the Henikoff weight matrix (see e.g.
+-- https://www.cs.umd.edu/class/fall2011/cmsc858s/Weights.pdf) 
+-- for an alignment.
+
+-- TODO: the original version of lazyTextFreqArray uses lazy Text, but there may
+-- be no need to do so.
+
 henikoffMatrix :: Alignment -> HenikoffMatrix
 henikoffMatrix aln = countMat2HenikoffMat countMat 
     where countMat = lazyTextFreqArray $ map (LT.fromStrict . rowSeq) aln
 
--- Produces a Henikoff weight matrix from a count matrix.
+-- Takes all the assocs in the counts array, and computes the Henikoff weight
+-- score from those counts as well as the number of different residues at the
+-- relevant position (stored in 'tCounts').
 
 countMat2HenikoffMat :: CountMatrix -> HenikoffMatrix
 countMat2HenikoffMat mat = array (bounds mat) $ map (divBy tCounts) $ assocs mat
