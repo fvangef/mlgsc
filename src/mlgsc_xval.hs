@@ -32,6 +32,7 @@ import Classifier (NucClassifier, otuTree,
         buildNucClassifier, scoreSequenceWithCrumbs)
 import NewickParser
 import NewickDumper
+import Weights
 
 --import Trees
 --import Align
@@ -82,7 +83,8 @@ leaveOneOut tree fastaRecs n = scoreQuery classifier testRec
     where   classifier = buildNucClassifier smallProb scaleFactor otuAlnMap tree
             smallProb = 0.0001
             scaleFactor = 1000
-            otuAlnMap = alnToAlnMap otuAln
+            otuAlnMap = alnToAlnMap wtOtuAln
+            wtOtuAln = henikoffWeightAln otuAln
             otuAln = fastARecordsToAln trainSet
             trainSet = Data.Foldable.toList trainSetSeq
             (testRec, trainSetSeq) = spliceElemAt fastaRecs n
