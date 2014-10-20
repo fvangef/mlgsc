@@ -19,6 +19,30 @@ test4 = TestCase (assertEqual "FastA rec 2 seq" (T.pack "ggcc") (FastA.sequence 
 test5 = TestCase (assertEqual "FastA rec 3 hdr" (T.pack "hdr3") (FastA.header $ fastARecs !! 2))
 test6 = TestCase (assertEqual "FastA rec 3 seq" (T.pack "gaattc") (FastA.sequence $ fastARecs !! 2))
 
+-- Check ID and OTU, by convention the first and second words of the header.
+
+fastAInput2 = T.pack $ unlines [
+    ">XAA01 Methanococcus",
+    "accgatgctaatgtagcatgcagcatatgcg",
+    "cgagcgatctagcacgagcatgcatg",
+    "cgcaggtcatcgagagtc",
+    ">ZAB089 Archaeoglobus",
+    "cgatatcgagagcgatcatcatgcagcagcaggcat",
+    "gcagcatgcatgcncgatcggatgcatgcnngcatcga"
+    ]
+
+-- by now I have learned about the short syntax :-)
+
+fastARecs2 = fastATextToRecords fastAInput2
+
+record10 = fastARecs2 !! 0
+record11 = fastARecs2 !! 1
+
+test7 = "FastA ID" ~: (T.pack "XAA01") ~=? (FastA.fastAId record10)
+test8 = "FastA OTU" ~: (T.pack "Methanococcus") ~=? (FastA.fastAOTU record10)
+test9 = "FastA ID" ~: (T.pack "ZAB089") ~=? (FastA.fastAId record11)
+test10 = "FastA OTU" ~: (T.pack "Archaeoglobus") ~=? (FastA.fastAOTU record11)
+
 tests = TestList [
             TestLabel "FastA parser" test1
             , TestLabel "FastA parser" test2
@@ -26,6 +50,10 @@ tests = TestList [
             , TestLabel "FastA parser" test4
             , TestLabel "FastA parser" test5
             , TestLabel "FastA parser" test6
+            , TestLabel "fastA header fields" test7
+            , TestLabel "fastA header fields" test8
+            , TestLabel "fastA header fields" test9
+            , TestLabel "fastA header fields" test10
 		]
 
 main = do
