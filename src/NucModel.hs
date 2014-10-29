@@ -75,21 +75,8 @@ instance Binary NucModel where
         smallScore <- get :: Get Int
         return $ NucModel mat smallScore
 
--- Builds a NucMOdel from a list of aligned sequences. Residues other than A, C,
+-- Builds a NucMOdel from a (weighted) Alignment
 -- G, T are ignored, but gaps (-) are modelled.
-
--- TODO: remove when transition to weighted alns is complete.
-
--- alnToNucModel :: SmallProb -> ScaleFactor -> [Sequence] -> NucModel
--- alnToNucModel smallProb scale aln = 
---     NucModel (scoreMapListToVectors smallScore scoreMapList) smallScore
---     where   scoreMapList = fmap (freqMapToScoreMap scale
---                                 . countsMapToRelFreqMap size
---                                 . colToCountsMap ) $ T.transpose aln
---             size = fromIntegral $ length aln   -- number of sequences
---             smallScore = round (scale * (logBase 10 smallProb))
-
--- Same thing, but with a _weighted_alignment
 
 alnToNucModel :: SmallProb -> ScaleFactor -> Alignment -> NucModel
 alnToNucModel smallProb scale aln = 
@@ -119,7 +106,9 @@ probToScore scale prob = round (scale * (logBase 10 prob))
 colToCountsMap :: Column -> M.Map Residue Int
 colToCountsMap col = M.fromListWith (+) [(res, 1) | res <- (T.unpack col)] 
 
--- Same thing, but with a weighted column, using a list of weights.
+-- Computes a residue -> counts map for a column, weighted by sequence weight,
+-- e.g. if a sequence has 'A' at that position, and the sequence's weight is 2,
+-- then for that sequence 'A' is added twice to the total count of 'A'.
 
 weightedColToCountsMap :: [Int] -> Column -> M.Map Residue Int
 weightedColToCountsMap weights col =
