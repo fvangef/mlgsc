@@ -10,27 +10,27 @@ import Alignment
 -- Test of the OTU -> Alignment function
 
 fastaInput = unlines [
-    ">Genus_A",
+    ">ID_01 Genus_A",
     "AXGCAT",
     "GCGTGT",
-    ">Genus_B",
+    ">ID_02 Genus_B",
     "BXG",
     "CAT",
     "GCG",
     "TGC",
-    ">Genus_A",
+    ">ID_03 Genus_A",
     "AYGC",
     "ATGC",
     "GTGC",
-    ">Genus_C",
+    ">ID_04 Genus_C",
     "CXGCATGCATGC",
-    ">Genus_B",
+    ">ID_05 Genus_B",
     "BYGCATGCATAC",
-    ">Genus_C",
+    ">ID_06 Genus_C",
     "CYGCATGCATGC",
-    ">Genus_C",
+    ">ID_07 Genus_C",
     "CZGCTTGCATGC",
-    ">Genus_D",
+    ">ID_08 Genus_D",
     "DXGCTTGCATGC"
     ]
 
@@ -38,14 +38,32 @@ fastaRecs = fastATextToRecords $ T.pack fastaInput
 aln = fastARecordsToAln fastaRecs
 alnMap = alnToAlnMap aln
 
-test01 = "aln row label" ~: (rowLabel $ aln !! 0) ~?= (S.pack "Genus_A")
-test02 = "aln row label" ~: (rowLabel $ aln !! 1) ~?= (S.pack "Genus_B")
-test03 = "aln row label" ~: (rowLabel $ aln !! 2) ~?= (S.pack "Genus_A")
-test04 = "aln row label" ~: (rowLabel $ aln !! 3) ~?= (S.pack "Genus_C")
-test05 = "aln row label" ~: (rowLabel $ aln !! 4) ~?= (S.pack "Genus_B")
-test06 = "aln row label" ~: (rowLabel $ aln !! 5) ~?= (S.pack "Genus_C")
-test07 = "aln row label" ~: (rowLabel $ aln !! 6) ~?= (S.pack "Genus_C")
-test08 = "aln row label" ~: (rowLabel $ aln !! 7) ~?= (S.pack "Genus_D")
+test01 = "aln row label" ~: (rowLabel $ aln !! 0) ~?= (S.pack "ID_01 Genus_A")
+test02 = "aln row label" ~: (rowLabel $ aln !! 1) ~?= (S.pack "ID_02 Genus_B")
+test03 = "aln row label" ~: (rowLabel $ aln !! 2) ~?= (S.pack "ID_03 Genus_A")
+test04 = "aln row label" ~: (rowLabel $ aln !! 3) ~?= (S.pack "ID_04 Genus_C")
+test05 = "aln row label" ~: (rowLabel $ aln !! 4) ~?= (S.pack "ID_05 Genus_B")
+test06 = "aln row label" ~: (rowLabel $ aln !! 5) ~?= (S.pack "ID_06 Genus_C")
+test07 = "aln row label" ~: (rowLabel $ aln !! 6) ~?= (S.pack "ID_07 Genus_C")
+test08 = "aln row label" ~: (rowLabel $ aln !! 7) ~?= (S.pack "ID_08 Genus_D")
+
+test41 = "aln row Id" ~: (rowId $ aln !! 0) ~?= (S.pack "ID_01")
+test42 = "aln row Id" ~: (rowId $ aln !! 1) ~?= (S.pack "ID_02")
+test43 = "aln row Id" ~: (rowId $ aln !! 2) ~?= (S.pack "ID_03")
+test44 = "aln row Id" ~: (rowId $ aln !! 3) ~?= (S.pack "ID_04")
+test45 = "aln row Id" ~: (rowId $ aln !! 4) ~?= (S.pack "ID_05")
+test46 = "aln row Id" ~: (rowId $ aln !! 5) ~?= (S.pack "ID_06")
+test47 = "aln row Id" ~: (rowId $ aln !! 6) ~?= (S.pack "ID_07")
+test48 = "aln row Id" ~: (rowId $ aln !! 7) ~?= (S.pack "ID_08")
+
+test51 = "aln row OTU" ~: (rowOTU $ aln !! 0) ~?= (S.pack "Genus_A")
+test52 = "aln row OTU" ~: (rowOTU $ aln !! 1) ~?= (S.pack "Genus_B")
+test53 = "aln row OTU" ~: (rowOTU $ aln !! 2) ~?= (S.pack "Genus_A")
+test54 = "aln row OTU" ~: (rowOTU $ aln !! 3) ~?= (S.pack "Genus_C")
+test55 = "aln row OTU" ~: (rowOTU $ aln !! 4) ~?= (S.pack "Genus_B")
+test56 = "aln row OTU" ~: (rowOTU $ aln !! 5) ~?= (S.pack "Genus_C")
+test57 = "aln row OTU" ~: (rowOTU $ aln !! 6) ~?= (S.pack "Genus_C")
+test58 = "aln row OTU" ~: (rowOTU $ aln !! 7) ~?= (S.pack "Genus_D")
 
 test11 = "aln row seq" ~: (rowSeq $ aln !! 0) ~?= (S.pack "AXGCATGCGTGT")
 test12 = "aln row seq" ~: (rowSeq $ aln !! 1) ~?= (S.pack "BXGCATGCGTGC")
@@ -111,7 +129,23 @@ tests = TestList [
             TestLabel "lookup" test35,
             TestLabel "lookup" test36,
             TestLabel "lookup" test37,
-            TestLabel "lookup" test38
+            TestLabel "lookup" test38,
+            TestLabel "lookup" test41,
+            TestLabel "lookup" test42,
+            TestLabel "lookup" test43,
+            TestLabel "lookup" test44,
+            TestLabel "lookup" test45,
+            TestLabel "lookup" test46,
+            TestLabel "lookup" test47,
+            TestLabel "lookup" test48,
+            TestLabel "lookup" test51,
+            TestLabel "lookup" test52,
+            TestLabel "lookup" test53,
+            TestLabel "lookup" test54,
+            TestLabel "lookup" test55,
+            TestLabel "lookup" test56,
+            TestLabel "lookup" test57,
+            TestLabel "lookup" test58
 		]
 
 main = do
