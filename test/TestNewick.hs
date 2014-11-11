@@ -46,7 +46,7 @@ nw03 = "(Aeromonas,(Bacillus,Clostridium)innode_lbl);"
 (Right tree3) = parseNewickTree nw03
 test21 = "fringe, w/innodes" ~: expectedFringe @=? fringe tree3
 
-fringetests = TestList $ Prelude.map (TestLabel "fringe") [test20]
+fringetests = TestList $ Prelude.map (TestLabel "fringe") [test20, test21]
 
 -- tests = rwtests ++ fringetests
 

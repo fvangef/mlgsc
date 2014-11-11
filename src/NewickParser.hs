@@ -32,7 +32,8 @@ nwNode :: Parser (Tree T.Text)
 nwNode = do	{ oParen
 			  ; children <- nwNode `sepBy` comma
 			  ; cParen
-			  ; return $ Node T.empty children
+              ; label <- option "" identifier 
+			  ; return $ Node (T.pack label) children
 			}
 		 <|> nwLeaf
 
