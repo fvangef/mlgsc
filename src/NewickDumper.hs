@@ -11,7 +11,8 @@ treeToNewick tree = T.snoc (nodeToNewick tree) ';'
 
 nodeToNewick :: Tree T.Text -> T.Text
 nodeToNewick (Node label [])    = label
-nodeToNewick (Node _ children)  = T.cons '(' $ T.snoc innerNw ')'
+nodeToNewick (Node label children)  = (T.cons '(' $ T.snoc innerNw ')')
+                `T.append` label
     where   innerNw     = T.intercalate (T.pack ",") childrenNw
             childrenNw  = L.map nodeToNewick children
 

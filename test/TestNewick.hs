@@ -26,6 +26,8 @@ newicks = [
     , "(A,(B,C));"
     ,"(((Deep)));"
     , "A;"
+    , "(Aeromonas,(Bacillus,Clostridium)innode_lbl);"
+    , "((A,B)f,((C,D)g,E)h)i;"
     ]
 
 testCases = Prelude.map makeNewickTestCase newicks
