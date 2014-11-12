@@ -15,10 +15,7 @@
         )Actinomycineae,
         Actinopolyspora,
         (
-          (
-            Brevibacterium,
-            Corynebacterium
-          ),
+					Corynebacterium,
           Dietzia,
           Gordonia,
           Mycobacterium,
@@ -88,12 +85,7 @@
           Dactylosporangium,
           Salinispora,
           Solwaraspora,
-          (
-            Virgisporangium,
-            Virgisporangium,
-            Virgisporangium,
-            Virgosporangium
-          )Virgisporangium
+          Virgisporangium
         )Micromonosporaceae,
         (
           (
@@ -162,11 +154,10 @@
   (
     (
       (
-        (
-          Rubricoccus,
-          Salinibacter
-        )Rhodothermaceae
-      )Bacteroidetes,
+        Rubricoccus,
+        Salinibacter,
+      )Rhodothermaceae
+      ,
       (
         Bacteroides,
         (
@@ -186,7 +177,6 @@
       (
         (
           Adhaeribacter,
-          Flectobacillus,
           Cytophaga,
           Dyadobacter,
           Emticicia,
@@ -263,7 +253,7 @@
         Prosthecochloris
       )Chlorobiaceae
     )Chlorobia
-  )Bacteroidetes,
+  ),
   (
     (
       (
@@ -292,7 +282,7 @@
         Verrucomicrobium
       )Verrucomicrobiaceae
     )Verrucomicrobia
-  )Chlamydiae,
+  ),
   (
     Longilinea,
     Caldilinea,
@@ -330,12 +320,9 @@
       Arthrospira,
       Halomicronema,
       Leptolyngbya,
-      Oscillatoria,
-      Lyngbya,
       Microcoleus,
       Lyngbya,
       Oscillatoria,
-      Phormidium,
       Planktothrix,
       Pseudanabaena,
       Symploca,
@@ -378,7 +365,6 @@
           Kyrpidia
         )Alicyclobacillaceae,
         (
-          Bacillus,
           Anoxybacillus,
           Bacillus,
           Geobacillus,
@@ -390,16 +376,14 @@
           Salibacillus,
           Virgibacillus
         )Bacillaceae,
-        (
-          Gemella,
-          Exiguobacterium
-        )Bacillales,
+				Gemella,
+				Exiguobacterium,
         (
           (
             Ammoniphilus,
             Aneurinibacillus,
             Oxalophagus
-          )Aneurinibacillus,
+          ),
           Brevibacillus,
           Cohnella,
           Paenibacillus
@@ -464,6 +448,7 @@
         (
           Alkaliphilus,
           Butyribacterium,
+          Tepidibacter,
           Clostridium,
           Lutispora,
           Oxobacter,
@@ -482,31 +467,29 @@
             Peptoniphilus,
             Sedimentibacter,
             Sporanaerobacter
-          )Clostridiales,
+          )Peptostreptococcaceae,
           (
             Acidaminobacter,
             Fusibacter,
             Guggenheimella
-          )Clostridiales,
+          ),
           (
             Anaerovorax,
             Mogibacterium
-          )Clostridiales,
+          ),
           Anaerobranca,
           Sulfobacillus,
           Symbiobacterium
-        )Clostridiales,
+        ),
         (
           Acetobacterium,
           Anaerofustis
         )Eubacteriaceae,
         (
           Anaerostipes,
-          Ruminococcus,
           Blautia,
           Butyrivibrio,
           Catonella,
-          Clostridium,
           Coprococcus,
           Dorea,
           Lachnobacterium,
@@ -525,10 +508,6 @@
           Sporotomaculum
         )Peptococcaceae,
         (
-          Peptostreptococcus,
-          Tepidibacter
-        )Peptostreptococcaceae,
-        (
           Anaerotruncus,
           Ethanoligenens,
           Faecalibacterium,
@@ -540,10 +519,8 @@
       Halanaerobium,
       (
         (
-          Caldanaerobacter,
           Carboxydibrachium,
           Caldanaerobacter,
-          Thermoanaerobacter,
           Ammonifex,
           Moorella,
           Thermacetogenium,
@@ -552,7 +529,7 @@
         (
           Caldicellulosiruptor,
           Thermoanaerobacterium
-        )Thermoanaerobacterales,
+        )Thermoanaerobacterales_III,
         Coprothermobacter
       )Thermoanaerobacterales
     )Clostridia,
@@ -596,20 +573,15 @@
       )Fusobacteriaceae,
       (
         Leptotrichia,
-        (
-          Leptotrichia,
-          Sneathia,
-          Sneathia
-        )Sneathia
+        Sneathia
       )Leptotrichiaceae
     )Fusobacteriales
   )Fusobacteriia,
   (
-    (
-      Leptospirillum,
-      Nitrospira
-    )Nitrospiraceae
-  )Nitrospira,
+    Leptospirillum,
+    Nitrospira
+  )Nitrospiraceae
+  ,
   (
     Gemmata,
     Planctomyces
@@ -662,10 +634,8 @@
           Kaistia,
           Agrobacterium,
           Rhizobium,
-          (
-            Ensifer,
-            Sinorhizobium
-          )Sinorhizobium
+          Ensifer,
+          Sinorhizobium
         )Rhizobiaceae,
         (
           Afifella,
@@ -770,7 +740,6 @@
           Limnohabitans,
           Pelomonas,
           Polaromonas,
-          Rhodoferax,
           Simplicispira,
           Variovorax,
           Verminephrobacter
@@ -905,7 +874,6 @@
         Aggregatibacter,
         Bisgaard,
         Haemophilus,
-        Haemophilus,
         Pasteurella
       )Pasteurellaceae,
       (
@@ -958,7 +926,6 @@
           Rhodanobacter,
           Stenotrophomonas,
           Thermomonas,
-          Pseudomonas,
           Xylella
         )Xanthomonadaceae
       )Xanthomonadales
