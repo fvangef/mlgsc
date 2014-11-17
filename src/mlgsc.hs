@@ -16,7 +16,7 @@ import Data.Binary (decodeFile)
 import Data.Tree
 --import System.Directory
 --
---import MlgscTypes
+import MlgscTypes
 import FastA
 import Crumbs (dropCrumbs, followCrumbs)
 import NucModel
@@ -33,7 +33,10 @@ main = do
     let queryRecs = fastATextToRecords queryFastA
     classifier <- (decodeFile classifierFname) :: IO NucClassifier
     let query = LT.toStrict $ FastA.sequence $ queryRecs !! 2
-    let (score, crumbs) = scoreSequenceWithCrumbs classifier query  
-    let otu = followCrumbs crumbs $ otuTree classifier
+    let otu = classifySequence classifier query
     STIO.putStrLn otu
 
+-- classifySequence :: NucClassifier -> Sequence -> LT.Text
+classifySequence classifier query = otu
+    where   (score, crumbs) = scoreSequenceWithCrumbs classifier query  
+            otu = followCrumbs crumbs $ otuTree classifier

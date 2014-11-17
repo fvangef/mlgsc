@@ -85,6 +85,15 @@ test21 = "follow, str tree, length" ~: (followCrumbs [0,0,0] stringTree)
 test22 = "follow, str tree, (!! 1)" ~: (followCrumbs [1,0] stringTree)
                                     ~?= "five"
 
+-- followCrumbsWithTrail returns all "labels" along the path
+
+test30 = "follow w/ trail, int tree" ~:
+    (followCrumbsWithTrail [1,2,0] intTree) ~?= [0, 2, 7, 12]
+test31 = "follow w/ trail, str tree,length" ~:
+    (followCrumbsWithTrail [0,0,0] stringTree) ~?= ["zero","one","three","nine"]
+test32 = "follow w/ trail, str tree, (!! 1)" ~:
+    (followCrumbsWithTrail [1,0] stringTree) ~?= ["zero", "two", "five"]
+
 tests = TestList [
             TestLabel "bestByWithIndex" test01
             -- , TestLabel "bestByWithIndex" test02
@@ -94,6 +103,9 @@ tests = TestList [
             , TestLabel "followCrumbs" test20
             , TestLabel "followCrumbs" test21
             , TestLabel "followCrumbs" test22
+            , TestLabel "followCrumbsWithTrail" test30
+            , TestLabel "followCrumbsWithTrail" test31
+            , TestLabel "followCrumbsWithTrail" test32
 		]
 
 -- Test followCrumbs, using the above cases "the other way around"

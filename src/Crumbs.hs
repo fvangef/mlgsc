@@ -2,6 +2,7 @@
 module Crumbs (
     Crumbs,
     followCrumbs,
+    followCrumbsWithTrail,
     dropCrumbs,
     bestByWithIndex, 
     empty
@@ -12,15 +13,25 @@ import Data.List
 import Control.Monad.Writer
 
 
-type Crumbs = [Int]
+type Crumb = Int
+type Crumbs = [Crumb]
 
 empty = (undefined, -1)
 
--- Follows a list of crumbs. No error recovery!
+-- Follows a list of crumbs. Returns the rootLabel of the node corresponding to
+-- the last crumb. No error recovery!
 
 followCrumbs :: Crumbs -> Tree a -> a
 followCrumbs (c:cs) (Node _ kids) = followCrumbs cs (kids !! c)
 followCrumbs [] node = rootLabel node
+
+-- As above, but returns a list containing the rootLabels of all nodes visited
+-- on the path through the tree.
+
+followCrumbsWithTrail :: Crumbs -> Tree a -> [a]
+followCrumbsWithTrail (c:cs) (Node rl kids) =
+    rl : (followCrumbsWithTrail cs (kids !! c))
+followCrumbsWithTrail [] node = [rootLabel node]
 
 -- A wrapper around the monadic dropCrumbsM below
 
@@ -39,9 +50,6 @@ dropCrumbsM m (Node rl kids) = do
     tell [bestNdx]
     dropCrumbsM m $ bestKid
     where m' (Node rl _) = m rl
-
-
-
 
 -- finds the (first) object in a list that maximizes some metric m, returns
 -- that object and its index in the list. Not efficient, but should be ok for
