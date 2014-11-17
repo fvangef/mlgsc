@@ -1,3 +1,5 @@
+.PHONY: clean
+
 test_sources = $(wildcard *.hs)
 test_bins = $(basename $(test_sources))
 
@@ -6,3 +8,6 @@ test_bins = $(basename $(test_sources))
 
 check: $(test_bins)
 	for test in $(test_bins) ; do echo "$$test" ; ./$$test ; done
+
+clean:
+	$(RM) $(test_bins) *.o *.hi
