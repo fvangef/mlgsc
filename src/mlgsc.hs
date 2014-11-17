@@ -34,8 +34,9 @@ main = do
     let queryRecs = fastATextToRecords queryFastA
     classifier <- (decodeFile classifierFname) :: IO NucClassifier
     let query = LT.toStrict $ FastA.sequence $ queryRecs !! 2
-    let otu = classifySequenceWithTrail classifier query
-    STIO.putStrLn otu
+    let predTaxo = classifySequenceWithTrail classifier query
+    mapM_ STIO.putStrLn $ map (classifySequenceWithTrail classifier .
+                            LT.toStrict . FastA.sequence) queryRecs
 
 -- classifySequence :: NucClassifier -> Sequence -> LT.Text
 classifySequence classifier query = otu
