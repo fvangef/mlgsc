@@ -72,6 +72,10 @@ stringTree =   Node "zero" [
 test11 = "drop, str tree, length" ~: (dropCrumbs length stringTree)
                                   ~?= (4,[0,0,0])
 
+-- debug
+two = (subForest stringTree) !! 1
+objs2 = subForest two
+
 -- this time, use the second character of the string, using the ordering of Char
 
 test12 = "drop, str tree, (!! 1)" ~: (dropCrumbs (!! 1) stringTree)

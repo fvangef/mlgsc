@@ -4,8 +4,9 @@ module Crumbs (
     followCrumbs,
     followCrumbsWithTrail,
     dropCrumbs,
+    dropExtendedCrumbsM,
     bestByWithIndex, 
-    empty
+    empty,
     ) where
 
 import Data.Tree
@@ -17,6 +18,7 @@ type Crumb = Int
 type Crumbs = [Crumb]
 
 empty = (undefined, -1)
+emptyExt = (undefined, -1, 1, 1)
 
 -- Follows a list of crumbs. Returns the rootLabel of the node corresponding to
 -- the last crumb. No error recovery!
@@ -80,13 +82,31 @@ data ExtendedCrumb = ExtendedCrumb {
 
 type ExtendedCrumbTrail = [ExtendedCrumb]
 
--- like dropCrumbsM, bit with extended crumbs.
+-- A wrapper around the monadic dropExtendedCrumbsM below
 
-dropExtendedCrumbsM :: (Ord b) =>
-    (a -> b) -> Tree a -> Writer ExtendedCrumbTrail b
+dropExtendedCrumbs :: (Ord b) => (a -> b) -> Tree a -> (b, Crumbs)
+dropExtendedCrumbs m tree = runWriter $ dropCrumbsM m tree
+
+-- like dropCrumbsM, but with extended crumbs.
+
 dropExtendedCrumbsM m (Node rl []) = return $ m rl
 dropExtendedCrumbsM m (Node rl kids) = do
-    let (bestKid, bestNdx) = bestByWithIndex kids m'
-    tell [bestNdx]
-    dropCrumbsM m $ bestKid
+    let (bestKid, bestNdx, bestScore, secondBestScore) = bestByExtended kids m'
+    tell [(bestNdx, bestScore, secondBestScore)] 
+    dropExtendedCrumbsM m $ bestKid
     where m' (Node rl _) = m rl
+
+-- finds the (first) object in a list that maximizes some metric m (think score
+-- of a sequence according to a model), returns that object and its index in
+-- the list, as well as the best score and second-best score themselves. Not
+-- efficient, but should be ok for short lists.
+
+bestByExtended :: Ord b => [a] -> (a -> b) -> (a, Int, b, b)
+bestByExtended objs m = (bestObj, bestNdx, bestMetricValue, secondBestMetricValue)
+    where   sorted = reverse $ sort $ metricValues
+            metricValues = map m objs
+            bestMetricValue = sorted !! 0
+            secondBestMetricValue = sorted !! 1
+            bestNdx = head $ elemIndices bestMetricValue metricValues
+            bestObj = objs !! bestNdx
+            
