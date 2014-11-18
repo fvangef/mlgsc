@@ -5,6 +5,7 @@ module Crumbs (
     followCrumbsWithTrail,
     dropCrumbs,
     dropExtendedCrumbs,
+    followExtendedCrumbsWithTrail,
     bestByWithIndex, 
     empty,
     ) where
@@ -102,3 +103,9 @@ bestByExtended objs m = (bestObj, bestNdx, bestMetricValue, secondBestMetricValu
             bestNdx = head $ elemIndices bestMetricValue metricValues
             bestObj = objs !! bestNdx
             
+-- Follows an extended crumbs trail, returning labels and score ratios
+
+-- followExtendedCrumbsWithTrail :: Ord b => [(Int, b, b)] -> Tree a -> [a]
+followExtendedCrumbsWithTrail ((ndx, best, secBest):cs) (Node rl kids) =
+    (rl, best, secBest) : (followExtendedCrumbsWithTrail cs (kids !! ndx))
+followExtendedCrumbsWithTrail [] node = [(rootLabel node, 1, 1)]
