@@ -9,5 +9,10 @@ GHCFLAGS = -O2
 
 all: $(targets)
 
+mlgsc: MlgscTypes.hs FastA.hs Crumbs.hs NucModel.hs Classifier.hs
+
+mlgsc_train: MlgscTypes.hs NewickParser.hs FastA.hs Classifier.hs \
+	Weights.hs Alignment.hs
+
 clean:
-	$(RM) $(targets)
+	$(RM) $(targets) *.o *.hi

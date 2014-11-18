@@ -38,10 +38,12 @@ followCrumbsWithTrail [] node = [rootLabel node]
 dropCrumbs :: (Ord b) => (a -> b) -> Tree a -> (b, Crumbs)
 dropCrumbs m tree = runWriter $ dropCrumbsM m tree
 
--- Given a tree and some metric m, generates a list of crumbs by recursively
--- applying m to a node's children and calling itself on the best-scoring child,
--- until a leaf is reached. Returns the score of that leaf, as well as a list of
--- crumbs followed to reach it, as a Writer monad.
+-- Given a tree and some metric m (which will typically be a function that
+-- scores a sequence according to a model held at the tree node), generates a
+-- list of crumbs by recursively applying m to a node's children and calling
+-- itself on the best-scoring child, until a leaf is reached. Returns the score
+-- of that leaf, as well as a list of crumbs followed to reach it, as a Writer
+-- monad.
 
 dropCrumbsM :: (Ord b) => (a -> b) -> Tree a -> Writer [Int] b
 dropCrumbsM m (Node rl []) = return $ m rl
@@ -62,3 +64,29 @@ bestByWithIndex objs m  = (bestObj, head ndx)
             ndx         = elemIndices max_metric obj_metrics 
             max_metric  = maximum obj_metrics
             obj_metrics = map m objs
+
+{-
+ - Extended Crumbs: these crumbs not only track the _index_ of the "best" child
+ - according to the metric m (again, think of a sequence scoring function), but
+ - also record the two best values of on a set of sibling nodes. This enables to
+ - compute e.g. the log odds ratio of the best to the next best, etc.
+ - -}
+
+data ExtendedCrumb = ExtendedCrumb {
+        siblingIndex    :: Int,
+        bestValue       :: Int,
+        secondBestValue :: Int
+        }
+
+type ExtendedCrumbTrail = [ExtendedCrumb]
+
+-- like dropCrumbsM, bit with extended crumbs.
+
+dropExtendedCrumbsM :: (Ord b) =>
+    (a -> b) -> Tree a -> Writer ExtendedCrumbTrail b
+dropExtendedCrumbsM m (Node rl []) = return $ m rl
+dropExtendedCrumbsM m (Node rl kids) = do
+    let (bestKid, bestNdx) = bestByWithIndex kids m'
+    tell [bestNdx]
+    dropCrumbsM m $ bestKid
+    where m' (Node rl _) = m rl
