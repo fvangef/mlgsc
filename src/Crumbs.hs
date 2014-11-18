@@ -4,7 +4,7 @@ module Crumbs (
     followCrumbs,
     followCrumbsWithTrail,
     dropCrumbs,
-    dropExtendedCrumbsM,
+    dropExtendedCrumbs,
     bestByWithIndex, 
     empty,
     ) where
@@ -74,18 +74,10 @@ bestByWithIndex objs m  = (bestObj, head ndx)
  - compute e.g. the log odds ratio of the best to the next best, etc.
  - -}
 
-data ExtendedCrumb = ExtendedCrumb {
-        siblingIndex    :: Int,
-        bestValue       :: Int,
-        secondBestValue :: Int
-        }
-
-type ExtendedCrumbTrail = [ExtendedCrumb]
-
 -- A wrapper around the monadic dropExtendedCrumbsM below
 
-dropExtendedCrumbs :: (Ord b) => (a -> b) -> Tree a -> (b, Crumbs)
-dropExtendedCrumbs m tree = runWriter $ dropCrumbsM m tree
+-- dropExtendedCrumbs :: (Ord b) => (a -> b) -> Tree a -> (b, Crumbs)
+dropExtendedCrumbs m tree = runWriter $ dropExtendedCrumbsM m tree
 
 -- like dropCrumbsM, but with extended crumbs.
 

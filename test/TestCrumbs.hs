@@ -98,6 +98,19 @@ test31 = "follow w/ trail, str tree,length" ~:
 test32 = "follow w/ trail, str tree, (!! 1)" ~:
     (followCrumbsWithTrail [1,0] stringTree) ~?= ["zero", "two", "five"]
 
+-- dropExtendedCrumbs records the best and second-best scores along the way.
+-- This is used in the real classifier to keep tabs on how much better a branch
+-- is than its next-best sibling.
+
+test40 = "drop ext crumbs, int" ~: (dropExtendedCrumbs id intTree) ~?=
+    (12,[(1,2,1), (2,7,6), (0,12,11)]) 
+test41 = "drop ext crumbs, str len" ~:
+    (dropExtendedCrumbs length stringTree) ~?=
+    (4,[(0,3,3), (0,5,4), (0,4,3)]) 
+test42 = "drop ext crumbs, str ! 1" ~:
+    (dropExtendedCrumbs (!! 1) stringTree) ~?=
+    ('i',[(1,'w','n'), (0,'i','i')]) 
+
 tests = TestList [
             TestLabel "bestByWithIndex" test01
             -- , TestLabel "bestByWithIndex" test02
@@ -110,6 +123,9 @@ tests = TestList [
             , TestLabel "followCrumbsWithTrail" test30
             , TestLabel "followCrumbsWithTrail" test31
             , TestLabel "followCrumbsWithTrail" test32
+            , TestLabel "dropExtendedCrumbs" test40
+            , TestLabel "dropExtendedCrumbs" test41
+            , TestLabel "dropExtendedCrumbs" test42
 		]
 
 -- Test followCrumbs, using the above cases "the other way around"
