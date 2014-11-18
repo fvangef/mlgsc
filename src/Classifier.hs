@@ -2,7 +2,8 @@ module Classifier (
     NucClassifier,
     otuTree, modTree,
     buildNucClassifier,
-    scoreSequenceWithCrumbs) where
+    scoreSequenceWithCrumbs,
+    scoreSequenceWithExtendedCrumbs) where
 
 import Data.Tree
 import qualified Data.Map.Strict as M
@@ -40,10 +41,12 @@ buildNucClassifier smallprob scale map otuTree = NucClassifier otuTree modTree
             treeOfAlns      = mergeAlns treeOfLeafAlns
             treeOfLeafAlns  = fmap (\k -> M.findWithDefault [] k map) otuTree
 
-
 scoreSequenceWithCrumbs :: NucClassifier -> Sequence -> (Int, Crumbs)
 scoreSequenceWithCrumbs classifier seq =
     dropCrumbs (scoreCrumbs seq) $ modTree classifier
+
+scoreSequenceWithExtendedCrumbs classifier seq =
+    dropExtendedCrumbs (scoreCrumbs seq) $ modTree classifier
 
 -- Passsed a Sequence, returns a function (CladeModel mod) => mod -> int that
 -- can itelf be passed to dropCrumbs, thereby scoring said sequence according to

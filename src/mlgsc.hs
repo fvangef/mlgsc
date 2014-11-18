@@ -19,9 +19,11 @@ import Data.Tree
 --
 import MlgscTypes
 import FastA
-import Crumbs (dropCrumbs, followCrumbs, followCrumbsWithTrail)
+import Crumbs (dropCrumbs, followCrumbs, followCrumbsWithTrail,
+    followExtendedCrumbsWithTrail)
 import NucModel
-import Classifier (NucClassifier, otuTree, modTree, scoreSequenceWithCrumbs)
+import Classifier (NucClassifier, otuTree, modTree, scoreSequenceWithCrumbs,
+        scoreSequenceWithExtendedCrumbs)
 
 --import Trees
 --import Align
@@ -47,3 +49,11 @@ classifySequence classifier query = otu
 classifySequenceWithTrail classifier query = taxo
     where   (score, crumbs) = scoreSequenceWithCrumbs classifier query  
             taxo = ST.intercalate (ST.pack "; ") $ followCrumbsWithTrail crumbs $ otuTree classifier
+
+-- classifySequence :: NucClassifier -> Sequence -> LT.Text
+classifySequenceWithExtendedTrail classifier query = extendedTaxo
+    where   (score, trail) = scoreSequenceWithCrumbs classifier query  
+            extendedTaxo = ST.intercalate (ST.pack "; ") taxoList
+            taxoList = map phyloNode2Text $ followExtendedCrumbsWithTrail trail $ otuTree classifier
+
+phyloNode2Text (lbl, best, second) = ST.pack $ lbl ++ (show best)
