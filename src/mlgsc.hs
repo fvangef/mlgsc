@@ -5,6 +5,7 @@
 -- module Main where
 
 import System.Environment (getArgs)
+import Control.Applicative
 --import System.Console.GetOpt
 --import System.IO
 --
@@ -50,13 +51,24 @@ classifySequenceWithTrail classifier query = taxo
 
 -- classifySequence :: NucClassifier -> Sequence -> LT.Text
 
-classifySequenceWithExtendedTrail classifier query = taxo
+classifySequenceWithExtendedTrail classifier query = trailToTaxo trail
     where   (score, crumbs) = scoreSequenceWithExtendedCrumbs classifier query  
             -- extendedTaxo = ST.intercalate (ST.pack ";dd.. ") taxoList
             trail = followExtendedCrumbsWithTrail crumbs $ otuTree classifier
-            taxo = ST.intercalate (ST.pack "; ") $ map phyloNode2Text trail
 
+trailToExtendedTaxo trail = ST.intercalate (ST.pack "; ") eLbl
+    where   labels = tail $ map (\(lbl,_,_) -> lbl) trail
+            confid = init $ map (\(_,best,second) -> best - second) trail
+            eLbl = getZipList $ toElbl <$> ZipList labels <*> ZipList confid
+            toElbl lbl conf = ST.concat [lbl,
+                                         ST.pack " (", 
+                                         ST.pack $ show conf,
+                                         ST.pack ")"]
+
+trailToTaxo trail = ST.intercalate (ST.pack "; ") $ map phyloNode2Text trail
+ 
 phyloNode2Text (lbl, best, second) = ST.concat [
-                                        lbl,
-                                        ST.pack $ show best
-                                        ]
+                                     lbl,
+                                     ST.pack $ show best
+                                     ]
+ 
