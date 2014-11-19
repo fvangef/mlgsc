@@ -35,7 +35,7 @@ main = do
     queryFastA <- LTIO.readFile queriesFname
     let queryRecs = fastATextToRecords queryFastA
     classifier <- (decodeFile classifierFname) :: IO NucClassifier
-    mapM_ STIO.putStrLn $ map (classifySequenceWithTrail classifier .
+    mapM_ STIO.putStrLn $ map (classifySequenceWithExtendedTrail classifier .
                             LT.toStrict . FastA.sequence) queryRecs
 
 -- classifySequence :: NucClassifier -> Sequence -> LT.Text
@@ -49,11 +49,14 @@ classifySequenceWithTrail classifier query = taxo
             taxo = ST.intercalate (ST.pack "; ") $ followCrumbsWithTrail crumbs $ otuTree classifier
 
 -- classifySequence :: NucClassifier -> Sequence -> LT.Text
-{--
-classifySequenceWithExtendedTrail classifier query = extendedTaxo
-    where   (score, trail) = scoreSequenceWithExtendedCrumbs classifier query  
-            extendedTaxo = ST.intercalate (ST.pack "; ") taxoList
-            taxoList = map phyloNode2Text $ followExtendedCrumbsWithTrail trail $ otuTree classifier
 
-phyloNode2Text (lbl, best, second) = ST.pack $ lbl ++ (show best)
---}
+classifySequenceWithExtendedTrail classifier query = taxo
+    where   (score, crumbs) = scoreSequenceWithExtendedCrumbs classifier query  
+            -- extendedTaxo = ST.intercalate (ST.pack ";dd.. ") taxoList
+            trail = followExtendedCrumbsWithTrail crumbs $ otuTree classifier
+            taxo = ST.intercalate (ST.pack "; ") $ map phyloNode2Text trail
+
+phyloNode2Text (lbl, best, second) = ST.concat [
+                                        lbl,
+                                        ST.pack $ show best
+                                        ]
