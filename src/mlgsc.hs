@@ -35,8 +35,6 @@ main = do
     queryFastA <- LTIO.readFile queriesFname
     let queryRecs = fastATextToRecords queryFastA
     classifier <- (decodeFile classifierFname) :: IO NucClassifier
-    let query = LT.toStrict $ FastA.sequence $ queryRecs !! 2
-    let predTaxo = classifySequenceWithTrail classifier query
     mapM_ STIO.putStrLn $ map (classifySequenceWithTrail classifier .
                             LT.toStrict . FastA.sequence) queryRecs
 
@@ -51,9 +49,11 @@ classifySequenceWithTrail classifier query = taxo
             taxo = ST.intercalate (ST.pack "; ") $ followCrumbsWithTrail crumbs $ otuTree classifier
 
 -- classifySequence :: NucClassifier -> Sequence -> LT.Text
+{--
 classifySequenceWithExtendedTrail classifier query = extendedTaxo
-    where   (score, trail) = scoreSequenceWithCrumbs classifier query  
+    where   (score, trail) = scoreSequenceWithExtendedCrumbs classifier query  
             extendedTaxo = ST.intercalate (ST.pack "; ") taxoList
             taxoList = map phyloNode2Text $ followExtendedCrumbsWithTrail trail $ otuTree classifier
 
 phyloNode2Text (lbl, best, second) = ST.pack $ lbl ++ (show best)
+--}
