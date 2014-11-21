@@ -51,19 +51,32 @@ classifySequenceWithTrail classifier query = taxo
 
 -- classifySequence :: NucClassifier -> Sequence -> LT.Text
 
-classifySequenceWithExtendedTrail classifier query = trailToTaxo trail
+classifySequenceWithExtendedTrail :: NucClassifier -> Sequence -> ST.Text
+classifySequenceWithExtendedTrail classifier query = trailToExtendedTaxo trail
+-- classifySequenceWithExtendedTrail classifier query = ST.pack "undef"
     where   (score, crumbs) = scoreSequenceWithExtendedCrumbs classifier query  
             -- extendedTaxo = ST.intercalate (ST.pack ";dd.. ") taxoList
             trail = followExtendedCrumbsWithTrail crumbs $ otuTree classifier
 
+trailToExtendedTaxo :: [(ST.Text, Int, Int)] -> ST.Text
 trailToExtendedTaxo trail = ST.intercalate (ST.pack "; ") eLbl
     where   labels = tail $ map (\(lbl,_,_) -> lbl) trail
-            confid = init $ map (\(_,best,second) -> best - second) trail
-            eLbl = getZipList $ toElbl <$> ZipList labels <*> ZipList confid
+            bests = init $ map (\(_,best,_) -> best) trail
+            seconds = init $ map (\(_,_,second) -> second) trail
+            rls = zipWith relativeLikelihood bests seconds
+            eLbl = zipWith toElbl labels rls
             toElbl lbl conf = ST.concat [lbl,
                                          ST.pack " (", 
                                          ST.pack $ show conf,
                                          ST.pack ")"]
+
+relativeLikelihood :: Int -> Int -> Double
+relativeLikelihood bestScore secondBestScore = 
+    exp((aic 0 lMin - (aic 0 lSec))/2.0)
+    where   lMin = 10 ** (fromIntegral bestScore / 1000)
+            lSec = 10 ** (fromIntegral secondBestScore / 1000)
+
+aic k l = 2 * k - (2 * log l)
 
 trailToTaxo trail = ST.intercalate (ST.pack "; ") $ map phyloNode2Text trail
  
