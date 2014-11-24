@@ -37,8 +37,13 @@ main = do
     queryFastA <- LTIO.readFile queriesFname
     let queryRecs = fastATextToRecords queryFastA
     classifier <- (decodeFile classifierFname) :: IO NucClassifier
-    mapM_ STIO.putStrLn $ map (classifySequenceWithExtendedTrail classifier .
+    let headers = map FastA.header queryRecs
+    let predictions = map (classifySequenceWithExtendedTrail classifier .
                             LT.toStrict . FastA.sequence) queryRecs
+    mapM_ STIO.putStrLn $ zipWith output headers predictions
+
+output :: LT.Text -> ST.Text -> ST.Text
+output header pred = ST.concat [LT.toStrict header, ST.pack "\t->\t", pred]
 
 -- classifySequence :: NucClassifier -> Sequence -> LT.Text
 classifySequence classifier query = otu
