@@ -68,9 +68,14 @@ trailToExtendedTaxo trail = ST.intercalate (ST.pack "; ") $ getZipList erLbls
             erLbls = toERlbl <$> labels <*> ers
             toERlbl lbl er = ST.concat [lbl,
                                  ST.pack " (", 
-                                 ST.pack erString,
+                                 ST.pack erStr,
                                  ST.pack ")"]
-                where erString = printf "%g" (logBase 10 er) :: String
+                where erStr = case printf "%.0g" (logBase 10 er) :: String of
+                            "Infinity" -> "*"
+                            otherwise -> printf "%.0g" (logBase 10 er) :: String
+
+                    
+
 
 trailToScoreTaxo :: [(ST.Text, Int, Int)] -> ST.Text
 trailToScoreTaxo trail = ST.intercalate (ST.pack "; ") $ getZipList scrLbls
