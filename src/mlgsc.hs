@@ -13,6 +13,7 @@ import qualified Data.Text.Lazy as LT
 import qualified Data.Text.Lazy.IO as LTIO
 import qualified Data.Text as ST
 import qualified Data.Text.IO as STIO
+import Text.Printf
 
 import Data.Binary (decodeFile)
 import Data.Tree
@@ -59,24 +60,61 @@ classifySequenceWithExtendedTrail classifier query = trailToExtendedTaxo trail
             trail = followExtendedCrumbsWithTrail crumbs $ otuTree classifier
 
 trailToExtendedTaxo :: [(ST.Text, Int, Int)] -> ST.Text
-trailToExtendedTaxo trail = ST.intercalate (ST.pack "; ") eLbl
-    where   labels = tail $ map (\(lbl,_,_) -> lbl) trail
-            bests = init $ map (\(_,best,_) -> best) trail
-            seconds = init $ map (\(_,_,second) -> second) trail
-            rls = zipWith relativeLikelihood bests seconds
-            eLbl = zipWith toElbl labels rls
-            toElbl lbl conf = ST.concat [lbl,
+trailToExtendedTaxo trail = ST.intercalate (ST.pack "; ") $ getZipList erLbls
+    where   labels = ZipList $ tail $ map (\(lbl,_,_) -> lbl) trail
+            bests = ZipList $ init $ map (\(_,best,_) -> best) trail
+            seconds = ZipList $ init $ map (\(_,_,second) -> second) trail
+            ers = evidenceRatio' <$> (ZipList $ repeat 1000) <*> seconds <*> bests
+            erLbls = toERlbl <$> labels <*> ers
+            toERlbl lbl er = ST.concat [lbl,
+                                 ST.pack " (", 
+                                 ST.pack erString,
+                                 ST.pack ")"]
+                where erString = printf "%g" (logBase 10 er) :: String
+
+trailToScoreTaxo :: [(ST.Text, Int, Int)] -> ST.Text
+trailToScoreTaxo trail = ST.intercalate (ST.pack "; ") $ getZipList scrLbls
+    where   labels = ZipList $ tail $ map (\(lbl,_,_) -> lbl) trail
+            bests = ZipList $ init $ map (\(_,best,_) -> best) trail
+            seconds = ZipList $ init $ map (\(_,_,second) -> second) trail
+            scrLbls = toScrLbl <$> labels <*> bests <*> seconds
+            toScrLbl lbl bst sec = ST.concat [lbl,
                                          ST.pack " (", 
-                                         ST.pack $ show conf,
+                                         ST.pack $ show bst,
+                                         ST.pack " -- ",
+                                         ST.pack $ show sec,
                                          ST.pack ")"]
 
-relativeLikelihood :: Int -> Int -> Double
-relativeLikelihood bestScore secondBestScore = 
-    exp((aic 0 lMin - (aic 0 lSec))/2.0)
-    where   lMin = 10 ** (fromIntegral bestScore / 1000)
-            lSec = 10 ** (fromIntegral secondBestScore / 1000)
+-- Computes the evidence ratio, i.e. exp(delta-AIC / 2), except that I use
+-- delta-AIC' (in which the factor 2 is dropped, so I avoid having to multiply
+-- by 2 only to divide by 2 again just after).
 
-aic k l = 2 * k - (2 * log l)
+evidenceRatio' :: Int -> Int -> Int -> Double
+evidenceRatio' scaleFactor bestScore secondBestScore = 
+        exp(deltaAIC' l_min l_sec)
+    where   l_min = scoreTologLikelihood scaleFactor bestScore
+            l_sec = scoreTologLikelihood scaleFactor secondBestScore
+
+-- Converts a model score (which is a scaled, rounded log-likelihood (log base
+-- 10)) to a log-likelihood (log base e, i.e. ln). To do this, we _divide_ by
+-- the scale factor to get an unscaled log10-likelihood, and then divide by
+-- log10(e) to get a ln-based likelihood.
+
+scoreTologLikelihood :: Int -> Int -> Double
+scoreTologLikelihood scaleFactor score = log10Likelihood / logBase 10 e
+    where   log10Likelihood = fromIntegral score / fromIntegral scaleFactor
+            e = exp(1.0)
+            
+-- Computes the difference in AIC of two log-likelihoods, taking into account
+-- that the number of parameters k is in our case the same in any two models,
+-- and this cancels out, i.e. delta AIC = AIC1 - AIC2 = 2k -2 ln (L_1) - (2k -
+-- 2 ln(L_2)) = -2 (ln (L_1) - ln (L_2)). Since the arguments are already _log_
+-- likelihoods, the expression simplifies to -2 (l_1 - l_2), where l_1 =
+-- ln(L_1), etc. I also drop the constant 2, since we'd be dividing by 2 right
+-- away in evidenceRatio anyway.
+
+deltaAIC' :: Double -> Double -> Double
+deltaAIC' l1 l2 = - (l1 - l2)
 
 trailToTaxo trail = ST.intercalate (ST.pack "; ") $ map phyloNode2Text trail
  
