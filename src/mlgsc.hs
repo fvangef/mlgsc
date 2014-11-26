@@ -46,11 +46,6 @@ output :: LT.Text -> ST.Text -> ST.Text
 output header pred = ST.concat [LT.toStrict header, ST.pack "\t->\t", pred]
 
 -- classifySequence :: NucClassifier -> Sequence -> LT.Text
-classifySequence classifier query = otu
-    where   (score, crumbs) = scoreSequenceWithCrumbs classifier query  
-            otu = followCrumbs crumbs $ otuTree classifier
-
--- classifySequence :: NucClassifier -> Sequence -> LT.Text
 classifySequenceWithTrail classifier query = taxo
     where   (score, crumbs) = scoreSequenceWithCrumbs classifier query  
             taxo = ST.intercalate (ST.pack "; ") $ followCrumbsWithTrail crumbs $ otuTree classifier
@@ -63,6 +58,11 @@ classifySequenceWithExtendedTrail classifier query = trailToExtendedTaxo trail
     where   (score, crumbs) = scoreSequenceWithExtendedCrumbs classifier query  
             -- extendedTaxo = ST.intercalate (ST.pack ";dd.. ") taxoList
             trail = followExtendedCrumbsWithTrail crumbs $ otuTree classifier
+
+-- Takes an extended trail (i.e., a list of (OTU name, best score, secod-best
+-- score) tuples) and formats it as a taxonomy line, with empty labels remplaced
+-- by 'unnamed' and labels followed by the log10 of the evidence ratio between
+-- the best and second-best likelihoods.
 
 trailToExtendedTaxo :: [(ST.Text, Int, Int)] -> ST.Text
 trailToExtendedTaxo trail = ST.intercalate (ST.pack "; ") $ getZipList erLbls
@@ -81,22 +81,6 @@ trailToExtendedTaxo trail = ST.intercalate (ST.pack "; ") $ getZipList erLbls
                       lblOrUndef = if ST.empty == lbl
                                         then ST.pack "unnamed"
                                         else lbl
-
-                    
-
-
-trailToScoreTaxo :: [(ST.Text, Int, Int)] -> ST.Text
-trailToScoreTaxo trail = ST.intercalate (ST.pack "; ") $ getZipList scrLbls
-    where   labels = ZipList $ tail $ map (\(lbl,_,_) -> lbl) trail
-            bests = ZipList $ init $ map (\(_,best,_) -> best) trail
-            seconds = ZipList $ init $ map (\(_,_,second) -> second) trail
-            scrLbls = toScrLbl <$> labels <*> bests <*> seconds
-            toScrLbl lbl bst sec = ST.concat [lbl,
-                                         ST.pack " (", 
-                                         ST.pack $ show bst,
-                                         ST.pack " -- ",
-                                         ST.pack $ show sec,
-                                         ST.pack ")"]
 
 -- Computes the evidence ratio, i.e. exp(delta-AIC / 2), except that I use
 -- delta-AIC' (in which the factor 2 is dropped, so I avoid having to multiply
@@ -128,11 +112,3 @@ scoreTologLikelihood scaleFactor score = log10Likelihood / logBase 10 e
 
 deltaAIC' :: Double -> Double -> Double
 deltaAIC' l1 l2 = - (l1 - l2)
-
-trailToTaxo trail = ST.intercalate (ST.pack "; ") $ map phyloNode2Text trail
- 
-phyloNode2Text (lbl, best, second) = ST.concat [
-                                     lbl,
-                                     ST.pack $ show best
-                                     ]
- 
