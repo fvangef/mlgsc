@@ -6,9 +6,6 @@
 
 import System.Environment (getArgs)
 import System.Random
---import System.Console.GetOpt
---import System.IO
---
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import Data.Foldable (toList)
@@ -21,8 +18,7 @@ import qualified Data.Text.IO as STIO
 
 import Data.Binary (decodeFile)
 import Data.Tree
---import System.Directory
---
+
 import MlgscTypes
 import FastA
 import Alignment
@@ -33,10 +29,7 @@ import Classifier (NucClassifier, otuTree,
 import NewickParser
 import NewickDumper
 import Weights
-
---import Trees
---import Align
---import Cdf
+import Output
 
 main :: IO ()
 main = do
@@ -51,7 +44,7 @@ main = do
     gen <- getStdGen
     let randomIndices = take 100 $ randomRs bounds gen
     putStrLn ("Performing LOO X-val on indices " ++ (show randomIndices))
-    mapM_ (putStrLn . leaveOneOut tree fastARecs) randomIndices
+    mapM_ (STIO.putStrLn . leaveOneOut tree fastARecs) randomIndices
 
 
 scoreQuery :: NucClassifier -> FastA -> String
@@ -78,9 +71,14 @@ spliceElemAt seq n = (elem, head >< tail)
 -- newick tree, and finally scores the test sequence on the classifier. IOW,
 -- does one leave-one-out test.
 
-leaveOneOut :: OTUTree -> Seq FastA -> Int -> String 
-leaveOneOut tree fastaRecs n = scoreQuery classifier testRec
-    where   classifier = buildNucClassifier smallProb scaleFactor otuAlnMap tree
+-- TODO: rmove the hard-coded constants below!
+
+leaveOneOut :: OTUTree -> Seq FastA -> Int -> ST.Text
+leaveOneOut tree fastaRecs n = ST.concat [header, ST.pack " -> ", prediction]
+    where   header = LT.toStrict $ FastA.header testRec
+            prediction = classifySequenceWithExtendedTrail classifier testSeq
+            testSeq = LT.toStrict $ FastA.sequence testRec
+            classifier = buildNucClassifier smallProb scaleFactor otuAlnMap tree
             smallProb = 0.0001
             scaleFactor = 1000
             otuAlnMap = alnToAlnMap wtOtuAln
