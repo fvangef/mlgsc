@@ -71,13 +71,16 @@ trailToExtendedTaxo trail = ST.intercalate (ST.pack "; ") $ getZipList erLbls
             seconds = ZipList $ init $ map (\(_,_,second) -> second) trail
             ers = evidenceRatio' <$> (ZipList $ repeat 1000) <*> seconds <*> bests
             erLbls = toERlbl <$> labels <*> ers
-            toERlbl lbl er = ST.concat [lbl,
+            toERlbl lbl er = ST.concat [lblOrUndef,
                                  ST.pack " (", 
                                  ST.pack erStr,
                                  ST.pack ")"]
                 where erStr = case printf "%.0g" (logBase 10 er) :: String of
                             "Infinity" -> "*"
                             otherwise -> printf "%.0g" (logBase 10 er) :: String
+                      lblOrUndef = if ST.empty == lbl
+                                        then ST.pack "unnamed"
+                                        else lbl
 
                     
 
