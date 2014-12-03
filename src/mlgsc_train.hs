@@ -3,6 +3,7 @@ import System.Environment (getArgs)
 --import System.IO
 --import System.Random
 import qualified Data.List as L
+import qualified Data.Set as S
 import qualified Data.Map.Strict as M
 import Data.Binary (encodeFile)
 import qualified Data.Text as ST
@@ -37,7 +38,10 @@ main = do
     -- mapM_ putStrLn $ dumpAlnMap otuAlnMap
     -- Show this unless quiet or list is empty
     putStrLn "The following tree OTUs are NOT found in the alignment:"
-    mapM_ STIO.putStrLn $ checkOtuNames tree otuAlnMap
+    mapM_ STIO.putStrLn $ treeOTUsNotInALn tree otuAlnMap
+    putStrLn "The following alignment OTUs are NOT found in the tree:"
+    mapM_ STIO.putStrLn $ alnOTUsNotInTree tree otuAlnMap
+
     let classifier = buildNucClassifier smallProb scaleFactor
                     otuAlnMap tree
     encodeFile "classifier.bcls" classifier
@@ -51,7 +55,16 @@ dumpAlnMap otuAlnMap = map f $ M.assocs otuAlnMap
 dumpAlnRow :: AlnRow -> ST.Text
 dumpAlnRow (AlnRow lbl seq wt) = ST.unwords [lbl, ST.pack $ show wt]
 
--- compares OTU names in the tree to those in the FastA map
-checkOtuNames :: OTUTree -> AlnMap -> [ST.Text]
-checkOtuNames otuTree otuAlnMap =
+-- returns a list of tree OTUs not found in the alignment
+
+treeOTUsNotInALn :: OTUTree -> AlnMap -> [ST.Text]
+treeOTUsNotInALn otuTree otuAlnMap =
     filter (\otu -> M.notMember otu otuAlnMap) $ fringe otuTree
+
+-- returns a list of alignment OTUs not found in the tree
+
+alnOTUsNotInTree :: OTUTree -> AlnMap -> [ST.Text]
+alnOTUsNotInTree otuTree otuAlnMap =
+    filter (\otu -> S.notMember otu treeOTUSet) $ M.keys otuAlnMap
+    where   treeOTUSet = S.fromList $ fringe otuTree
+    
