@@ -16,6 +16,17 @@ shuffleList gen list        = map fst orderedPairs
                 | anum < bnum   = LT
                 | anum == bnum  = EQ
 
+-- See
+-- http://stackoverflow.com/questions/14692059/how-to-shuffle-a-list-in-haskell
+-- except that it doesn't work :-)
+
+shuffle :: StdGen -> [a] -> [a]
+shuffle g xs = shuffle' (randoms g) xs
+
+shuffle' :: [Int] -> [a] -> [a]
+shuffle' (i:is) xs = let (firsts, rest) = splitAt (i `mod` length xs) xs
+                     in (last firsts) : shuffle' is (init firsts ++ rest)
+
 
 l1 = [1..6]
 l2 = [100..110]

@@ -7,6 +7,7 @@
 import System.Environment (getArgs)
 import System.Random
 import qualified Data.Map.Strict as M
+import Data.Map.Strict ((!))
 import qualified Data.Set as S
 import Data.Foldable (toList)
 import Data.Sequence ((><), Seq)
@@ -29,6 +30,7 @@ import Classifier (NucClassifier, otuTree,
 import NewickParser
 import NewickDumper
 import Weights
+import Shuffle
 import Output
 
 main :: IO ()
@@ -42,10 +44,26 @@ main = do
     let fastARecs = Sq.fromList $ fastATextToRecords fastAInput
     let bounds = (0, Sq.length fastARecs)
     gen <- getStdGen
-    let randomIndices = take 100 $ randomRs bounds gen
+    let randomIndices = take 100 $ shuffleList gen $ validIndices fastARecs
     putStrLn ("Performing LOO X-val on indices " ++ (show randomIndices))
     mapM_ (STIO.putStrLn . leaveOneOut tree fastARecs) randomIndices
 
+-- Return a list of indices of valid FastA records (index in the records
+-- Sequence). A record is valid, for LOO purposes, if it pertains to an OTU with
+-- at least 2 members - otherwise, if one would remove the single instance of a
+-- given OTU, there is no way the classifier can recognize it, as it won't be
+-- represented in the training set.
+
+validIndices :: Seq FastA -> [Int]
+validIndices fastARecs = map snd validFreqIdxPairs
+    where   validFreqIdxPairs = filter
+                        (\(freq, index) -> freq > 1) freqIdxPairs
+            freqIdxPairs = toList $ Sq.mapWithIndex toFreqIdxPair fastARecs
+            otu2freq = M.fromListWith (+) [(otu, 1) | otu <- fastAOTUs] 
+            fastAOTUs = toList $ fmap fastAOTU fastARecs
+            toFreqIdxPair idx fasta = (freq, idx)
+                where   freq = otu2freq ! (fastAOTU fasta)
+                        
 
 scoreQuery :: NucClassifier -> FastA -> String
 scoreQuery classifier query =
