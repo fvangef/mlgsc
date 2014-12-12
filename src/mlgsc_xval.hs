@@ -23,9 +23,11 @@ import Data.Tree
 import MlgscTypes
 import FastA
 import Alignment
+import Align
 import Crumbs (dropCrumbs, followCrumbs)
+import CladeModel
 import NucModel
-import Classifier (NucClassifier, otuTree, 
+import Classifier (NucClassifier, otuTree, modTree,
         buildNucClassifier, scoreSequenceWithCrumbs)
 import NewickParser
 import NewickDumper
@@ -57,7 +59,7 @@ main = do
 validIndices :: Seq FastA -> [Int]
 validIndices fastARecs = map snd validFreqIdxPairs
     where   validFreqIdxPairs = filter
-                        (\(freq, index) -> freq > 1) freqIdxPairs
+                        (\(freq, index) -> freq > 3) freqIdxPairs
             freqIdxPairs = toList $ Sq.mapWithIndex toFreqIdxPair fastARecs
             otu2freq = M.fromListWith (+) [(otu, 1) | otu <- fastAOTUs] 
             fastAOTUs = toList $ fmap fastAOTU fastARecs
@@ -94,7 +96,12 @@ spliceElemAt seq n = (elem, head >< tail)
 leaveOneOut :: OTUTree -> Seq FastA -> Int -> ST.Text
 leaveOneOut tree fastaRecs n = ST.concat [header, ST.pack " -> ", prediction]
     where   header = LT.toStrict $ FastA.header testRec
-            prediction = classifySequenceWithExtendedTrail classifier testSeq
+            prediction = classifySequenceWithExtendedTrail
+                classifier alignedTestSeq
+            alignedTestSeq = msalign scoringScheme rootMod testSeq
+            scoringScheme = ScoringScheme (-2)
+                (scoringSchemeMap (absentResScore rootMod))
+            rootMod = rootLabel $ modTree classifier 
             testSeq = LT.toStrict $ FastA.sequence testRec
             classifier = buildNucClassifier smallProb scaleFactor otuAlnMap tree
             smallProb = 0.0001

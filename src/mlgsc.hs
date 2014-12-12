@@ -17,7 +17,9 @@ import MlgscTypes
 import FastA
 import Crumbs (dropCrumbs, followCrumbs, followCrumbsWithTrail,
     followExtendedCrumbsWithTrail)
+import CladeModel
 import NucModel
+import Align
 import Classifier (NucClassifier, otuTree, modTree, scoreSequenceWithCrumbs,
         scoreSequenceWithExtendedCrumbs)
 import Output
@@ -28,7 +30,13 @@ main = do
     queryFastA <- LTIO.readFile queriesFname
     let queryRecs = fastATextToRecords queryFastA
     classifier <- (decodeFile classifierFname) :: IO NucClassifier
+    let rootMod = rootLabel $ modTree classifier 
+    let scoringScheme = ScoringScheme (-2) (scoringSchemeMap (absentResScore rootMod))
     let headers = map FastA.header queryRecs
     let predictions = map (classifySequenceWithExtendedTrail classifier .
-                            LT.toStrict . FastA.sequence) queryRecs
+                            (msalign scoringScheme rootMod) .
+                            LT.toStrict . 
+                            FastA.sequence) queryRecs
     mapM_ STIO.putStrLn $ zipWith output headers predictions
+
+
