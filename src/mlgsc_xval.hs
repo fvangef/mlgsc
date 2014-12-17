@@ -16,6 +16,7 @@ import qualified Data.Text.Lazy.IO as LTIO
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text as ST
 import qualified Data.Text.IO as STIO
+import Options.Applicative
 
 import Data.Binary (decodeFile)
 import Data.Tree
@@ -35,20 +36,87 @@ import Weights
 import Shuffle
 import Output
 
+data Params = Params {
+                optSmallProb        :: Double
+                , optScaleFactor    :: Double
+                , optNbRounds       :: Int
+                , optSeed           :: Int
+                , alnFname          :: String
+                , treeFname         :: String
+                }
+
+parseSmallProb :: Parser Double
+parseSmallProb = option auto
+                    (long "small-prob"
+                    <> short 'p'
+                    <> metavar "SMALL_PROB"
+                    <> value 0.0001
+                    <> help "small probability for absent residues")
+
+parseScaleFactor :: Parser Double
+parseScaleFactor = option auto
+                    (long "scale-factor"
+                    <> short 's'
+                    <> metavar "SCALE_FACTOR"
+                    <> value 1000.0
+                    <> help "scale factor for log(frequencies)")
+
+parseNbRounds :: Parser Int
+parseNbRounds = option auto
+                    (long "nb_rounds"
+                    <> short 'r'
+                    <> metavar "NB_ROUNDS"
+                    <> value 100
+                    <> help "number of rounds of LOO")
+
+parseSeed :: Parser Int
+parseSeed = option auto
+                    (long "random-seed"
+                    <> short 'R'
+                    <> metavar "RANDOM_SEED"
+                    <> value (-1)
+                    <> help "seed for the random number generator")
+
+parseOptions :: Parser Params
+parseOptions = Params
+                <$> parseSmallProb
+                <*> parseScaleFactor
+                <*> parseNbRounds
+                <*> parseSeed
+                <*> argument str (metavar "<alignment file>")
+                <*> argument str (metavar "<tree file>")
+
+parseOptionsInfo :: ParserInfo Params
+parseOptionsInfo = info (helper <*> parseOptions) 
+                    ( fullDesc
+                    <> progDesc "perform leave-one-out cross-validation"
+                    <> Options.Applicative.header
+                        "mlgsc_xval - cross-validate model from alignment and tree")
+
 main :: IO ()
 main = do
-    let smallProb = 0.0001
-    let scaleFactor = 1000
-    [alnFname, newickFname] <- getArgs
-    newickString <- readFile newickFname
+    params <- execParser parseOptionsInfo
+    let smallProb = optSmallProb params
+    let scaleFactor = optScaleFactor params
+    let nbRounds = optNbRounds params
+    newickString <- readFile $ treeFname params
     let (Right tree) = parseNewickTree newickString
-    fastAInput <-  LTIO.readFile alnFname
+    fastAInput <-  LTIO.readFile $ alnFname params
     let fastARecs = Sq.fromList $ fastATextToRecords fastAInput
     let bounds = (0, Sq.length fastARecs)
-    gen <- getStdGen
-    let randomIndices = take 100 $ shuffleList gen $ validIndices fastARecs
+    gen <- getGen $ optSeed params
+    let randomIndices = take nbRounds $ shuffleList gen $ validIndices fastARecs
     putStrLn ("Performing LOO X-val on indices " ++ (show randomIndices))
-    mapM_ (STIO.putStrLn . leaveOneOut tree fastARecs) randomIndices
+    mapM_ (STIO.putStrLn .
+        leaveOneOut smallProb scaleFactor tree fastARecs) randomIndices
+
+-- gets a random number generator. If the seed is negative, gets the global
+-- generator, else use the seed.
+
+getGen :: Int -> IO StdGen
+getGen seed
+    | seed < 0 = getStdGen
+    | otherwise = return $ mkStdGen seed
 
 -- Return a list of indices of valid FastA records (index in the records
 -- Sequence). A record is valid, for LOO purposes, if it pertains to an OTU with
@@ -93,22 +161,23 @@ spliceElemAt seq n = (elem, head >< tail)
 
 -- TODO: rmove the hard-coded constants below!
 
-leaveOneOut :: OTUTree -> Seq FastA -> Int -> ST.Text
-leaveOneOut tree fastaRecs n = ST.concat [header, ST.pack " -> ", prediction]
+leaveOneOut :: SmallProb -> ScaleFactor -> OTUTree -> Seq FastA -> Int -> ST.Text
+leaveOneOut smallProb scaleFactor tree fastaRecs n = ST.concat [header, ST.pack " -> ", prediction]
     where   header = LT.toStrict $ FastA.header testRec
             prediction = classifySequenceWithExtendedTrail
                 classifier alignedTestSeq
-            alignedTestSeq = msalign scoringScheme rootMod testSeq
+            alignedTestSeq = msalign scoringScheme rootMod $ degap testSeq
             scoringScheme = ScoringScheme (-2)
                 (scoringSchemeMap (absentResScore rootMod))
             rootMod = rootLabel $ modTree classifier 
             testSeq = LT.toStrict $ FastA.sequence testRec
             classifier = buildNucClassifier smallProb scaleFactor otuAlnMap tree
-            smallProb = 0.0001
-            scaleFactor = 1000
             otuAlnMap = alnToAlnMap wtOtuAln
             wtOtuAln = henikoffWeightAln otuAln
             otuAln = fastARecordsToAln trainSet
             trainSet = Data.Foldable.toList trainSetSeq
             (testRec, trainSetSeq) = spliceElemAt fastaRecs n
 
+degap :: Sequence -> Sequence
+degap = ST.replace gap ST.empty
+    where gap = ST.pack "-"
