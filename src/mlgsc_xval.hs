@@ -41,6 +41,7 @@ data Params = Params {
                 , optScaleFactor    :: Double
                 , optNbRounds       :: Int
                 , optSeed           :: Int
+                , optMinSeqInOTU    :: Int
                 , alnFname          :: String
                 , treeFname         :: String
                 }
@@ -77,12 +78,21 @@ parseSeed = option auto
                     <> value (-1)
                     <> help "seed for the random number generator")
 
+parseMinSeqInOTU :: Parser Int
+parseMinSeqInOTU = option auto
+                    (long "min-seq-ino-OTU"
+                    <> short 'm'
+                    <> metavar "MIN_SEQ_IN_OTU"
+                    <> value (3)
+                    <> help "minimum #member seqs in an OTU")
+
 parseOptions :: Parser Params
 parseOptions = Params
                 <$> parseSmallProb
                 <*> parseScaleFactor
                 <*> parseNbRounds
                 <*> parseSeed
+                <*> parseMinSeqInOTU
                 <*> argument str (metavar "<alignment file>")
                 <*> argument str (metavar "<tree file>")
 
