@@ -1,4 +1,5 @@
 import System.Environment (getArgs)
+import Options.Applicative
 --import System.Console.GetOpt
 --import System.IO
 --import System.Random
@@ -21,14 +22,65 @@ import Classifier
 import Weights
 import Alignment
 
+data Molecule = DNA | Pep
+    deriving (Show, Eq, Read)
+
+data Params = Params {
+                optSmallProb        :: Double
+                , optScaleFactor    :: Double
+                , optOutFname       :: String
+                , molType           :: Molecule
+                , alnFname          :: String
+                , treeFname         :: String
+                }
+
+parseSmallProb :: Parser Double
+parseSmallProb = option auto
+                    (long "small-prob"
+                    <> short 'p'
+                    <> metavar "SMALL_PROB"
+                    <> value 0.0001
+                    <> help "small probability for absent residues")
+
+parseScaleFactor :: Parser Double
+parseScaleFactor = option auto
+                    (long "scale-factor"
+                    <> short 's'
+                    <> metavar "SCALE_FACTOR"
+                    <> value 1000.0
+                    <> help "scale factor for log(frequencies)")
+
+parseOutFname :: Parser String
+parseOutFname = option auto
+                    (long "output-file"
+                    <> short 'o'
+                    <> metavar "OUTFILE"
+                    <> value ""
+                    <> help "name of the output classifier (default: derived from alignment)")
+                    
+parseOptions :: Parser Params
+parseOptions = Params
+                <$> parseSmallProb
+                <*> parseScaleFactor
+                <*> parseOutFname
+                <*> argument auto (metavar "<DNA|Pep>")
+                <*> argument str (metavar "<alignment file>")
+                <*> argument str (metavar "<tree file>")
+
+parseOptionsInfo :: ParserInfo Params
+parseOptionsInfo = info (helper <*> parseOptions) 
+                    ( fullDesc
+                    <> progDesc "train model from alignment and tree"
+                    <> Options.Applicative.header
+                        "mlgsc_train - model trainer for the ML general sequence classifier")
+
+
 main :: IO ()
 main = do
-    let smallProb = 0.0001
-    let scaleFactor = 1000
-    [alnFname, newickFname] <- getArgs
-    newickString <- readFile newickFname
+    params <- execParser parseOptionsInfo
+    newickString <- readFile $ treeFname params
     let (Right tree) = parseNewickTree newickString
-    fastAInput <-  LTIO.readFile alnFname
+    fastAInput <-  LTIO.readFile $ alnFname params
     let fastaRecs = fastATextToRecords fastAInput
     -- putStrLn "Weight dump (short)"
     -- mapM_ (STIO.putStrLn . dumpAlnRow) $ take 10 rawOtuAln
@@ -42,8 +94,9 @@ main = do
     putStrLn "The following alignment OTUs are NOT found in the tree:"
     mapM_ STIO.putStrLn $ alnOTUsNotInTree tree otuAlnMap
 
-    let classifier = buildNucClassifier smallProb scaleFactor
-                    otuAlnMap tree
+    let classifier = buildNucClassifier
+                        (optSmallProb params) (optScaleFactor params)
+                        otuAlnMap tree
     encodeFile "classifier.bcls" classifier
 
 dumpAlnMap :: AlnMap -> [String]
