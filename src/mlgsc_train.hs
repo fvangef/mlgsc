@@ -1,8 +1,7 @@
-import System.Environment (getArgs)
+module Main where
+
 import Options.Applicative
---import System.Console.GetOpt
---import System.IO
---import System.Random
+import System.FilePath.Posix
 import qualified Data.List as L
 import qualified Data.Set as S
 import qualified Data.Map.Strict as M
@@ -10,10 +9,7 @@ import Data.Binary (encodeFile)
 import qualified Data.Text as ST
 import qualified Data.Text.IO as STIO
 import qualified Data.Text.Lazy.IO as LTIO
---import qualified Data.Text.IO as TIO
---import System.Random
---
---
+
 import MlgscTypes
 import NewickParser
 import NewickDumper
@@ -97,7 +93,9 @@ main = do
     let classifier = buildNucClassifier
                         (optSmallProb params) (optScaleFactor params)
                         otuAlnMap tree
-    encodeFile "classifier.bcls" classifier
+    let outputFileName = outFName (optOutFname params)
+                                  (alnFname params)
+    encodeFile outputFileName classifier
 
 dumpAlnMap :: AlnMap -> [String]
 dumpAlnMap otuAlnMap = map f $ M.assocs otuAlnMap
@@ -121,3 +119,9 @@ alnOTUsNotInTree otuTree otuAlnMap =
     filter (\otu -> S.notMember otu treeOTUSet) $ M.keys otuAlnMap
     where   treeOTUSet = S.fromList $ fringe otuTree
     
+-- Computes the name of the output file, based on the value of the "optOutFname"
+-- option and possibly of the alignment file name.
+
+outFName :: String -> String -> String
+outFname optOutFn _ = optOutFn  -- if suplied, pass unchanged
+outFName "" alnFn = replaceExtension alnFn "bcls" -- else, derive from aln name
