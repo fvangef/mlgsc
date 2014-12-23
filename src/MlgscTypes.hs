@@ -4,6 +4,9 @@ import Data.Text
 import Data.Tree
 import qualified Data.Map.Strict as M
 
+data Molecule = DNA | Pep
+    deriving (Show, Eq, Read)
+
 type Sequence       = Text
 type Column         = Text
 type Residue        = Char

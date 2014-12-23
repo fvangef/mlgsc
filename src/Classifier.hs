@@ -1,7 +1,7 @@
 module Classifier (
     NucClassifier,
     otuTree, modTree,
-    buildNucClassifier,
+    buildClassifier,
     scoreSequenceWithCrumbs,
     scoreSequenceWithExtendedCrumbs) where
 
@@ -15,12 +15,19 @@ import MlgscTypes
 import CladeModel
 import Alignment
 import NucModel
+import PepModel
 import Crumbs
 
-data NucClassifier = NucClassifier {
-                        otuTree :: OTUTree,
-                        modTree :: Tree NucModel
-                        } deriving (Show, Eq)
+data Classifier = NucClassifier OTUTree (Tree NucModel)
+                | PepClassifier OTUTree (Tree PepModel)
+                deriving (Show, Eq)
+
+buildClassifier :: Molecule -> SmallProb -> ScaleFactor ->
+    AlnMap -> OTUTree -> Classifier
+buildClassifier mol smallProb scale alnMap otuTree 
+    = case mol of
+        DNA -> buildNucClassifier smallProb scale alnMap otuTree
+        Pep -> buildPepClassifier smallProb scale alnMap otuTree
 
 instance Binary NucClassifier where
     put classifier = do
@@ -32,8 +39,6 @@ instance Binary NucClassifier where
         modTree <- get :: Get (Tree NucModel)
         return $ NucClassifier otuTree modTree
         
--- TODO: make NucClassifier and instance of Data.Binary.
---
 buildNucClassifier  :: SmallProb -> ScaleFactor
                     -> AlnMap -> OTUTree -> NucClassifier
 buildNucClassifier smallprob scale map otuTree = NucClassifier otuTree modTree

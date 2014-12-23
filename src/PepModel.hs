@@ -1,27 +1,14 @@
--- A model for a conserved region of nucleic acid of length L. 
+-- A model for a conserved region of protein (peptidic) of length L. 
 
-{- This model uses a 2D array (more precisely, a Vector of Vectors). The outer
- - vector must be boxed, as it contains other vectors; the inner vectors can be
- - unboxed, since they contain numbers (i.e. positional scores of nucleotides).
- -
- - Since unboxed vectors are more efficient than boxed ones, (see e.g.
- - http://www.haskell.org/haskellwiki/Numeric_Haskell:_A_Vector_Tutorial#Boxed_Arrays:_Data.Vector),
- - I will have a short outer vector (one per nucleotide) of long inner
- - vectors (indexed by position) of integers. 
- -
- - E.g. (where '<>' denote vectors):
- -  <
- -   <0,3,5,2>, -- A
- -   <3,6,6,3>, -- C
- -   <1,3,5,2>, -- G
- -   <2,6,8,1>  -- T
- -  >
+{- This model uses a boxed vector of residue -> score maps. There is one map per
+ - position in the modeled region (corresponding to columns in the multiple
+ - alignments the model is made from).  -
  -}
 
 -- TODO: once it works, restrict exports to the minimal needed set.
-module NucModel (NucModel, matrix, alnToNucModel) where
+module PepModel (PepModel, matrix, alnToPepModel) where
 
--- module  NucModel where -- 
+-- module  PepModel where -- 
 
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as U
@@ -35,12 +22,12 @@ import MlgscTypes
 import Alignment
 import CladeModel
 
-data NucModel = NucModel {
-                    matrix :: V.Vector (U.Vector Int)
+data PepModel = PepModel {
+                    matrix :: V.Vector (M.Map Char Int)
                     , smallScore :: Int
                 } deriving (Show, Eq)
 
-instance CladeModel NucModel where
+instance CladeModel PepModel where
     --Remember: sequence positions start -- at 1, but vector indexes (sensibly)
     -- start at 0.
     scoreOf nm res pos
@@ -65,7 +52,7 @@ instance CladeModel NucModel where
 
     absentResScore = smallScore
 
-instance Binary NucModel where
+instance Binary PepModel where
     put nm = do
         put $ matrix nm
         put $ smallScore nm
@@ -73,14 +60,13 @@ instance Binary NucModel where
     get = do
         mat <- get :: Get (V.Vector (U.Vector Int))
         smallScore <- get :: Get Int
-        return $ NucModel mat smallScore
+        return $ PepModel mat smallScore
 
--- Builds a NucMOdel from a (weighted) Alignment
+-- Builds a PepMOdel from a (weighted) Alignment
 -- G, T are ignored, but gaps (-) are modelled.
 
-alnToNucModel :: SmallProb -> ScaleFactor -> Alignment -> NucModel
-alnToNucModel smallProb scale aln = 
-    NucModel (scoreMapListToVectors smallScore scoreMapList) smallScore
+alnToPepModel :: SmallProb -> ScaleFactor -> Alignment -> PepModel
+alnToPepModel smallProb scale aln = PepModel scoreMapList smallScore
     where   scoreMapList = fmap (freqMapToScoreMap scale
                                 . countsMapToRelFreqMap wsize
                                 . weightedColToCountsMap weights)
@@ -90,11 +76,3 @@ alnToNucModel smallProb scale aln =
             sequences = map rowSeq aln
             weights = map rowWeight aln
 
-
-scoreMapListToVectors :: Int -> [M.Map Residue Int] -> V.Vector (U.Vector Int)
-scoreMapListToVectors smallScore sml = V.fromList [vA, vC, vG, vT, vD] 
-    where   vA = U.fromList $ map (M.findWithDefault smallScore 'A') sml
-            vC = U.fromList $ map (M.findWithDefault smallScore 'C') sml
-            vG = U.fromList $ map (M.findWithDefault smallScore 'G') sml
-            vT = U.fromList $ map (M.findWithDefault smallScore 'T') sml
-            vD = U.fromList $ map (M.findWithDefault smallScore '-') sml

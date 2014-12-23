@@ -14,12 +14,9 @@ import MlgscTypes
 import NewickParser
 import NewickDumper
 import FastA
-import Classifier
+import Classifier (buildClassifier)
 import Weights
 import Alignment
-
-data Molecule = DNA | Pep
-    deriving (Show, Eq, Read)
 
 data Params = Params {
                 optSmallProb        :: Double
@@ -88,19 +85,15 @@ main = do
     let (Right tree) = parseNewickTree newickString
     fastAInput <-  LTIO.readFile $ alnFName params
     let fastaRecs = fastATextToRecords fastAInput
-    -- putStrLn "Weight dump (short)"
-    -- mapM_ (STIO.putStrLn . dumpAlnRow) $ take 10 rawOtuAln
     let otuAln = (henikoffWeightAln . fastARecordsToAln) fastaRecs
     let otuAlnMap = alnToAlnMap otuAln
-    -- Show this if verbose
-    -- mapM_ putStrLn $ dumpAlnMap otuAlnMap
-    -- Show this unless quiet or list is empty
     putStrLn "The following tree OTUs are NOT found in the alignment:"
     mapM_ STIO.putStrLn $ treeOTUsNotInALn tree otuAlnMap
     putStrLn "The following alignment OTUs are NOT found in the tree:"
     mapM_ STIO.putStrLn $ alnOTUsNotInTree tree otuAlnMap
 
-    let classifier = buildNucClassifier
+    let classifier = buildClassifier
+                        (molType params)
                         (optSmallProb params) (optScaleFactor params)
                         otuAlnMap tree
     let outputFileName = outFName (optOutFName params)
