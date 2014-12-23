@@ -24,10 +24,11 @@ data Molecule = DNA | Pep
 data Params = Params {
                 optSmallProb        :: Double
                 , optScaleFactor    :: Double
-                , optOutFname       :: String
+                , optOutFName       :: String
+                , optVerbosity      :: Int
                 , molType           :: Molecule
-                , alnFname          :: String
-                , treeFname         :: String
+                , alnFName          :: String
+                , treeFName         :: String
                 }
 
 parseSmallProb :: Parser Double
@@ -46,19 +47,28 @@ parseScaleFactor = option auto
                     <> value 1000.0
                     <> help "scale factor for log(frequencies)")
 
-parseOutFname :: Parser String
-parseOutFname = option auto
+parseOutFName :: Parser String
+parseOutFName = option str
                     (long "output-file"
                     <> short 'o'
                     <> metavar "OUTFILE"
                     <> value ""
                     <> help "name of the output classifier (default: derived from alignment)")
-                    
+
+parseVerbosityLevel :: Parser Int
+parseVerbosityLevel = option auto
+                    (long "verbosity"
+                    <> short 'v'
+                    <> metavar "VERBOSITY LEVEL"
+                    <> value 1
+                    <> help "0: quiet, 1: normal, 2: verbose")
+
 parseOptions :: Parser Params
 parseOptions = Params
                 <$> parseSmallProb
                 <*> parseScaleFactor
-                <*> parseOutFname
+                <*> parseOutFName
+                <*> parseVerbosityLevel
                 <*> argument auto (metavar "<DNA|Pep>")
                 <*> argument str (metavar "<alignment file>")
                 <*> argument str (metavar "<tree file>")
@@ -74,9 +84,9 @@ parseOptionsInfo = info (helper <*> parseOptions)
 main :: IO ()
 main = do
     params <- execParser parseOptionsInfo
-    newickString <- readFile $ treeFname params
+    newickString <- readFile $ treeFName params
     let (Right tree) = parseNewickTree newickString
-    fastAInput <-  LTIO.readFile $ alnFname params
+    fastAInput <-  LTIO.readFile $ alnFName params
     let fastaRecs = fastATextToRecords fastAInput
     -- putStrLn "Weight dump (short)"
     -- mapM_ (STIO.putStrLn . dumpAlnRow) $ take 10 rawOtuAln
@@ -93,8 +103,8 @@ main = do
     let classifier = buildNucClassifier
                         (optSmallProb params) (optScaleFactor params)
                         otuAlnMap tree
-    let outputFileName = outFName (optOutFname params)
-                                  (alnFname params)
+    let outputFileName = outFName (optOutFName params)
+                                  (alnFName params)
     encodeFile outputFileName classifier
 
 dumpAlnMap :: AlnMap -> [String]
@@ -119,9 +129,10 @@ alnOTUsNotInTree otuTree otuAlnMap =
     filter (\otu -> S.notMember otu treeOTUSet) $ M.keys otuAlnMap
     where   treeOTUSet = S.fromList $ fringe otuTree
     
--- Computes the name of the output file, based on the value of the "optOutFname"
+-- Computes the name of the output file, based on the value of the "optOutFName"
 -- option and possibly of the alignment file name.
 
 outFName :: String -> String -> String
-outFname optOutFn _ = optOutFn  -- if suplied, pass unchanged
-outFName "" alnFn = replaceExtension alnFn "bcls" -- else, derive from aln name
+outFName optOutFN alnFN 
+      | optOutFN == ""  = replaceExtension alnFN "bcls"
+      | otherwise       = optOutFN
