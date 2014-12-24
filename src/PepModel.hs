@@ -23,51 +23,46 @@ import Alignment
 import CladeModel
 
 data PepModel = PepModel {
-                    matrix :: V.Vector (M.Map Char Int)
+                    matrix :: V.Vector (M.Map Residue Int)
                     , smallScore :: Int
+                    , modelLength :: Int
                 } deriving (Show, Eq)
 
 instance CladeModel PepModel where
     --Remember: sequence positions start -- at 1, but vector indexes (sensibly)
     -- start at 0.
-    scoreOf nm res pos
-        | res == 'A'    = (mat V.! 0) U.! (pos - 1)
-        | res == 'C'    = (mat V.! 1) U.! (pos - 1)
-        | res == 'G'    = (mat V.! 2) U.! (pos - 1)
-        | res == 'T'    = (mat V.! 3) U.! (pos - 1)
-        | res == '-'    = (mat V.! 4) U.! (pos - 1)
-        | otherwise     = smallScore nm
-        where mat = matrix nm
+    scoreOf mod res pos = M.findWithDefault (smallScore mod) res posMap
+        where posMap = (matrix mod) V.! (pos - 1)
 
-    scoreSeq nm seq
-        | (U.null $ V.head $ matrix nm)   = minBound :: Int
-        | otherwise = sum $ map (\(c,i) -> scoreOf nm c i) seqWithPos
+    -- TODO: try to rewrite this in applicative style
+    scoreSeq mod seq = sum $ map (\(res,pos) -> scoreOf mod res pos) seqWithPos
         where seqWithPos = zip (T.unpack seq) [1..] -- eg [('A',1), ...], etc.
 
     -- just return the length of the 'A' vector (they're all the same length
     -- anyway)
-    modLength nm = U.length vA
-        where   vA = mat V.! 0
-                mat = matrix nm
+    modLength = modelLength
 
     absentResScore = smallScore
 
 instance Binary PepModel where
-    put nm = do
-        put $ matrix nm
-        put $ smallScore nm
+    put mod = do
+        put $ matrix mod
+        put $ smallScore mod
+        put $ modelLength mod
 
     get = do
-        mat <- get :: Get (V.Vector (U.Vector Int))
+        mat <- get :: Get (V.Vector (M.Map Residue Int))
         smallScore <- get :: Get Int
-        return $ PepModel mat smallScore
+        modelLength <- get :: Get Int
+        return $ PepModel mat smallScore modelLength
 
 -- Builds a PepMOdel from a (weighted) Alignment
 -- G, T are ignored, but gaps (-) are modelled.
 
 alnToPepModel :: SmallProb -> ScaleFactor -> Alignment -> PepModel
-alnToPepModel smallProb scale aln = PepModel scoreMapList smallScore
-    where   scoreMapList = fmap (freqMapToScoreMap scale
+alnToPepModel smallProb scale aln = PepModel scoreMapVector smallScore length
+    where   scoreMapVector = V.fromList scoreMapList
+            scoreMapList = fmap (freqMapToScoreMap scale
                                 . countsMapToRelFreqMap wsize
                                 . weightedColToCountsMap weights)
                                 $ T.transpose sequences
@@ -75,4 +70,4 @@ alnToPepModel smallProb scale aln = PepModel scoreMapList smallScore
             wsize = fromIntegral $ sum weights
             sequences = map rowSeq aln
             weights = map rowWeight aln
-
+            length = T.length $ rowSeq $ head aln 
