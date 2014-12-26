@@ -28,8 +28,7 @@ import Align
 import Crumbs (dropCrumbs, followCrumbs)
 import CladeModel
 import NucModel
-import Classifier (NucClassifier, otuTree, modTree,
-        buildNucClassifier, scoreSequenceWithCrumbs)
+import Classifier (Classifier(..), buildClassifier, scoreSequenceWithCrumbs)
 import NewickParser
 import NewickDumper
 import Weights
@@ -145,11 +144,11 @@ validIndices fastARecs = map snd validFreqIdxPairs
                 where   freq = otu2freq ! (fastAOTU fasta)
                         
 
-scoreQuery :: NucClassifier -> FastA -> String
-scoreQuery classifier query =
+scoreQuery :: Classifier -> FastA -> String
+scoreQuery classifier@(Classifier otuTree _) query =
     (LT.unpack $ FastA.header query) ++ " -> " ++ (ST.unpack otu) ++ " (" 
     ++ (show score) ++ ")"
-    where   otu = followCrumbs crumbs $ otuTree classifier
+    where   otu = followCrumbs crumbs otuTree 
             (score, crumbs) = scoreSequenceWithCrumbs classifier querySeq 
             querySeq = LT.toStrict $ FastA.sequence query
 
@@ -179,9 +178,10 @@ leaveOneOut smallProb scaleFactor tree fastaRecs n = ST.concat [header, ST.pack 
             alignedTestSeq = msalign scoringScheme rootMod $ degap testSeq
             scoringScheme = ScoringScheme (-2)
                 (scoringSchemeMap (absentResScore rootMod))
-            rootMod = rootLabel $ modTree classifier 
+            rootMod = rootLabel modTree 
             testSeq = LT.toStrict $ FastA.sequence testRec
-            classifier = buildNucClassifier smallProb scaleFactor otuAlnMap tree
+            classifier@(Classifier _ modTree) =
+                buildClassifier DNA smallProb scaleFactor otuAlnMap tree
             otuAlnMap = alnToAlnMap wtOtuAln
             wtOtuAln = henikoffWeightAln otuAln
             otuAln = fastARecordsToAln trainSet
