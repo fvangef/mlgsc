@@ -12,7 +12,7 @@ import Data.Binary (Binary, put, get, Get)
 import Data.Text.Binary
 
 import MlgscTypes
-import CladeModel
+-- import CladeModel
 import Alignment
 import NucModel
 import PepModel
@@ -27,31 +27,51 @@ buildClassifier :: Molecule -> SmallProb -> ScaleFactor ->
 buildClassifier mol smallProb scale alnMap otuTree 
     = case mol of
         DNA -> buildNucClassifier smallProb scale alnMap otuTree
-        Pep -> buildPepClassifier smallProb scale alnMap otuTree
+        Prot -> buildPepClassifier smallProb scale alnMap otuTree
 
-instance Binary NucClassifier where
-    put classifier = do
-        put $ otuTree classifier
-        put $ modTree classifier
+instance Binary Classifier where
+    put (NucClassifier otuTree nucModTree) = do
+        put DNA
+        put otuTree
+        put nucModTree
+    put (PepClassifier otuTree pepModTree) = do
+        put Prot
+        put otuTree
+        put pepModTree
     
     get = do
+        mol <- get :: Get Molecule
         otuTree <- get :: Get OTUTree
-        modTree <- get :: Get (Tree NucModel)
-        return $ NucClassifier otuTree modTree
-        
+        case mol of
+            DNA -> do
+                nucModTree <- get :: Get (Tree NucModel)
+                return $ NucClassifier otuTree nucModTree
+            Prot -> do
+                pepModTree <- get :: Get (Tree NucModel)
+                return $ NucClassifier otuTree pepModTree
+
+-- TODO: factor out these two
+
 buildNucClassifier  :: SmallProb -> ScaleFactor
-                    -> AlnMap -> OTUTree -> NucClassifier
+                    -> AlnMap -> OTUTree -> Classifier
 buildNucClassifier smallprob scale map otuTree = NucClassifier otuTree modTree
     where   modTree         = fmap (alnToNucModel smallprob scale) treeOfAlns
             treeOfAlns      = mergeAlns treeOfLeafAlns
             treeOfLeafAlns  = fmap (\k -> M.findWithDefault [] k map) otuTree
 
-scoreSequenceWithCrumbs :: NucClassifier -> Sequence -> (Int, Crumbs)
-scoreSequenceWithCrumbs classifier seq =
-    dropCrumbs (scoreCrumbs seq) $ modTree classifier
+buildPepClassifier  :: SmallProb -> ScaleFactor
+                    -> AlnMap -> OTUTree -> Classifier
+buildPepClassifier smallprob scale map otuTree = PepClassifier otuTree modTree
+    where   modTree         = fmap (alnToPepModel smallprob scale) treeOfAlns
+            treeOfAlns      = mergeAlns treeOfLeafAlns
+            treeOfLeafAlns  = fmap (\k -> M.findWithDefault [] k map) otuTree
 
-scoreSequenceWithExtendedCrumbs classifier seq =
-    dropExtendedCrumbs (scoreCrumbs seq) $ modTree classifier
+scoreSequenceWithCrumbs :: Classifier -> Sequence -> (Int, Crumbs)
+scoreSequenceWithCrumbs (NucClassifier _ nucModTree) seq =
+    dropCrumbs (scoreCrumbs seq) nucModTree
+
+scoreSequenceWithExtendedCrumbs (NucClassifier _ nucModTree) seq =
+    dropExtendedCrumbs (scoreCrumbs seq) nucModTree
 
 -- Passsed a Sequence, returns a function (CladeModel mod) => mod -> int that
 -- can itelf be passed to dropCrumbs, thereby scoring said sequence according to

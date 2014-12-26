@@ -4,7 +4,7 @@ import Data.Text
 import Data.Tree
 import qualified Data.Map.Strict as M
 
-data Molecule = DNA | Pep
+data Molecule = DNA | Prot
     deriving (Show, Eq, Read)
 
 type Sequence       = Text

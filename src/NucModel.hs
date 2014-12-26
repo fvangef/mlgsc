@@ -19,7 +19,7 @@
  -}
 
 -- TODO: once it works, restrict exports to the minimal needed set.
-module NucModel (NucModel, matrix, alnToNucModel) where
+module NucModel (NucModel, nucScoreOf, nucScoreSeq, nucModLength, nucAbsentResScore, matrix, alnToNucModel) where
 
 -- module  NucModel where -- 
 
@@ -33,37 +33,36 @@ import Data.Vector.Binary
 
 import MlgscTypes
 import Alignment
-import CladeModel
+import CladeModelAux
 
 data NucModel = NucModel {
                     matrix :: V.Vector (U.Vector Int)
                     , smallScore :: Int
                 } deriving (Show, Eq)
 
-instance CladeModel NucModel where
-    --Remember: sequence positions start -- at 1, but vector indexes (sensibly)
-    -- start at 0.
-    scoreOf nm res pos
-        | res == 'A'    = (mat V.! 0) U.! (pos - 1)
-        | res == 'C'    = (mat V.! 1) U.! (pos - 1)
-        | res == 'G'    = (mat V.! 2) U.! (pos - 1)
-        | res == 'T'    = (mat V.! 3) U.! (pos - 1)
-        | res == '-'    = (mat V.! 4) U.! (pos - 1)
-        | otherwise     = smallScore nm
-        where mat = matrix nm
+--Remember: sequence positions start -- at 1, but vector indexes (sensibly)
+-- start at 0.
+nucScoreOf nm res pos
+    | res == 'A'    = (mat V.! 0) U.! (pos - 1)
+    | res == 'C'    = (mat V.! 1) U.! (pos - 1)
+    | res == 'G'    = (mat V.! 2) U.! (pos - 1)
+    | res == 'T'    = (mat V.! 3) U.! (pos - 1)
+    | res == '-'    = (mat V.! 4) U.! (pos - 1)
+    | otherwise     = smallScore nm
+    where mat = matrix nm
 
-    scoreSeq nm seq
-        | (U.null $ V.head $ matrix nm)   = minBound :: Int
-        | otherwise = sum $ map (\(c,i) -> scoreOf nm c i) seqWithPos
-        where seqWithPos = zip (T.unpack seq) [1..] -- eg [('A',1), ...], etc.
+nucScoreSeq nm seq
+    | (U.null $ V.head $ matrix nm)   = minBound :: Int
+    | otherwise = sum $ map (\(c,i) -> nucScoreOf nm c i) seqWithPos
+    where seqWithPos = zip (T.unpack seq) [1..] -- eg [('A',1), ...], etc.
 
-    -- just return the length of the 'A' vector (they're all the same length
-    -- anyway)
-    modLength nm = U.length vA
-        where   vA = mat V.! 0
-                mat = matrix nm
+-- just return the length of the 'A' vector (they're all the same length
+-- anyway)
+nucModLength nm = U.length vA
+    where   vA = mat V.! 0
+            mat = matrix nm
 
-    absentResScore = smallScore
+nucAbsentResScore = smallScore
 
 instance Binary NucModel where
     put nm = do

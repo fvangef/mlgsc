@@ -20,7 +20,7 @@ import Data.Vector.Binary
 
 import MlgscTypes
 import Alignment
-import CladeModel
+import CladeModelAux
 
 data PepModel = PepModel {
                     matrix :: V.Vector (M.Map Residue Int)
@@ -28,21 +28,20 @@ data PepModel = PepModel {
                     , modelLength :: Int
                 } deriving (Show, Eq)
 
-instance CladeModel PepModel where
-    --Remember: sequence positions start -- at 1, but vector indexes (sensibly)
-    -- start at 0.
-    scoreOf mod res pos = M.findWithDefault (smallScore mod) res posMap
-        where posMap = (matrix mod) V.! (pos - 1)
+--Remember: sequence positions start -- at 1, but vector indexes (sensibly)
+-- start at 0.
+scoreOf mod res pos = M.findWithDefault (smallScore mod) res posMap
+    where posMap = (matrix mod) V.! (pos - 1)
 
-    -- TODO: try to rewrite this in applicative style
-    scoreSeq mod seq = sum $ map (\(res,pos) -> scoreOf mod res pos) seqWithPos
-        where seqWithPos = zip (T.unpack seq) [1..] -- eg [('A',1), ...], etc.
+-- TODO: try to rewrite this in applicative style
+scoreSeq mod seq = sum $ map (\(res,pos) -> scoreOf mod res pos) seqWithPos
+    where seqWithPos = zip (T.unpack seq) [1..] -- eg [('A',1), ...], etc.
 
-    -- just return the length of the 'A' vector (they're all the same length
-    -- anyway)
-    modLength = modelLength
+-- just return the length of the 'A' vector (they're all the same length
+-- anyway)
+modLength = modelLength
 
-    absentResScore = smallScore
+absentResScore = smallScore
 
 instance Binary PepModel where
     put mod = do

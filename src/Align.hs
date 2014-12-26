@@ -8,7 +8,7 @@ import qualified Data.Vector.Unboxed as U
 import Text.Printf
 
 import MlgscTypes
-import CladeModel
+import CladeModel (CladeModel, scoreOf, modLength)
 
 
 data Direction 	= None | Diag | Down | Righ	-- 'Right' is defined by Either
@@ -69,7 +69,7 @@ scoringSchemeMap smallScore = M.fromList $ zip thresholds [-1, 1, 2, 3]
 -- TODO: the gap opening penalty and scoring map for scoreModVseq should be
 -- parameters, not hard-coded.
 
-msdpmat :: (CladeModel mod) => ScoringScheme -> mod -> VSequence -> DPMatrix
+msdpmat :: ScoringScheme -> CladeModel -> VSequence -> DPMatrix
 msdpmat scsc hmod vseq  = dpmat
 	where	dpmat = array ((0,0), (seq_len, mat_len)) 
 			[((i,j), cell i j) | i <- [0..seq_len], j <- [0..mat_len]]
@@ -119,8 +119,7 @@ seqISLMatScore hmod vseq i j
 -- should at least depend on the CladeModel, e.g. the model's smallScore should
 -- be the lowest in the map (with zero the highest).
 
-scoreModVseq :: (CladeModel mod)
-    => (M.Map Int Int) -> mod -> VSequence -> Position -> Position -> Int
+scoreModVseq :: (M.Map Int Int) -> CladeModel -> VSequence -> Position -> Position -> Int
 scoreModVseq scThr hmod vseq i j =
     case M.lookupGE modScore scThr of
         Nothing -> 0    -- shouldn't happen
@@ -137,7 +136,7 @@ topCell mat = fst $ maximumBy cellCmp (assocs mat)
 		| otherwise	= LT
 -}
 
-msalign :: (CladeModel mod) => ScoringScheme -> mod -> Sequence -> Sequence
+msalign :: ScoringScheme -> CladeModel -> Sequence -> Sequence
 msalign scsc mat seq = T.pack $ nwMatBacktrack (msdpmat scsc mat vseq) vseq
 	where vseq = U.fromList $ T.unpack seq 
 
