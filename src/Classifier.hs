@@ -21,6 +21,16 @@ import CladeModel (CladeModel(..), scoreSeq)
 data Classifier = Classifier OTUTree (Tree CladeModel)
                 deriving (Show, Eq)
 
+instance Binary Classifier where
+    put (Classifier otuTree modTree) = do
+        put otuTree
+        put modTree
+
+    get = do
+        otuTree <- get :: Get OTUTree
+        modTree <- get :: Get (Tree CladeModel)
+        return $ Classifier otuTree modTree
+
 buildClassifier :: Molecule -> SmallProb -> ScaleFactor ->
     AlnMap -> OTUTree -> Classifier
 buildClassifier mol smallProb scale alnMap otuTree 
