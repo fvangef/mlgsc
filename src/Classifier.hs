@@ -17,9 +17,9 @@ import Alignment
 import NucModel
 import PepModel
 import Crumbs
+import CladeModel (CladeModel(..), scoreSeq)
 
-data Classifier = NucClassifier OTUTree (Tree NucModel)
-                | PepClassifier OTUTree (Tree PepModel)
+data Classifier = Classifier OTUTree (Tree CladeModel)
                 deriving (Show, Eq)
 
 buildClassifier :: Molecule -> SmallProb -> ScaleFactor ->
@@ -29,56 +29,33 @@ buildClassifier mol smallProb scale alnMap otuTree
         DNA -> buildNucClassifier smallProb scale alnMap otuTree
         Prot -> buildPepClassifier smallProb scale alnMap otuTree
 
-instance Binary Classifier where
-    put (NucClassifier otuTree nucModTree) = do
-        put DNA
-        put otuTree
-        put nucModTree
-    put (PepClassifier otuTree pepModTree) = do
-        put Prot
-        put otuTree
-        put pepModTree
-    
-    get = do
-        mol <- get :: Get Molecule
-        otuTree <- get :: Get OTUTree
-        case mol of
-            DNA -> do
-                nucModTree <- get :: Get (Tree NucModel)
-                return $ NucClassifier otuTree nucModTree
-            Prot -> do
-                pepModTree <- get :: Get (Tree NucModel)
-                return $ NucClassifier otuTree pepModTree
-
--- TODO: factor out these two
-
 buildNucClassifier  :: SmallProb -> ScaleFactor
                     -> AlnMap -> OTUTree -> Classifier
-buildNucClassifier smallprob scale map otuTree = NucClassifier otuTree modTree
-    where   modTree         = fmap (alnToNucModel smallprob scale) treeOfAlns
+buildNucClassifier smallprob scale map otuTree = Classifier otuTree modTree
+    where   modTree         = fmap (NucCladeModel . alnToNucModel smallprob scale) treeOfAlns
             treeOfAlns      = mergeAlns treeOfLeafAlns
             treeOfLeafAlns  = fmap (\k -> M.findWithDefault [] k map) otuTree
 
 buildPepClassifier  :: SmallProb -> ScaleFactor
                     -> AlnMap -> OTUTree -> Classifier
-buildPepClassifier smallprob scale map otuTree = PepClassifier otuTree modTree
-    where   modTree         = fmap (alnToPepModel smallprob scale) treeOfAlns
+buildPepClassifier smallprob scale map otuTree = Classifier otuTree modTree
+    where   modTree         = fmap (PepCladeModel . alnToPepModel smallprob scale) treeOfAlns
             treeOfAlns      = mergeAlns treeOfLeafAlns
             treeOfLeafAlns  = fmap (\k -> M.findWithDefault [] k map) otuTree
 
 scoreSequenceWithCrumbs :: Classifier -> Sequence -> (Int, Crumbs)
-scoreSequenceWithCrumbs (NucClassifier _ nucModTree) seq =
-    dropCrumbs (scoreCrumbs seq) nucModTree
+scoreSequenceWithCrumbs (Classifier _ modTree) seq =
+    dropCrumbs (scoreCrumbs seq) modTree
 
-scoreSequenceWithExtendedCrumbs (NucClassifier _ nucModTree) seq =
-    dropExtendedCrumbs (scoreCrumbs seq) nucModTree
+scoreSequenceWithExtendedCrumbs (Classifier _ modTree) seq =
+    dropExtendedCrumbs (scoreCrumbs seq) modTree
 
--- Passsed a Sequence, returns a function (CladeModel mod) => mod -> int that
--- can itelf be passed to dropCrumbs, thereby scoring said sequence according to
--- a classifier and obtaining a crumbs trail. IOW, this is _meant_ to be called
--- with only one argument.
+-- Passsed a Sequence, returns a function CladeModel -> Int that can itelf be
+-- passed to dropCrumbs, thereby scoring said sequence according to a classifier
+-- and obtaining a crumbs trail. IOW, this is _meant_ to be called with only one
+-- argument.
 
-scoreCrumbs :: (CladeModel mod) => Sequence -> mod -> Int
+scoreCrumbs :: Sequence -> CladeModel -> Int
 scoreCrumbs seq mod = scoreSeq mod seq -- isn't this flip scoreSeq?
 
 -- produces a new tree of which each node's data is a concatenation of its
