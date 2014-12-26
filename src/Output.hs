@@ -19,8 +19,7 @@ import FastA
 import Crumbs (dropCrumbs, followCrumbs, followCrumbsWithTrail,
     followExtendedCrumbsWithTrail)
 import NucModel
-import Classifier (NucClassifier, otuTree, modTree, scoreSequenceWithCrumbs,
-        scoreSequenceWithExtendedCrumbs)
+import Classifier (Classifier(..), scoreSequenceWithExtendedCrumbs)
 
 -- formats a header and a classification. 
 --
@@ -29,10 +28,11 @@ output header pred = ST.concat [LT.toStrict header, ST.pack "\t->\t", pred]
 
 -- Classifies a Sequence according to a NucClassifier
 
-classifySequenceWithExtendedTrail :: NucClassifier -> Sequence -> ST.Text
-classifySequenceWithExtendedTrail classifier query = trailToExtendedTaxo trail
+classifySequenceWithExtendedTrail :: Classifier -> Sequence -> ST.Text
+classifySequenceWithExtendedTrail classifier@(Classifier otuTree _) query
+    = trailToExtendedTaxo trail
     where   (score, crumbs) = scoreSequenceWithExtendedCrumbs classifier query  
-            trail = followExtendedCrumbsWithTrail crumbs $ otuTree classifier
+            trail = followExtendedCrumbsWithTrail crumbs otuTree
 
 -- Takes an extended trail (i.e., a list of (OTU name, best score, secod-best
 -- score) tuples) and formats it as a taxonomy line, with empty labels remplaced
