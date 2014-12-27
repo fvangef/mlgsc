@@ -18,15 +18,19 @@ data CladeModel = NucCladeModel NucModel
 
 scoreOf :: CladeModel -> Residue -> Position -> Int
 scoreOf (NucCladeModel nm) res pos = nucScoreOf nm res pos
+scoreOf (PepCladeModel pm) res pos = pepScoreOf pm res pos
 
 scoreSeq :: CladeModel -> Sequence -> Int
 scoreSeq (NucCladeModel nm) seq = nucScoreSeq nm seq
+scoreSeq (PepCladeModel pm) seq = pepScoreSeq pm seq
 
 modLength :: CladeModel -> Int
 modLength (NucCladeModel nm) = nucModLength nm
+modLength (PepCladeModel pm) = pepModLength pm
 
 absentResScore :: CladeModel -> Int
 absentResScore (NucCladeModel nm) = nucAbsentResScore nm
+absentResScore (PepCladeModel pm) = pepAbsentResScore pm
 
 instance Binary CladeModel where
     put (NucCladeModel nm) = do

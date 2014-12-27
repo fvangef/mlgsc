@@ -6,7 +6,7 @@
  -}
 
 -- TODO: once it works, restrict exports to the minimal needed set.
-module PepModel (PepModel, matrix, alnToPepModel) where
+module PepModel (PepModel, pepScoreOf, pepScoreSeq, pepModLength, pepAbsentResScore, matrix, alnToPepModel) where
 
 -- module  PepModel where -- 
 
@@ -30,18 +30,18 @@ data PepModel = PepModel {
 
 --Remember: sequence positions start -- at 1, but vector indexes (sensibly)
 -- start at 0.
-scoreOf mod res pos = M.findWithDefault (smallScore mod) res posMap
+pepScoreOf mod res pos = M.findWithDefault (smallScore mod) res posMap
     where posMap = (matrix mod) V.! (pos - 1)
 
 -- TODO: try to rewrite this in applicative style
-scoreSeq mod seq = sum $ map (\(res,pos) -> scoreOf mod res pos) seqWithPos
+pepScoreSeq mod seq = sum $ map (\(res,pos) -> pepScoreOf mod res pos) seqWithPos
     where seqWithPos = zip (T.unpack seq) [1..] -- eg [('A',1), ...], etc.
 
 -- just return the length of the 'A' vector (they're all the same length
 -- anyway)
-modLength = modelLength
+pepModLength = modelLength
 
-absentResScore = smallScore
+pepAbsentResScore = smallScore
 
 instance Binary PepModel where
     put mod = do
