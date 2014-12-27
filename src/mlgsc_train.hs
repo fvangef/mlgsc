@@ -66,7 +66,7 @@ parseOptions = Params
                 <*> parseScaleFactor
                 <*> parseOutFName
                 <*> parseVerbosityLevel
-                <*> argument auto (metavar "<DNA|Pep>")
+                <*> argument auto (metavar "<DNA|Prot>")
                 <*> argument str (metavar "<alignment file>")
                 <*> argument str (metavar "<tree file>")
 
