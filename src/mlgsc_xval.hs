@@ -41,6 +41,8 @@ data Params = Params {
                 , optNbRounds       :: Int
                 , optSeed           :: Int
                 , optMinSeqInOTU    :: Int
+                , optNoHenikoffWt   :: Bool
+                , molType           :: Molecule
                 , alnFname          :: String
                 , treeFname         :: String
                 }
@@ -92,6 +94,10 @@ parseOptions = Params
                 <*> parseNbRounds
                 <*> parseSeed
                 <*> parseMinSeqInOTU
+                <*> switch (
+                        short 'W' <> long "no-Henikoff-weighting"
+                        <> help "don't perform Henikoff weighting of input aln")
+                <*> argument auto (metavar "<DNA|Prot>")
                 <*> argument str (metavar "<alignment file>")
                 <*> argument str (metavar "<tree file>")
 
@@ -115,9 +121,11 @@ main = do
     let bounds = (0, Sq.length fastARecs)
     gen <- getGen $ optSeed params
     let randomIndices = take nbRounds $ shuffleList gen $ validIndices fastARecs
+    let mol = molType params
+    let noHWt = optNoHenikoffWt params
     putStrLn ("Performing LOO X-val on indices " ++ (show randomIndices))
     mapM_ (STIO.putStrLn .
-        leaveOneOut smallProb scaleFactor tree fastARecs) randomIndices
+        leaveOneOut mol noHWt smallProb scaleFactor tree fastARecs) randomIndices
 
 -- gets a random number generator. If the seed is negative, gets the global
 -- generator, else use the seed.
@@ -170,8 +178,10 @@ spliceElemAt seq n = (elem, head >< tail)
 
 -- TODO: rmove the hard-coded constants below!
 
-leaveOneOut :: SmallProb -> ScaleFactor -> OTUTree -> Seq FastA -> Int -> ST.Text
-leaveOneOut smallProb scaleFactor tree fastaRecs n = ST.concat [header, ST.pack " -> ", prediction]
+leaveOneOut :: Molecule -> Bool -> SmallProb -> ScaleFactor ->
+    OTUTree -> Seq FastA -> Int -> ST.Text
+leaveOneOut mol noHWt smallProb scaleFactor tree fastaRecs n =
+    ST.concat [header, ST.pack " -> ", prediction]
     where   header = LT.toStrict $ FastA.header testRec
             prediction = classifySequenceWithExtendedTrail
                 classifier alignedTestSeq
@@ -181,9 +191,11 @@ leaveOneOut smallProb scaleFactor tree fastaRecs n = ST.concat [header, ST.pack 
             rootMod = rootLabel modTree 
             testSeq = LT.toStrict $ FastA.sequence testRec
             classifier@(Classifier _ modTree) =
-                buildClassifier DNA smallProb scaleFactor otuAlnMap tree
+                buildClassifier mol smallProb scaleFactor otuAlnMap tree
             otuAlnMap = alnToAlnMap wtOtuAln
-            wtOtuAln = henikoffWeightAln otuAln
+            wtOtuAln = if noHWt
+                then otuAln
+                else henikoffWeightAln otuAln
             otuAln = fastARecordsToAln trainSet
             trainSet = Data.Foldable.toList trainSetSeq
             (testRec, trainSetSeq) = spliceElemAt fastaRecs n
