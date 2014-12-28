@@ -41,6 +41,7 @@ data Params = Params {
                 , optNbRounds       :: Int
                 , optSeed           :: Int
                 , optMinSeqInOTU    :: Int
+                , optVerbosity      :: Int
                 , optNoHenikoffWt   :: Bool
                 , molType           :: Molecule
                 , alnFname          :: String
@@ -87,6 +88,14 @@ parseMinSeqInOTU = option auto
                     <> value (3)
                     <> help "minimum #member seqs in an OTU")
 
+parseVerbosity :: Parser Int
+parseVerbosity = option auto
+                    (long "verbositsy"
+                    <> short 'v'
+                    <> metavar "VERBOSITY_LEVEL (0-2)"
+                    <> value (1)
+                    <> help "verbosity (0: quiet, 1: normal, 2: verbose)")
+
 parseOptions :: Parser Params
 parseOptions = Params
                 <$> parseSmallProb
@@ -94,6 +103,7 @@ parseOptions = Params
                 <*> parseNbRounds
                 <*> parseSeed
                 <*> parseMinSeqInOTU
+                <*> parseVerbosity
                 <*> switch (
                         short 'W' <> long "no-Henikoff-weighting"
                         <> help "don't perform Henikoff weighting of input aln")
@@ -123,7 +133,7 @@ main = do
     let randomIndices = take nbRounds $ shuffleList gen $ validIndices fastARecs
     let mol = molType params
     let noHWt = optNoHenikoffWt params
-    putStrLn ("Performing LOO X-val on indices " ++ (show randomIndices))
+    putStrLn $ runInfo params randomIndices
     mapM_ (STIO.putStrLn .
         leaveOneOut mol noHWt smallProb scaleFactor tree fastARecs) randomIndices
 
@@ -151,6 +161,15 @@ validIndices fastARecs = map snd validFreqIdxPairs
             toFreqIdxPair idx fasta = (freq, idx)
                 where   freq = otu2freq ! (fastAOTU fasta)
                         
+runInfo :: Params -> [Int] -> String
+runInfo params randomIndices
+    | (optVerbosity params <= 1) = ""
+    | otherwise = unlines [
+        "Performing LOO X-val on indices ",
+        ("indices: " ++ (show randomIndices)),
+        ("seed: " ++ (show $ optSeed params)),
+        ("# trials: " ++ (show $ optNbRounds params))
+        ]
 
 scoreQuery :: Classifier -> FastA -> String
 scoreQuery classifier@(Classifier otuTree _) query =
