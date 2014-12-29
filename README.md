@@ -13,9 +13,8 @@ consists of the following:
 Example
 -------
 
-To illustrate how MLGSC works, try the following (the example files are in
-subdirectory `data`):
-
+Here is an example of MLGSC used for classifying protein sequences of Spo0A in
+the Firmicutes clade. We need 
 ```bash
 $ mlgsc_train Prot final_prot_aln.msa final_prot_tree.nw
 ```
