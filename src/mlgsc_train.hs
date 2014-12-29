@@ -108,7 +108,7 @@ dumpAlnRow (AlnRow lbl seq wt) = ST.unwords [lbl, ST.pack $ show wt]
 
 possibleWarnings :: Params -> OTUTree -> AlnMap -> IO ()
 possibleWarnings params tree otuAlnMap =
-    if (optVerbosity params) > 1
+    if (optVerbosity params) > 0
         then do
             if not $ null $ treeOTUsNotInALn tree otuAlnMap
                 then do
