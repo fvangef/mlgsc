@@ -30,10 +30,14 @@ data PepModel = PepModel {
 
 --Remember: sequence positions start -- at 1, but vector indexes (sensibly)
 -- start at 0.
+pepScoreOf :: PepModel -> Residue -> Position -> Int
+pepScoreOf (PepModel _ smallScore 0) _ _ = smallScore -- empty models
 pepScoreOf mod res pos = M.findWithDefault (smallScore mod) res posMap
     where posMap = (matrix mod) V.! (pos - 1)
 
 -- TODO: try to rewrite this in applicative style
+pepScoreSeq :: PepModel -> Sequence -> Int
+pepScoreSeq (PepModel _ smallScore 0) seq = smallScore * T.length seq
 pepScoreSeq mod seq = sum $ map (\(res,pos) -> pepScoreOf mod res pos) seqWithPos
     where seqWithPos = zip (T.unpack seq) [1..] -- eg [('A',1), ...], etc.
 
