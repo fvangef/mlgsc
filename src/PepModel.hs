@@ -59,6 +59,7 @@ instance Binary PepModel where
 -- G, T are ignored, but gaps (-) are modelled.
 
 alnToPepModel :: SmallProb -> ScaleFactor -> Alignment -> PepModel
+alnToPepModel smallProb scale [] = PepModel V.empty smallScore length
 alnToPepModel smallProb scale aln = PepModel scoreMapVector smallScore length
     where   scoreMapVector = V.fromList scoreMapList
             scoreMapList = fmap (freqMapToScoreMap scale

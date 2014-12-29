@@ -87,11 +87,7 @@ main = do
     let fastaRecs = fastATextToRecords fastAInput
     let otuAln = (henikoffWeightAln . fastARecordsToAln) fastaRecs
     let otuAlnMap = alnToAlnMap otuAln
-    putStrLn "The following tree OTUs are NOT found in the alignment:"
-    mapM_ STIO.putStrLn $ treeOTUsNotInALn tree otuAlnMap
-    putStrLn "The following alignment OTUs are NOT found in the tree:"
-    mapM_ STIO.putStrLn $ alnOTUsNotInTree tree otuAlnMap
-
+    possibleWarnings params tree otuAlnMap
     let classifier = buildClassifier
                         (molType params)
                         (optSmallProb params) (optScaleFactor params)
@@ -99,6 +95,7 @@ main = do
     let outputFileName = outFName (optOutFName params)
                                   (alnFName params)
     encodeFile outputFileName classifier
+
 
 dumpAlnMap :: AlnMap -> [String]
 dumpAlnMap otuAlnMap = map f $ M.assocs otuAlnMap
@@ -108,6 +105,22 @@ dumpAlnMap otuAlnMap = map f $ M.assocs otuAlnMap
 
 dumpAlnRow :: AlnRow -> ST.Text
 dumpAlnRow (AlnRow lbl seq wt) = ST.unwords [lbl, ST.pack $ show wt]
+
+possibleWarnings :: Params -> OTUTree -> AlnMap -> IO ()
+possibleWarnings params tree otuAlnMap =
+    if (optVerbosity params) > 1
+        then do
+            if not $ null $ treeOTUsNotInALn tree otuAlnMap
+                then do
+                    putStrLn "The following tree OTUs are NOT found in the alignment:"
+                    mapM_ STIO.putStrLn $ treeOTUsNotInALn tree otuAlnMap
+                else return ()
+            if not $ null $ alnOTUsNotInTree tree otuAlnMap
+                then do
+                    putStrLn "The following alignment OTUs are NOT found in the tree:"
+                    mapM_ STIO.putStrLn $ alnOTUsNotInTree tree otuAlnMap
+                else return ()
+        else return ()
 
 -- returns a list of tree OTUs not found in the alignment
 
