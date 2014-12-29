@@ -87,24 +87,39 @@ main = do
     let fastaRecs = fastATextToRecords fastAInput
     let otuAln = (henikoffWeightAln . fastARecordsToAln) fastaRecs
     let otuAlnMap = alnToAlnMap otuAln
+    let outputFileName = outFName (optOutFName params)
+                                  (alnFName params)
+    runInfo params outputFileName
     possibleWarnings params tree otuAlnMap
     let classifier = buildClassifier
                         (molType params)
                         (optSmallProb params) (optScaleFactor params)
                         otuAlnMap tree
-    let outputFileName = outFName (optOutFName params)
-                                  (alnFName params)
     encodeFile outputFileName classifier
 
 
-dumpAlnMap :: AlnMap -> [String]
-dumpAlnMap otuAlnMap = map f $ M.assocs otuAlnMap
-    where f (k, v) = otu ++ " (" ++ num ++ " seq)"
-            where   otu = ST.unpack k
-                    num = show $ length v 
+-- dumpAlnMap :: AlnMap -> [String]
+-- dumpAlnMap otuAlnMap = map f $ M.assocs otuAlnMap
+--     where f (k, v) = otu ++ " (" ++ num ++ " seq)"
+--             where   otu = ST.unpack k
+--                     num = show $ length v 
+-- 
+-- dumpAlnRow :: AlnRow -> ST.Text
+-- dumpAlnRow (AlnRow lbl seq wt) = ST.unwords [lbl, ST.pack $ show wt]
 
-dumpAlnRow :: AlnRow -> ST.Text
-dumpAlnRow (AlnRow lbl seq wt) = ST.unwords [lbl, ST.pack $ show wt]
+runInfo :: Params -> String -> IO ()
+runInfo params outFname
+    | optVerbosity params < 2   = do return ()
+    | otherwise                 = do
+        putStrLn $ unlines [
+            "MLGSC - building model ",
+            ("input alignment:  " ++ (alnFName params)),
+            ("input tree: " ++ (treeFName params)),
+            ("output: " ++ outFname),
+            ("molecule: " ++ (show $ molType params)),
+            ("small prob: " ++ (show $ optSmallProb params)),
+            ("scale factor: " ++ (show $ optScaleFactor params))
+            ]
 
 possibleWarnings :: Params -> OTUTree -> AlnMap -> IO ()
 possibleWarnings params tree otuAlnMap =
