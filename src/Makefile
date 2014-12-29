@@ -3,6 +3,7 @@
 targets = mlgsc mlgsc_train mlgsc_xval 
 
 GHCFLAGS = -O2
+INSTALLDIR = /usr/local/bin
 
 % :: %.hs
 	ghc $(GHCFLAGS) --make $<
@@ -14,6 +15,13 @@ mlgsc: MlgscTypes.hs FastA.hs Crumbs.hs NucModel.hs Classifier.hs Align.hs \
 
 mlgsc_train: MlgscTypes.hs NewickParser.hs FastA.hs Classifier.hs \
 	Weights.hs Alignment.hs CladeModel.hs CladeModelAux.hs
+
+mlgsc_xval: Align.hs Alignment.hs CladeModelAux.hs CladeModel.hs \
+	Classifier.hs Crumbs.hs FastA.hs MlgscTypes.hs MlgscTypes.hs \
+	NewickParser.hs NucModel.hs PepModel.hs Weights.hs
+
+install: all
+	install $(targets) $(INSTALLDIR)
 
 clean:
 	$(RM) $(targets) *.o *.hi
