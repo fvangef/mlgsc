@@ -1,4 +1,4 @@
-.PHONY: clean
+.PHONY: clean install
 
 targets = mlgsc mlgsc_train mlgsc_xval 
 
