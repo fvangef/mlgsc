@@ -22,6 +22,7 @@ Then we train the classifier with the following command:
 
 ```bash
 $ mlgsc_train Prot Spo0A.msa firmicute_genera.nw
+$ ls -l
 ```
 
 
