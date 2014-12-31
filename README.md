@@ -20,7 +20,7 @@ protein sequences (`Spo0A.msa`) and a phylogenetic tree of the Firmicute genera
 
 Then we train the classifier with the following command:
 
-```bash
+```shell
 $ mlgsc_train Prot Spo0A.msa firmicute_genera.nw
 $ ls -l
 ```
