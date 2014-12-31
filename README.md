@@ -13,11 +13,19 @@ consists of the following:
 Example
 -------
 
-Here is an example of MLGSC used for classifying protein sequences of Spo0A in
-the Firmicutes clade. We need 
+Here is an example of MLGSC used for classifying protein sequences of Spo0A to
+genus level in the Firmicutes clade. We need a multiple alignment of Spo0A
+protein sequences (`Spo0A.msa`) and a phylogenetic tree of the Firmicute genera
+(`firmicute_genera.nw`).
+
+Then we train the classifier with the following command:
+
 ```bash
-$ mlgsc_train Prot final_prot_aln.msa final_prot_tree.nw
+$ mlgsc_train Prot Spo0A.msa firmicute_genera.nw
 ```
 
+
+Data
+----
 
 
