@@ -49,6 +49,12 @@ much more tentatively classified as _Staphylococcus_ (confidence measure at
 genus level only 8), although its position within Staphylococcaceae seems well
 supported.
 
+Installation
+------------
+
+### Installing Haskell
+
+MLgsc is written in the [Haskell](http://haskell.org) language.
 Data
 ----
 
