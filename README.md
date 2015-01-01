@@ -54,7 +54,7 @@ Installation
 
 ### Installing Haskell
 
-MLgsc is written in the [Haskell](http://haskell.org) language.
+MLgsc is written in the [Haskell](https://www.haskell.org) language.
 Data
 ----
 
