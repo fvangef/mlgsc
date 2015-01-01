@@ -34,9 +34,20 @@ $ mlgsc queries.pep Spo0A.bcls
 
 This produces output like the following:
 
-    ID_201 Moraxella	->	Proteobacteria (79); Gammaproteobacteria (43); Pseudomonadales (26); Moraxellaceae (63); Moraxella (61)
-    ID_202 Wolbachia	->	Proteobacteria (45); Alphaproteobacteria (23); Rickettsiales (78); Anaplasmataceae (234); Wolbachia (218)
-    ID_203 Staphylococcus	->	Firmicutes (99); Bacilli (61); Bacillales (51); Staphylococcaceae (48); Staphylococcus (58)
+    query_01	->	Proteobacteria (79); Gammaproteobacteria (43); Pseudomonadales (26); Moraxellaceae (63); Moraxella (61)
+    query_02	->	Proteobacteria (45); Alphaproteobacteria (23); Rickettsiales (78); Anaplasmataceae (234); Wolbachia (218)
+    query_03	->	Firmicutes (99); Bacilli (61); Bacillales (51); Staphylococcaceae (48); Staphylococcus (8)
+    ...
+
+Each line lists a query ID (`query_01`, etc.), then a `->`, then MLgsc's
+classification of this query.  This consists of a list of tree nodes, from the
+most general (leftmost) to the most specific (rightmost) - in this case, genus.
+Each node is shown with a confidence measure (number in parentheses). High
+values indicate high confidence. In the example above, query 01 is confidently
+classified as _Moraxella_, and query 02 as _Wolbachia_; however, query 03 is
+much more tentatively classified as _Staphylococcus_ (confidence measure at
+genus level only 8), although its position within Staphylococcaceae seems well
+supported.
 
 Data
 ----
