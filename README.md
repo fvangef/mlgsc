@@ -22,9 +22,21 @@ Then we train the classifier with the following command:
 
 ```shell
 $ mlgsc_train Prot Spo0A.msa firmicute_genera.nw
-$ ls -l
 ```
 
+This produces a binary file named `Spo0A.bcls`, which contains the classifier.
+
+We can now use it to classify Spo0A sequences of unknown genus:
+
+```Bash
+$ mlgsc queries.pep Spo0A.bcls
+```
+
+This produces output like the following:
+
+    ID_201 Moraxella	->	Proteobacteria (79); Gammaproteobacteria (43); Pseudomonadales (26); Moraxellaceae (63); Moraxella (61)
+    ID_202 Wolbachia	->	Proteobacteria (45); Alphaproteobacteria (23); Rickettsiales (78); Anaplasmataceae (234); Wolbachia (218)
+    ID_203 Staphylococcus	->	Firmicutes (99); Bacilli (61); Bacillales (51); Staphylococcaceae (48); Staphylococcus (58)
 
 Data
 ----
