@@ -52,6 +52,18 @@ supported.
 Installation
 ------------
 
+MLgsc is available as binaries (Linux x86-64) and as source code. The binaries
+are found in subdirectory `src` of the distribution. They can be installed by
+issuing
+
+```
+$ sudo make install
+```
+
+in that directory. 
+
+To compile from source, see below.
+
 ### Installing Haskell
 
 MLgsc is written in the [Haskell](https://www.haskell.org) language. You will
