@@ -71,4 +71,17 @@ install all additional packages (you may need to run this as root):
 # cabal install array binary containers filepath mtl optparse-applicative parsec random text text-binary vector vector-binary$
 ```
 
+### Building
 
+If not already done, obtain the source from GitHub (e.g. using the "Download
+ZIP" button, or with `git clone`, etc.). Uncompress the archive if needed, then
+issue the following commands in the top-level directory of the source
+distribution:
+
+```shell
+$ runhaskell Setup.hs configure
+$ cabal build
+$ sudo cabal install --global
+```
+
+This will install the programs in `/usr/local/bin`.
