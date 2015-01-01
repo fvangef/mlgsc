@@ -93,13 +93,13 @@ test-suite	  weights
 
 executable mlgsc_train
   build-depends:  base, text, containers, parsec, vector, binary, vector-binary,
-                  text-binary, mtl
+                  text-binary, mtl, filepath
   main-is:        mlgsc_train.hs
   hs-source-dirs: src
 
 executable mlgsc_xval
   build-depends:  base, text, containers, parsec, vector, binary, vector-binary,
-                  text-binary, mtl, random
+                  text-binary, mtl, random, array, optparse-applicative
   main-is:        mlgsc_xval.hs
   hs-source-dirs: src
 

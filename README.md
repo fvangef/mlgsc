@@ -54,8 +54,21 @@ Installation
 
 ### Installing Haskell
 
-MLgsc is written in the [Haskell](https://www.haskell.org) language.
-Data
-----
+MLgsc is written in the [Haskell](https://www.haskell.org) language. You will
+need a Haskell compiler and libraries; the easiest way of toobtain this is to
+install the [Haskell platform](https://www.haskell.org/platform) on your
+machine - it is [available](https://www.haskell.org/platform/linux.html) as a
+precompiled package for several major Linux distribution including Ubuntu,
+Fedora, Mint, etc.
+
+#### Additional Libraries
+
+Libraries not included in the Haskell platform may be installed with the
+`cabal` tool (which comes with the platform). The following command will
+install all additional packages (you may need to run this as root):
+
+```bash
+# cabal install array binary containers filepath mtl optparse-applicative parsec random text text-binary vector vector-binary$
+```
 
 
