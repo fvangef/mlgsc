@@ -140,3 +140,11 @@ _Clostridium_.
     NLEAEVTNIMHEIGVPAHIKGYQYLRDAIIMVVKDLDVINSITKQLYPTIAKEYNTTPSR
     VERAIRHAIEVAWSRGQIDTIDSLFGYTINVGKGKPTNSEFIAMVAD
 
+It is advisable to have more than one reference sequence per OTU, but in our
+experience adding more than a dozen does little to enhance the classifier's
+accuracy. Ideally each OTU should be represented by roughly the same number of
+sequences, but since the alignment is subjected to Henikoff weighting the
+program can tolerate large variations (this is often the case when downloading
+all representatives of a given gene from a database: some genera like
+_Clostridium_ or _Pseudomonas_ have hundreds of known members, while several
+"rare" genera have only one. 
