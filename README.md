@@ -97,3 +97,46 @@ $ sudo cabal install --global
 ```
 
 This will install the programs in `/usr/local/bin`.
+
+### Program Manuals
+
+#### `mlgsc_train`
+
+This trains a classifier model (either DNA or protein) from a multiple alignment
+of reference sequences and a phylogenetic tree of the reference OTUs.
+
+This program takes three arguments: (i) one of the two keywords `DNA` or `Prot`,
+to indicate the type of molecule; (ii) the name of the multiple alignment file;
+and (iii) the name of a phylogenetic tree.
+
+#### Reference Multiple Alignment
+
+The alignment should be in aligned (gapped) FastA format. The header lines
+should contain an ID followed by an OTU name. The ID is ignored for training,
+but can be used to identify problematic training sequences; since the first word
+of a FastA header is usually an ID this will allow existing FastA alignments to
+be used with minimal editing.
+
+##### Example
+
+The first FastA entry in the alignment below has ID `ID_001` and OTU
+`Bacillus`. This states that the sequence is a reference for the _Bacillus_
+genus. The next two (`ID_001` and `ID_002`) are reference sequences for genus
+_Clostridium_.
+
+    >ID_001 Bacillus
+    IMPHLDGLAVLERLRE-SQLKK-QPN-VIMLTAFGQEDVTKKAVDLGASYFILKPFDMEN
+    LVGHIRQVSGNGSQL--THRAPS---SQSS------------VLR-PQPES------PKK
+    NLDASITTIIHEIGVPAHIKGYLYLREAISMVYNDIELLGSITKVLYPDIAKKFNTTASR
+    VERAIRHAIEVAWSRGNIDSISSLFGYTVSMSKAKPTNSEFIAMVAD
+    >ID_002 Clostridium
+    IMPHLDGLGVLEKIGA-TAISK-RPL-FIILSAVGQDKITQRALALGAEYYVVKPFDMEV
+    LISRIRQLKNVNQPN--VIRQ----------------DGLSGEVKSSYHPP------QPK
+    NLEAEVTNIMHEIGVPAHIKGYQYLRDAIIMVVKDLDVINSITKQLYPTIAKEYNTTPSR
+    VERAIRHAIEVAWSRGQIDTIDSLFGYTINVGKGKPTNSEFIAMVAD
+    >ID_003 Clostridium
+    IMPHLDGLGVLEKIGA-TAISK-RPL-FIILSAVGQDKITQRALALGAEYYVVKPFDMEV
+    LISRIRQLKNVNQPN--VIRQ----------------DGLSGEVKSSYHPP------QPK
+    NLEAEVTNIMHEIGVPAHIKGYQYLRDAIIMVVKDLDVINSITKQLYPTIAKEYNTTPSR
+    VERAIRHAIEVAWSRGQIDTIDSLFGYTINVGKGKPTNSEFIAMVAD
+
