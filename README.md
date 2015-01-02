@@ -67,7 +67,7 @@ To compile from source, see below.
 ### Installing Haskell
 
 MLgsc is written in the [Haskell](https://www.haskell.org) language. You will
-need a Haskell compiler and libraries; the easiest way of toobtain this is to
+need a Haskell compiler and libraries; the easiest way of obtaining this is to
 install the [Haskell platform](https://www.haskell.org/platform) on your
 machine - it is [available](https://www.haskell.org/platform/linux.html) as a
 precompiled package for several major Linux distribution including Ubuntu,
