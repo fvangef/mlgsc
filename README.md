@@ -119,10 +119,12 @@ be used with minimal editing.
 
 ##### Example
 
-The first FastA entry in the alignment below has ID `ID_001` and OTU
-`Bacillus`. This states that the sequence is a reference for the _Bacillus_
-genus. The next two (`ID_001` and `ID_002`) are reference sequences for genus
-_Clostridium_.
+Here are the first three entries in a multiple-FastA alignment of the stage 0
+sporulation protein A, Spo0A, in Firmicutes, grouped by genus.
+
+The first entry in the alignment has ID `ID_001` and OTU `Bacillus`. This
+states that the sequence is a reference for the _Bacillus_ genus. The next two
+(`ID_001` and `ID_002`) are reference sequences for genus _Clostridium_.
 
     >ID_001 Bacillus
     IMPHLDGLAVLERLRE-SQLKK-QPN-VIMLTAFGQEDVTKKAVDLGASYFILKPFDMEN
@@ -148,3 +150,16 @@ program can tolerate large variations (this is often the case when downloading
 all representatives of a given gene from a database: some genera like
 _Clostridium_ or _Pseudomonas_ have hundreds of known members, while several
 "rare" genera have only one. 
+
+#### Reference Phylogeny
+
+This should be a Newick tree in a single line. The leaves (tips) of the tree
+must correspond to the OTUs in the alignment. Currently the program does not
+accept trees with branch lengths. Inner node labels are allowed and indeed
+encouraged.
+
+##### Example
+
+Here is a sample tree of Firmicute genera:
+
+```
