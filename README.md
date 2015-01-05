@@ -181,10 +181,6 @@ Here is a sample tree of Firmicute genera:
                │              ├─────────────┤                                   
  ┌─────────────┼─Clostridia───┤             └────────────── Desulfotomaculum    
  │             │              │                                                 
- │             │              ├──────────────────────────── Heliobacterium      
- │             │              │                                                 
- │             │              ├──────────────────────────── Sulfobacillus       
- │             │              │                                                 
  │             │              └──────────────────────────── Symbiobacterium     
  │             │                                                                
  │             │              ┌──────────────────────────── Carboxydibrachium   
@@ -199,8 +195,6 @@ Here is a sample tree of Firmicute genera:
  │             │                                                                
  │             │              ┌──────────────────────────── Amphibacillus       
  │             │              │                                                 
- │             │              ├──────────────────────────── Anoxybacillus       
-─┤             │              │                                                 
  │             │              ├──────────────────────────── Bacillus            
  │             ├──────────────┤ Bacillaceae                                     
  │             │              ├──────────────────────────── Geobacillus         
@@ -208,10 +202,6 @@ Here is a sample tree of Firmicute genera:
  │             │              └──────────────────────────── Oceanobacillus      
  │             │                                                                
  ├─────────────┼─Bacilli─────────────────────────────────── Bhargavaea          
- │             │                                                                
- │             ├─────────────────────────────────────────── Listeria            
- │             │                                                                
- │             ├─────────────────────────────────────────── Exiguobacterium     
  │             │                                                                
  │             │              ┌──────────────────────────── Brevibacillus       
  │             ├──────────────┤ Paenibacillaceae                                
