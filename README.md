@@ -52,7 +52,7 @@ supported.
 Installation
 ------------
 
-MLgsc is available as binaries (Linux x86-64) and as source code. The binaries
+MLgsc is available as **binaries** (Linux x86-64) and as **source code**. The binaries
 are found in subdirectory `src` of the distribution. They can be installed by
 issuing
 
