@@ -154,9 +154,7 @@ _Clostridium_ or _Pseudomonas_ have hundreds of known members, while several
 #### Reference Phylogeny
 
 This should be a Newick tree in a single line. The leaves (tips) of the tree
-must correspond to the OTUs in the alignment. Currently the program does not
-accept trees with branch lengths. Inner node labels are allowed and indeed
-encouraged.
+must correspond to the OTUs in the alignment. The tree may be a phylogram (i.e., with branch lengths), but the branch lengths are not used and will be ignored. Inner node labels are allowed and indeed encouraged, as they will feature in the path through the tree that `mlgsc` outputs.
 
 ##### Example
 
@@ -214,3 +212,9 @@ Here is a sample tree of Firmicute genera:
  └─────────────┼─Erysipelotrichia────────────────────────── E dolichum          
                │                                                                
                └─────────────────────────────────────────── Turicibacter 
+```
+
+This tree (actually, a slightly larger version - the one above was shortened a
+bit to better fit the page) is found in `firmicutes_by_genus.nw`. Note that the
+OTU names in the alignment (`Bacillus`, `Clostridium`, etc.) appear at the
+_leaves_ of the tree.
