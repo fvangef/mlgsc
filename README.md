@@ -109,7 +109,7 @@ This program takes three arguments: (i) one of the two keywords `DNA` or `Prot`,
 to indicate the type of molecule; (ii) the name of the multiple alignment file;
 and (iii) the name of a phylogenetic tree.
 
-#### Reference Multiple Alignment
+##### Reference Multiple Alignment
 
 The alignment should be in aligned (gapped) FastA format. The header lines
 should contain an ID followed by an OTU name. The ID is ignored for training,
@@ -117,7 +117,7 @@ but can be used to identify problematic training sequences; since the first word
 of a FastA header is usually an ID this will allow existing FastA alignments to
 be used with minimal editing.
 
-##### Example
+###### Example
 
 Here are the first three entries in a multiple-FastA alignment of the stage 0
 sporulation protein A, Spo0A, in Firmicutes, grouped by genus.
@@ -151,12 +151,12 @@ all representatives of a given gene from a database: some genera like
 _Clostridium_ or _Pseudomonas_ have hundreds of known members, while several
 "rare" genera have only one. 
 
-#### Reference Phylogeny
+##### Reference Phylogeny
 
 This should be a Newick tree in a single line. The leaves (tips) of the tree
 must correspond to the OTUs in the alignment. The tree may be a phylogram (i.e., with branch lengths), but the branch lengths are not used and will be ignored. Inner node labels are allowed and indeed encouraged, as they will feature in the path through the tree that `mlgsc` outputs.
 
-##### Example
+###### Example
 
 Here is a sample tree of Firmicute genera:
 
@@ -214,7 +214,26 @@ Here is a sample tree of Firmicute genera:
                └─────────────────────────────────────────── Turicibacter 
 ```
 
+Note that the OTU names in the alignment (`Bacillus`, `Clostridium`, etc.)
+appear at the _leaves_ of the tree.
+
 This tree (actually, a slightly larger version - the one above was shortened a
-bit to better fit the page) is found in `firmicutes_by_genus.nw`. Note that the
-OTU names in the alignment (`Bacillus`, `Clostridium`, etc.) appear at the
-_leaves_ of the tree.
+bit to better fit the page) is found in `firmicutes_by_genus.nw`. It is a
+Newick-formatted file:
+
+```
+((Sporomusa,((Anaerofustis,Eubacterium),(Anaerostipes,Dorea,Marvinbryantia),Clostridium,(Dehalobacter,Desulfotomaculum),Heliobacterium,Oscillibacter,Ruminococcus,Pseudoflavonifractor,Sulfobacillus,Symbiobacterium),(Carboxydibrachium,Carboxydothermus,Moorella,Thermacetogenium)Thermoanaerobacteraceae)Clostridia,(Alicyclobacillus,(Amphibacillus,Anoxybacillus,Bacillus,Geobacillus,Lysinibacillus,Oceanobacillus)Bacillaceae,Bhargavaea,Listeria,Exiguobacterium,(Brevibacillus,Paenibacillus)Paenibacillaceae,Pasteuria,Sporosarcina,Desmospora)Bacilli,(C_innocuum,E_dolichum,Turicibacter)Erysipelotrichia);
+```
+
+#### Building the Classifier
+
+To train a model using the above alignment and phylogeny, do:
+
+```shell
+$ mlgsc_train Prot Spo0A.msa firmicutes_by_genus.nw
+```
+
+The output is a binary file. For this reason, it is not written to standard
+output, but directly to a file. By default, that file's name is derived from
+the alignment's name. In this case, the name is `Spo0A.bcls` ("binary
+classifier"). To specify another name, use option `-o`.
