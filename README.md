@@ -190,7 +190,7 @@ Here is a sample tree of Firmicute genera:
  │                            ├──────────────────────────── Moorella            
  │                            │                                                 
  │                            └──────────────────────────── Thermacetogenium    
- │                                                                           
+─┤
  │             ┌─────────────────────────────────────────── Alicyclobacillus    
  │             │                                                                
  │             │              ┌──────────────────────────── Amphibacillus       
