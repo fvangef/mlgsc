@@ -1,8 +1,7 @@
 module Classifier (
     Classifier(..),
     buildClassifier,
-    scoreSequenceWithCrumbs,
-    scoreSequenceWithExtendedCrumbs) where
+    classifySequenceWithExtendedTrail) where
 
 import Data.Tree
 import qualified Data.Map.Strict as M
@@ -52,9 +51,22 @@ buildPepClassifier smallprob scale map otuTree = Classifier otuTree modTree
             treeOfAlns      = mergeAlns treeOfLeafAlns
             treeOfLeafAlns  = fmap (\k -> M.findWithDefault [] k map) otuTree
 
+
+-- Classifies a Sequence according to a NucClassifier, yielding a Trail (list
+-- of (OTUName, best-score, next-best-score)).
+
+classifySequenceWithExtendedTrail :: Classifier -> Sequence -> Trail
+classifySequenceWithExtendedTrail classifier@(Classifier otuTree _) query
+    = followExtendedCrumbsWithTrail crumbs otuTree
+    where   (score, crumbs) = scoreSequenceWithExtendedCrumbs classifier query  
+
+-- Scores a Sequence according to a Classifier, yielding a (score, Crumb list)
+
 scoreSequenceWithCrumbs :: Classifier -> Sequence -> (Int, Crumbs)
 scoreSequenceWithCrumbs (Classifier _ modTree) seq =
     dropCrumbs (scoreCrumbs seq) modTree
+
+-- Same thing, but with ExtCrumbs
 
 scoreSequenceWithExtendedCrumbs (Classifier _ modTree) seq =
     dropExtendedCrumbs (scoreCrumbs seq) modTree

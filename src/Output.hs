@@ -19,7 +19,7 @@ import FastA
 import Crumbs (dropCrumbs, followCrumbs, followCrumbsWithTrail,
     followExtendedCrumbsWithTrail)
 import NucModel
-import Classifier (Classifier(..), scoreSequenceWithExtendedCrumbs)
+
 
 -- formats a header and a classification. 
 --
@@ -27,20 +27,12 @@ fmtOutputLine :: LT.Text -> ST.Text -> ST.Text
 fmtOutputLine header pred =
     ST.concat [LT.toStrict header, ST.pack "\t->\t", pred]
 
--- Classifies a Sequence according to a NucClassifier
-
-classifySequenceWithExtendedTrail :: Classifier -> Sequence -> ST.Text
-classifySequenceWithExtendedTrail classifier@(Classifier otuTree _) query
-    = trailToExtendedTaxo trail
-    where   (score, crumbs) = scoreSequenceWithExtendedCrumbs classifier query  
-            trail = followExtendedCrumbsWithTrail crumbs otuTree
-
 -- Takes an extended trail (i.e., a list of (OTU name, best score, secod-best
 -- score) tuples) and formats it as a taxonomy line, with empty labels remplaced
 -- by 'unnamed' and labels followed by the log10 of the evidence ratio between
 -- the best and second-best likelihoods.
 
-trailToExtendedTaxo :: [(ST.Text, Int, Int)] -> ST.Text
+trailToExtendedTaxo :: Trail -> ST.Text
 trailToExtendedTaxo trail = ST.intercalate (ST.pack "; ") $ getZipList erLbls
     where   labels = ZipList $ tail $ map (\(lbl,_,_) -> lbl) trail
             bests = ZipList $ init $ map (\(_,best,_) -> best) trail

@@ -23,8 +23,7 @@ import Crumbs (dropCrumbs, followCrumbs, followCrumbsWithTrail,
 import CladeModel
 import NucModel
 import Align
-import Classifier (Classifier(..), scoreSequenceWithCrumbs,
-        scoreSequenceWithExtendedCrumbs)
+import Classifier (Classifier(..), classifySequenceWithExtendedTrail)
 import Output
 
 data Params = Params {
@@ -61,7 +60,8 @@ main = do
                             then id
                             else (msalign scoringScheme rootMod)
     let headers = map FastA.header queryRecs
-    let predictions = map (classifySequenceWithExtendedTrail classifier .
+    let predictions = map (trailToExtendedTaxo  .
+                            classifySequenceWithExtendedTrail classifier .
                             processQuery .
                             LT.toStrict . 
                             FastA.sequence) queryRecs

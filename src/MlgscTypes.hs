@@ -15,3 +15,4 @@ type OTUName        = Text
 type OTUTree        = Tree OTUName
 type ScaleFactor    = Double
 type SmallProb      = Double
+type Trail          = [(OTUName, Int, Int)]

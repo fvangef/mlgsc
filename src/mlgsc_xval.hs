@@ -28,7 +28,7 @@ import Align
 import Crumbs (dropCrumbs, followCrumbs)
 import CladeModel
 import NucModel
-import Classifier (Classifier(..), buildClassifier, scoreSequenceWithCrumbs)
+import Classifier (Classifier(..), buildClassifier, classifySequenceWithExtendedTrail)
 import NewickParser
 import NewickDumper
 import Weights
@@ -171,14 +171,6 @@ runInfo params randomIndices
         ("# trials: " ++ (show $ optNbRounds params))
         ]
 
-scoreQuery :: Classifier -> FastA -> String
-scoreQuery classifier@(Classifier otuTree _) query =
-    (LT.unpack $ FastA.header query) ++ " -> " ++ (ST.unpack otu) ++ " (" 
-    ++ (show score) ++ ")"
-    where   otu = followCrumbs crumbs otuTree 
-            (score, crumbs) = scoreSequenceWithCrumbs classifier querySeq 
-            querySeq = LT.toStrict $ FastA.sequence query
-
 -- Given any Seq, returns its nth element as well as all the others, in the
 -- same order. Note: this is a Data.Sequence.Seq, not a (biomolecular)
 -- Sequence. I just use a Seq instead of a list because it's faster.
@@ -203,7 +195,7 @@ leaveOneOut :: Molecule -> Bool -> SmallProb -> ScaleFactor ->
 leaveOneOut mol noHWt smallProb scaleFactor tree fastaRecs n =
     ST.concat [header, ST.pack " -> ", prediction] 
     where   header = LT.toStrict $ FastA.header testRec
-            prediction = classifySequenceWithExtendedTrail
+            prediction = trailToExtendedTaxo $ classifySequenceWithExtendedTrail
                 classifier alignedTestSeq
             alignedTestSeq = msalign scoringScheme rootMod $ degap testSeq
             scoringScheme = ScoringScheme (-2)

@@ -14,9 +14,18 @@ import Data.Tree
 import Data.List
 import Control.Monad.Writer
 
+import CladeModel
 
 type Crumb = Int
 type Crumbs = [Crumb]
+
+type ExtCrumb = (Int, Int, Int)
+type ExtCrumbs = [ExtCrumb]
+
+{- TODO: 
+ * simple Crumbs are not used anymore
+ * extended crumbs should be (Int, Int, Int)
+ -}
 
 empty = (undefined, -1)
 emptyExt = (undefined, -1, 1, 1)
@@ -82,6 +91,7 @@ dropExtendedCrumbs m tree = runWriter $ dropExtendedCrumbsM m tree
 
 -- like dropCrumbsM, but with extended crumbs.
 
+dropExtendedCrumbsM :: (CladeModel -> Int) -> Tree CladeModel -> Writer ExtCrumbs Int
 dropExtendedCrumbsM m (Node rl []) = return $ m rl
 dropExtendedCrumbsM m (Node rl kids) = do
     let (bestKid, bestNdx, bestScore, secondBestScore) = bestByExtended kids m'
