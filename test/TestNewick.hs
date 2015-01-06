@@ -33,6 +33,12 @@ newicks = [
 testCases = Prelude.map makeNewickTestCase newicks
 rwtests = TestList $ Prelude.map (TestLabel "Newick R/W" ) testCases
 
+-- The Newick parser ignores branch lengths, but trees with branch lengths
+-- should parse just fine.
+(Right tree10) = parseNewickTree "((A:1,B:1.2)f:3.1,((C:0.2,D:2)g:23,E:2)h:1)i:23;"
+exp10 = pack "((A,B)f,((C,D)g,E)h)i;"
+test10 = "with lengths" ~: exp10 @=? treeToNewick tree10
+
 -- tests the fringe of a tree (set of leaves)
 
 nw02 = "(Aeromonas,(Bacillus,Clostridium));"
