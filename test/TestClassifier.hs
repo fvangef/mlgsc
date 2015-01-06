@@ -9,6 +9,7 @@ import FastA
 import Alignment
 import Classifier
 import Crumbs
+import MlgscTypes
 
 fastaInput1 = unlines [
     ">ID0 Aeromonas", 
@@ -47,7 +48,7 @@ fastaRecs1 = fastATextToRecords $ LT.pack fastaInput1
 aln1 = fastARecordsToAln fastaRecs1
 map1 = alnToAlnMap aln1
 
-clssfr1 = buildNucClassifier smallprob scale map1 tree1
+clssfr1 = buildClassifier DNA smallprob scale map1 tree1
 
 
 -- Now score sequences according to the classifier, e.g.

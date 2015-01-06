@@ -18,7 +18,7 @@ aln1 = [
         ]
 
 
-aln1Mod = alnToNucModel small_prob scale_factor aln1
+aln1Mod = NucCladeModel $ alnToNucModel small_prob scale_factor aln1
 scsc = ScoringScheme (-2) (scoringSchemeMap (absentResScore aln1Mod))
 
 input1 = "AAATTTAAA"
