@@ -107,9 +107,6 @@ test40 = "drop ext crumbs, int" ~: (dropExtendedCrumbs id intTree) ~?=
 test41 = "drop ext crumbs, str len" ~:
     (dropExtendedCrumbs length stringTree) ~?=
     (4,[(0,3,3), (0,5,4), (0,4,3)]) 
-test42 = "drop ext crumbs, str ! 1" ~:
-    (dropExtendedCrumbs (!! 1) stringTree) ~?=
-    ('i',[(1,'w','n'), (0,'i','i')]) 
 
 tests = TestList [
             TestLabel "bestByWithIndex" test01
@@ -125,7 +122,6 @@ tests = TestList [
             , TestLabel "followCrumbsWithTrail" test32
             , TestLabel "dropExtendedCrumbs" test40
             , TestLabel "dropExtendedCrumbs" test41
-            , TestLabel "dropExtendedCrumbs" test42
 		]
 
 -- Test followCrumbs, using the above cases "the other way around"

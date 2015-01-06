@@ -50,7 +50,7 @@ map1 = alnToAlnMap aln1
 
 clssfr1 = buildClassifier DNA smallprob scale map1 tree1
 
-
+-- TODO: should use extended crumbs, and not call these functions directly.
 -- Now score sequences according to the classifier, e.g.
 
 (s1, c1) = scoreSequenceWithCrumbs clssfr1 $ ST.pack "ACGTACGT"

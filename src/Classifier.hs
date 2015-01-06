@@ -1,6 +1,7 @@
 module Classifier (
     Classifier(..),
     buildClassifier,
+    scoreSequenceWithCrumbs,
     classifySequenceWithExtendedTrail) where
 
 import Data.Tree
