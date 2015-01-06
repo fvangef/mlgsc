@@ -23,8 +23,9 @@ import Classifier (Classifier(..), scoreSequenceWithExtendedCrumbs)
 
 -- formats a header and a classification. 
 --
-output :: LT.Text -> ST.Text -> ST.Text
-output header pred = ST.concat [LT.toStrict header, ST.pack "\t->\t", pred]
+fmtOutputLine :: LT.Text -> ST.Text -> ST.Text
+fmtOutputLine header pred =
+    ST.concat [LT.toStrict header, ST.pack "\t->\t", pred]
 
 -- Classifies a Sequence according to a NucClassifier
 

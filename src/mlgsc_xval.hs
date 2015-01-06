@@ -196,11 +196,12 @@ spliceElemAt seq n = (elem, head >< tail)
 -- does one leave-one-out test.
 
 -- TODO: rmove the hard-coded constants below!
+-- TODO: use output f()s from Output.hs
 
 leaveOneOut :: Molecule -> Bool -> SmallProb -> ScaleFactor ->
     OTUTree -> Seq FastA -> Int -> ST.Text
 leaveOneOut mol noHWt smallProb scaleFactor tree fastaRecs n =
-    ST.concat [header, ST.pack " -> ", prediction]
+    ST.concat [header, ST.pack " -> ", prediction] 
     where   header = LT.toStrict $ FastA.header testRec
             prediction = classifySequenceWithExtendedTrail
                 classifier alignedTestSeq

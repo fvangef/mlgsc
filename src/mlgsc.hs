@@ -65,6 +65,6 @@ main = do
                             processQuery .
                             LT.toStrict . 
                             FastA.sequence) queryRecs
-    mapM_ STIO.putStrLn $ zipWith output headers predictions
+    mapM_ STIO.putStrLn $ zipWith fmtOutputLine headers predictions
 
 
