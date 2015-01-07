@@ -12,6 +12,7 @@ import qualified Data.Text.Lazy.IO as LTIO
 import qualified Data.Text as ST
 import qualified Data.Text.IO as STIO
 import Text.Printf
+import Control.Applicative
 import Options.Applicative
 
 import Data.Binary (decodeFile)
@@ -60,11 +61,10 @@ main = do
                             then id
                             else (msalign scoringScheme rootMod)
     let headers = map FastA.header queryRecs
-    let predictions = map (trailToExtendedTaxo  .
-                            classifySequenceWithExtendedTrail classifier .
-                            processQuery .
-                            LT.toStrict . 
-                            FastA.sequence) queryRecs
-    mapM_ STIO.putStrLn $ zipWith fmtOutputLine headers predictions
-
-
+    let processedQueries =
+            map (processQuery . LT.toStrict. FastA.sequence) queryRecs
+    let predictions =
+            map (trailToExtendedTaxo .
+                classifySequenceWithExtendedTrail classifier) processedQueries
+    let outLines = fmtOutputLine <$> ZipList headers <*> ZipList predictions
+    mapM_ STIO.putStrLn $ getZipList outLines
