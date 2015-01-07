@@ -67,7 +67,8 @@ main = do
                             else (msalign scoringScheme rootMod)
     let headers = map FastA.header queryRecs
     let processedQueries =
-            map (processQuery . LT.toStrict. FastA.sequence) queryRecs
+            map (processQuery . ST.toUpper .
+                LT.toStrict. FastA.sequence) queryRecs
     let predictions =
             map (trailToExtendedTaxo .
                 classifySequenceWithExtendedTrail classifier) processedQueries

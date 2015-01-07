@@ -19,7 +19,7 @@ fastATextToRecords fasta = map chunk2FastA chunks
 chunk2FastA :: LT.Text -> FastA
 chunk2FastA chunk = FastA hdr seq
     where   hdr = head chunk_lines
-            seq = LT.concat $ tail chunk_lines 
+            seq = (LT.toUpper . LT.concat) $ tail chunk_lines 
             chunk_lines = LT.lines chunk
 
 fastAId :: FastA -> LT.Text
