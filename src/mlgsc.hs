@@ -61,10 +61,10 @@ main = do
                             then id
                             else (msalign scoringScheme rootMod)
     let headers = map FastA.header queryRecs
-    let predictions = map (classifySequenceWithExtendedTrail classifier .
-                            processQuery .
-                            LT.toStrict . 
-                            FastA.sequence) queryRecs
+    let processedQueries =
+            map (processQuery . LT.toStrict. FastA.sequence) queryRecs
+    let predictions =
+            map (classifySequenceWithExtendedTrail classifier) processedQueries
     mapM_ STIO.putStrLn $ zipWith output headers predictions
 
 
