@@ -21,11 +21,18 @@ import Crumbs (dropCrumbs, followCrumbs, followCrumbsWithTrail,
 import NucModel
 
 
--- formats a header and a classification. 
---
-fmtOutputLine :: LT.Text -> ST.Text -> ST.Text
-fmtOutputLine header pred =
+-- formats a header and a classification, with an arrow ('->') in between 
+
+stdOutputLine :: LT.Text -> ST.Text -> ST.Text
+stdOutputLine header pred =
     ST.concat [LT.toStrict header, ST.pack "\t->\t", pred]
+
+-- as above, but prints the query as well.
+
+extOutputLine :: LT.Text -> ST.Text -> Sequence -> ST.Text
+extOutputLine header pred query =
+    ST.concat [LT.toStrict header, ST.pack "\t->\t", pred,
+        ST.pack " [", query, ST.pack "]"]
 
 -- Takes an extended trail (i.e., a list of (OTU name, best score, secod-best
 -- score) tuples) and formats it as a taxonomy line, with empty labels remplaced
