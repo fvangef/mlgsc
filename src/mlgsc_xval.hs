@@ -133,7 +133,7 @@ main = do
     let randomIndices = take nbRounds $ shuffleList gen $ validIndices fastARecs
     let mol = molType params
     let noHWt = optNoHenikoffWt params
-    putStrLn $ runInfo params randomIndices
+    putStrLn $ runInfo params randomIndices gen
     mapM_ (STIO.putStrLn .
         leaveOneOut mol noHWt smallProb scaleFactor tree fastARecs) randomIndices
 
@@ -143,7 +143,7 @@ main = do
 getGen :: Int -> IO StdGen
 getGen seed
     | seed < 0 = getStdGen
-    | otherwise = return $ mkStdGen seed
+    | otherwise = return $ mkStdGen (seed - 1)
 
 -- Return a list of indices of valid FastA records (index in the records
 -- Sequence). A record is valid, for LOO purposes, if it pertains to an OTU with
@@ -160,15 +160,19 @@ validIndices fastARecs = map snd validFreqIdxPairs
             fastAOTUs = toList $ fmap fastAOTU fastARecs
             toFreqIdxPair idx fasta = (freq, idx)
                 where   freq = otu2freq ! (fastAOTU fasta)
-                        
-runInfo :: Params -> [Int] -> String
-runInfo params randomIndices
+
+runInfo :: Params -> [Int] -> StdGen -> String
+runInfo params randomIndices gen
     | (optVerbosity params <= 1) = ""
     | otherwise = unlines [
-        "Performing LOO X-val on indices ",
-        ("indices: " ++ (show randomIndices)),
-        ("seed: " ++ (show $ optSeed params)),
-        ("# trials: " ++ (show $ optNbRounds params))
+        ("Performing " ++ (show $ optNbRounds params) ++  " rounds of LOO"),
+        ("alignment:\t" ++ alnFname params),
+        ("phylogeny:\t" ++ treeFname params),
+        ("seed:\t" ++ (head $ words $ show gen)),
+        ("indices:\t" ++ (show randomIndices)),
+        ("min #nb seq / OTU:\t" ++ (show $ optMinSeqInOTU params)),
+        ("Henikoff weighting:\t" ++ (show $ not $ optNoHenikoffWt params))
+
         ]
 
 -- Given any Seq, returns its nth element as well as all the others, in the
