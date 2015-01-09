@@ -19,7 +19,24 @@ import FastA
 import Crumbs (dropCrumbs, followCrumbs, followCrumbsWithTrail,
     followExtendedCrumbsWithTrail)
 import NucModel
+import OutputFormatStringParser
 
+
+-- formats an output line given a query and its classfication (= path through
+-- the tree) as well as a format string.
+
+formatResult :: String -> LT.Text -> Sequence -> ST.Text -> ST.Text
+formatResult fmtString qHeader qSeq path = 
+    ST.concat $ map (evalFmtComponent qHeader qSeq path) format
+        where (Right format) = parseOutputFormatString fmtString
+
+evalFmtComponent :: LT.Text -> Sequence -> ST.Text -> FmtComponent -> ST.Text
+evalFmtComponent qHeader _ _ Header = LT.toStrict qHeader  
+evalFmtComponent _ qSeq _ Sequence = qSeq
+evalFmtComponent _ qSeq _ Length = ST.pack $ show $
+    ST.length $ ST.filter (/= '-') qSeq
+evalFmtComponent _ _ path Path = path
+evalFmtComponent _ _ _ (Literal c) = ST.pack [c]
 
 -- formats a header and a classification, with an arrow ('->') in between 
 

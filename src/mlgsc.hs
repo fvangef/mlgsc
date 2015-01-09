@@ -72,8 +72,5 @@ main = do
     let predictions =
             map (trailToExtendedTaxo .
                 classifySequenceWithExtendedTrail classifier) processedQueries
-    let outLines = getZipList $ if optShowQuery params
-        then extOutputLine <$> ZipList headers <*> ZipList predictions
-             <*> ZipList processedQueries
-        else stdOutputLine <$> ZipList headers <*> ZipList predictions
+    let outLines = getZipList $ (formatResult "%h (%l): %p") <$> ZipList headers <*> ZipList processedQueries <*> ZipList predictions
     mapM_ STIO.putStrLn outLines
