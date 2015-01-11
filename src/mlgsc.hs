@@ -29,7 +29,7 @@ import Output
 
 data Params = Params {
                 optNoAlign          :: Bool
-                , optShowQuery      :: Bool
+                , optOutFmtString   :: String
                 , queryFname        :: String
                 , clsfrFname        :: String
                 }
@@ -40,10 +40,11 @@ parseOptions = Params
                     (long "no-align"
                     <> short 'A'
                     <> help "do not align query sequences")
-                <*> switch
-                    (long "show-query"
-                    <> short 's'
-                    <> help "show query (after alignment, if aligned)")
+                <*> option str
+                    (long "output-format"
+                    <> short 'f'
+                    <> help "printf-like format string for output"
+                    <> value "%h -> %p")
                 <*> argument str (metavar "<query seq file>")
                 <*> argument str (metavar "<classifier file>")
 
@@ -72,5 +73,8 @@ main = do
     let predictions =
             map (trailToExtendedTaxo .
                 classifySequenceWithExtendedTrail classifier) processedQueries
-    let outLines = getZipList $ (formatResult "%h (%l): %p") <$> ZipList headers <*> ZipList processedQueries <*> ZipList predictions
+    let outLines = getZipList $ (formatResult $ optOutFmtString params)
+                                <$> ZipList queryRecs
+                                <*> ZipList processedQueries
+                                <*> ZipList predictions
     mapM_ STIO.putStrLn outLines

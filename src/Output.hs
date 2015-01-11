@@ -22,19 +22,20 @@ import NucModel
 import OutputFormatStringParser
 
 
--- formats an output line given a query and its classfication (= path through
--- the tree) as well as a format string.
+-- formats an output line according to a format string (à la printf). ARguments
+-- are: format string, original query as a FastA record, query sequence after
+-- alignment, and path through the tree (as returned by trailToExtendedTaxo).
 
-formatResult :: String -> LT.Text -> Sequence -> ST.Text -> ST.Text
-formatResult fmtString qHeader qSeq path = 
-    ST.concat $ map (evalFmtComponent qHeader qSeq path) format
+formatResult :: FmtString -> FastA -> Sequence -> ST.Text -> ST.Text
+formatResult fmtString query alnQry path = 
+    ST.concat $ map (evalFmtComponent query alnQry path) format
         where (Right format) = parseOutputFormatString fmtString
 
-evalFmtComponent :: LT.Text -> Sequence -> ST.Text -> FmtComponent -> ST.Text
-evalFmtComponent qHeader _ _ Header = LT.toStrict qHeader  
-evalFmtComponent _ qSeq _ Sequence = qSeq
-evalFmtComponent _ qSeq _ Length = ST.pack $ show $
-    ST.length $ ST.filter (/= '-') qSeq
+evalFmtComponent :: FastA -> Sequence -> ST.Text -> FmtComponent -> ST.Text
+evalFmtComponent query _ _ Header = LT.toStrict $ FastA.header query
+evalFmtComponent _ alnQry _ AlignedQuery = alnQry
+evalFmtComponent query _ _ QueryLength = ST.pack $ show $
+    LT.length $ FastA.sequence query
 evalFmtComponent _ _ path Path = path
 evalFmtComponent _ _ _ (Literal c) = ST.pack [c]
 

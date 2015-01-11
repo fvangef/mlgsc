@@ -1,6 +1,7 @@
 module OutputFormatStringParser (
     FmtComponent(..),
     Format,
+    FmtString,
     parseOutputFormatString) where
 
 
@@ -10,11 +11,12 @@ import qualified Data.Text as T
 data FmtComponent = Literal Char
                         | Header
                         | Path
-                        | Length
-                        | Sequence
+                        | QueryLength
+                        | AlignedQuery
                         deriving (Show)
                        
 type Format = [FmtComponent]
+type FmtString = String
 
 literalChar :: Parser FmtComponent
 literalChar = do
@@ -24,12 +26,12 @@ literalChar = do
 escape :: Parser FmtComponent
 escape = do
     char '%'
-    f <- oneOf "hpl%"
+    f <- oneOf "ahlp%"
     return $ case f of
                 'h' -> Header
                 'p' -> Path
-                'l' -> Length
-                's' -> Sequence
+                'l' -> QueryLength
+                'a' -> AlignedQuery
                 '%' -> Literal '%'
 
 fmtComponent :: Parser FmtComponent
