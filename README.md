@@ -368,4 +368,23 @@ indicate that the wrong file(s) are being used, hence the warnings. At any
 rate, any actual _Listeria_ among the queries will be misclassified. To
 suppress all warnings, pass `-v 0` (verbosity level 0: quiet).
 
+The classification now shows internal tree labels:
 
+```
+$ mlgsc Spo0A_env_ampl_prot.pep firmicutes_Spo0A.mod | head
+IEQTHJI02DW663_1 [1 - 588]  -> Bacilli (50); Paenibacillaceae (44); Brevibacillus (140)
+IEQTHJI02DW663_2 [492 - 1] (REVERSE SENSE)  -> Clostridia (135); Clostridiales (182); Clostridium (98)
+IEQTHJI02DXXW9_1 [587 - 3] (REVERSE SENSE)  -> Bacilli (3); Paenibacillaceae (23); Paenibacillus (5)
+IEQTHJI02D2KPX_1 [404 - 3] (REVERSE SENSE)  -> Clostridia (23); Clostridiales (86); Clostridium (80)
+IEQTHJI02D8PM8_1 [1 - 546]  -> Clostridia (14); Clostridiales (147); Clostridium (162)
+IEQTHJI02D28VO_1 [183 - 593]  -> Clostridia (90); Clostridiales (191); Clostridium (104)
+IEQTHJI02D28VO_2 [593 - 3] (REVERSE SENSE)  -> Bacilli (25); Paenibacillaceae (66); Paenibacillus (96)
+IEQTHJI02C9B6J_1 [1 - 534]  -> Clostridia (60); Clostridiales (96); Clostridium (117)
+IEQTHJI02EN3F3_1 [1 - 480]  -> Clostridia (5); Clostridiales (137); Clostridium (151)
+IEQTHJI02C74FC_1 [1 - 438]  -> Clostridia (8); Clostridiales (124); Clostridium (152)
+```
+
+By default, `mlgsc` output the whole header of the query sequence - often it
+contains just an ID. Sometimes, as is the case here, the header contains extra
+information that may not be essential. The format of `mlgsc`'s output can be
+controlled via a printf-like format string, as in the following example:
