@@ -1,4 +1,5 @@
-module FastA (FastA(..), fastATextToRecords, fastAId, fastAOTU) where
+module FastA (FastA(..), fastATextToRecords, fastAId, fastAOTU,
+    degap) where
 
 import qualified Data.Map.Strict as M -- most likely going to use all values
 import qualified Data.Text.Lazy as LT
@@ -27,3 +28,6 @@ fastAId = head . LT.words . FastA.header
 
 fastAOTU :: FastA -> LT.Text
 fastAOTU = (!! 1) . LT.words . FastA.header
+
+degap :: FastA -> FastA
+degap (FastA hdr seq) = FastA hdr $  LT.replace (LT.pack "-") LT.empty seq

@@ -9,6 +9,7 @@ import Text.ParserCombinators.Parsec
 import qualified Data.Text as T
 
 data FmtComponent = Literal Char
+                        | ID
                         | Header
                         | Path
                         | QueryLength
@@ -26,13 +27,14 @@ literalChar = do
 escape :: Parser FmtComponent
 escape = do
     char '%'
-    f <- oneOf "ahlp%"
+    f <- oneOf "ahilp%"
     return $ case f of
-                'h' -> Header
-                'p' -> Path
-                'l' -> QueryLength
-                'a' -> AlignedQuery
                 '%' -> Literal '%'
+                'a' -> AlignedQuery
+                'l' -> QueryLength
+                'h' -> Header
+                'i' -> ID
+                'p' -> Path
 
 fmtComponent :: Parser FmtComponent
 fmtComponent = literalChar <|> escape

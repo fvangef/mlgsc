@@ -32,9 +32,10 @@ formatResult fmtString query alnQry path =
 
 evalFmtComponent :: FastA -> Sequence -> ST.Text -> FmtComponent -> ST.Text
 evalFmtComponent query _ _ Header = LT.toStrict $ FastA.header query
-evalFmtComponent _ alnQry _ AlignedQuery = alnQry
 evalFmtComponent query _ _ QueryLength = ST.pack $ show $
     LT.length $ FastA.sequence query
+evalFmtComponent query _ _ ID = LT.toStrict $ fastAId query
+evalFmtComponent _ alnQry _ AlignedQuery = alnQry
 evalFmtComponent _ _ path Path = path
 evalFmtComponent _ _ _ (Literal c) = ST.pack [c]
 

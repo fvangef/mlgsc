@@ -200,20 +200,20 @@ spliceElemAt seq n = (elem, head >< tail)
 -- does one leave-one-out test.
 
 -- TODO: rmove the hard-coded constants below!
--- TODO: use output f()s from Output.hs
+-- TODO: refactor, passing params as a single argument, or using a Reader monad
 
 leaveOneOut :: FmtString -> Molecule -> Bool -> SmallProb -> ScaleFactor ->
     OTUTree -> Seq FastA -> Int -> ST.Text
 leaveOneOut fmtString mol noHWt smallProb scaleFactor tree fastaRecs n =
-    formatResult fmtString testRec alignedTestSeq prediction 
+    formatResult fmtString origRec alignedTestSeq prediction 
     where   header = LT.toStrict $ FastA.header testRec
             prediction = trailToExtendedTaxo $ classifySequenceWithExtendedTrail
                 classifier alignedTestSeq
-            alignedTestSeq = msalign scoringScheme rootMod $ degap testSeq
+            alignedTestSeq = msalign scoringScheme rootMod testSeq
             scoringScheme = ScoringScheme (-2)
                 (scoringSchemeMap (absentResScore rootMod))
             rootMod = rootLabel modTree 
-            testSeq = LT.toStrict $ FastA.sequence testRec
+            testSeq = LT.toStrict $ FastA.sequence origRec
             classifier@(Classifier _ modTree) =
                 buildClassifier mol smallProb scaleFactor otuAlnMap tree
             otuAlnMap = alnToAlnMap wtOtuAln
@@ -223,7 +223,6 @@ leaveOneOut fmtString mol noHWt smallProb scaleFactor tree fastaRecs n =
             otuAln = fastARecordsToAln trainSet
             trainSet = Data.Foldable.toList trainSetSeq
             (testRec, trainSetSeq) = spliceElemAt fastaRecs n
-
-degap :: Sequence -> Sequence
-degap = ST.replace gap ST.empty
-    where gap = ST.pack "-"
+            -- we also need the ungapped sequence, e.g. for output and to make
+            -- sure alignment works.
+            origRec = FastA.degap testRec
