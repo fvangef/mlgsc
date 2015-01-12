@@ -245,7 +245,8 @@ done with program `mlgsc`, which takes two arguments: the name of the queries
 file, and the name of the classifier. Let's run it on its own input, to see if
 its predicted classifications make sense:
 
-{{{
+
+```shell
 $ mlgsc Spo0A.pep Spo0A.bcls
 ID_001 Bacillus -> Bacilli (56); Bacillaceae (97); Bacillus (87)
 ID_002 Clostridium -> Clostridia (106); unnamed (138); Clostridium (83)
@@ -254,7 +255,7 @@ ID_004 Bacillus -> Bacilli (79); Bacillaceae (95); Bacillus (99)
 ID_005 Bacillus -> Bacilli (84); Bacillaceae (89); Bacillus (104)
 ID_006 Bacillus -> Bacilli (84); Bacillaceae (89); Bacillus (104)
 ...
-}}}
+```
 
 where `Spo0A.pep` contains the (unaligned) Spo0A sequences. As we can see, the
 first six queries are predicted correctly. However, since these queries were
