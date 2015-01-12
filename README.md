@@ -271,8 +271,10 @@ The function of `mlgsc_xval` is to validate a classifier. To do so, it takes
 the same inputs as `mlgsc_train` (namely, an alignment and a tree), but instead
 of directly building a classifier, it does the following:
 
-1. Randomly draw one sequence from the alignment. This sequence becomes the _test sequence_, while all the other sequences form the _training set_.
-2. Build a classifier using the training set and the tree.
+1. Randomly draw one sequence from the alignment. This sequence becomes the
+   _test sequence_, while all the other sequences form the _training set_. The
+   test sequence is thus not part of the training set;
+2. Build a classifier using the training set and the tree;
 3. Classify the test sequence using the classifier.
 
 This procedure is repeated one hundred times (the number can be changed with option `-r`).
