@@ -406,7 +406,7 @@ IEQTHJI02C74FC_1 -> Clostridia (8); Clostridiales (124); Clostridium (152)
 Here, option `-f` specifies the format via its argument, `%i -> %p`. The `%i` is a placeholder for the ID, which is taken to be the first word (whitespace-separated) in the header; the `%p` is a placeholder for the predicted classification. The following placeholders are recognized:
 
 placeholder | meaning
----------------------
+------------|--------
 `%a`        | aligned query sequence (useful for diagnosing alignment problems)
 `%h`        | full FastA header
 `%i`        | query ID (1st word of header)
