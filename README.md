@@ -414,3 +414,16 @@ placeholder | meaning
 `%p`	    | predicted classification (path through the tree)
 `%%`	    | literal % sign
 
+For example, it may be useful to display the length of the query, since short
+sequence carry less information and may be harder to classify. The following
+format string shows the query length in parentheses, prefixed by "`l=`":
+
+```bash
+$ mlgsc -f "%i (l=%l) -> %p" Spo0A_env_ampl_prot.pep firmicutes_Spo0A.mod
+IEQTHJI02DW663_1 (l=196) -> Bacilli (50); Paenibacillaceae (44); Brevibacillus
+(140)
+IEQTHJI02DW663_2 (l=164) -> Clostridia (135); Clostridiales (182); Clostridium
+(98)
+IEQTHJI02DXXW9_1 (l=195) -> Bacilli (3); Paenibacillaceae (23); Paenibacillus (5
+...
+```
