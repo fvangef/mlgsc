@@ -388,3 +388,29 @@ By default, `mlgsc` output the whole header of the query sequence - often it
 contains just an ID. Sometimes, as is the case here, the header contains extra
 information that may not be essential. The format of `mlgsc`'s output can be
 controlled via a printf-like format string, as in the following example:
+
+```bash
+$ mlgsc -f "%i -> %p" Spo0A_env_ampl_prot.pep firmicutes_Spo0A.mod | head
+IEQTHJI02DW663_1 -> Bacilli (50); Paenibacillaceae (44); Brevibacillus (140)
+IEQTHJI02DW663_2 -> Clostridia (135); Clostridiales (182); Clostridium (98)
+IEQTHJI02DXXW9_1 -> Bacilli (3); Paenibacillaceae (23); Paenibacillus (5)
+IEQTHJI02D2KPX_1 -> Clostridia (23); Clostridiales (86); Clostridium (80)
+IEQTHJI02D8PM8_1 -> Clostridia (14); Clostridiales (147); Clostridium (162)
+IEQTHJI02D28VO_1 -> Clostridia (90); Clostridiales (191); Clostridium (104)
+IEQTHJI02D28VO_2 -> Bacilli (25); Paenibacillaceae (66); Paenibacillus (96)
+IEQTHJI02C9B6J_1 -> Clostridia (60); Clostridiales (96); Clostridium (117)
+IEQTHJI02EN3F3_1 -> Clostridia (5); Clostridiales (137); Clostridium (151)
+IEQTHJI02C74FC_1 -> Clostridia (8); Clostridiales (124); Clostridium (152)
+```
+
+Here, option `-f` specifies the format via its argument, `%i -> %p`. The `%i` is a placeholder for the ID, which is taken to be the first word (whitespace-separated) in the header; the `%p` is a placeholder for the predicted classification. The following placeholders are recognized:
+
+placeholder | meaning
+---------------------
+`%a`        | aligned query sequence (useful for diagnosing alignment problems)
+`%h`        | full FastA header
+`%i`        | query ID (1st word of header)
+`%l`	    | query length (unaligned)
+`%p`	    | predicted classification (path through the tree)
+`%%`	    | literal % sign
+
