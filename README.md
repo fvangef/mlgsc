@@ -346,3 +346,26 @@ IEQTHJI02EN3F3_1 [1 - 480]  -> unnamed (5); unnamed (137); Clostridium (151)
 IEQTHJI02C74FC_1 [1 - 438]  -> unnamed (8); unnamed (124); Clostridium (152)
 ...
 ```
+
+This example uses a tree in which only the leaves are labeled. Leaves must be
+labeled with OTU names for classification to work at all, but MLgsc can also
+use trees with internal labels, as shown below.
+
+File `firmicute_genera_fully-labeled.nw` contains a tree in which all internal
+nodes are labeled as well. It also contains an additional genus not found in
+the alignment.
+
+```
+$ mlgsc_train -o firmicutes_Spo0A.mod Prot firmicute_Spo0A_prot_train.msa firmicute_genera_fully-labeled.nw 
+The following tree OTUs are NOT found in the alignment:
+Listeria
+```
+
+MLgsc outputs a warning about the OTU name found in the tree but not in the
+alignment. The OTU is simply ignored and this does not prevent MLgsc from
+building a classifier, but discrepancies between alignment and tree may
+indicate that the wrong file(s) are being used, hence the warnings. At any
+rate, any actual _Listeria_ among the queries will be misclassified. To
+suppress all warnings, pass `-v 0` (verbosity level 0: quiet).
+
+
