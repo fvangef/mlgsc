@@ -25,7 +25,6 @@ import MlgscTypes
 import FastA
 import Alignment
 import Align
-import Crumbs (dropCrumbs, followCrumbs)
 import CladeModel
 import NucModel
 import Classifier (Classifier(..), buildClassifier, classifySequenceWithExtendedTrail)

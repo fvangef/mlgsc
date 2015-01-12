@@ -1,7 +1,6 @@
 module Classifier (
     Classifier(..),
     buildClassifier,
-    scoreSequenceWithCrumbs,
     classifySequenceWithExtendedTrail) where
 
 import Data.Tree
@@ -60,12 +59,6 @@ classifySequenceWithExtendedTrail :: Classifier -> Sequence -> Trail
 classifySequenceWithExtendedTrail classifier@(Classifier otuTree _) query
     = followExtendedCrumbsWithTrail crumbs otuTree
     where   (score, crumbs) = scoreSequenceWithExtendedCrumbs classifier query  
-
--- Scores a Sequence according to a Classifier, yielding a (score, Crumb list)
-
-scoreSequenceWithCrumbs :: Classifier -> Sequence -> (Int, Crumbs)
-scoreSequenceWithCrumbs (Classifier _ modTree) seq =
-    dropCrumbs (scoreCrumbs seq) modTree
 
 -- Same thing, but with ExtCrumbs
 

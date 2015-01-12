@@ -19,8 +19,7 @@ import Data.Binary (decodeFile)
 import Data.Tree
 import MlgscTypes
 import FastA
-import Crumbs (dropCrumbs, followCrumbs, followCrumbsWithTrail,
-    followExtendedCrumbsWithTrail)
+import Crumbs (followExtendedCrumbsWithTrail)
 import CladeModel
 import NucModel
 import Align
