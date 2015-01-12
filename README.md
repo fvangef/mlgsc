@@ -10,6 +10,9 @@ consists of the following:
 * `mlgsc_xval`: performs leave-one-out cross-validation on an alignment and a
   tree
 
+The distribution contains source code, binaries and example data, including data
+used in the article (submitted). 
+
 Example
 -------
 
@@ -279,3 +282,67 @@ of directly building a classifier, it does the following:
 
 This procedure is repeated one hundred times (the number can be changed with option `-r`).
 
+This form of cross-validation where the test set contains one datum and the
+training set contains all other data is called _Leave-one-out_. In the case of
+`mlgsc_xval`, we are constrained by the fact that an OTU in the tree must be
+represented by _at least one_ sequence in the alignment, otherwise there is no
+way for that OTU to be predicted as a classification. Therefore, a sequence can
+become a test sequence only if at least one sequence of the same OTU is left in
+the training set. By default, it is required that an OTU contain at least three,
+but this number can be changed with option `-m`.
+
+### Example
+
+The following is an example using real data referred to in the article
+(submitted). The data are found in subdirectory `data/manuscript`.
+
+#### Building the classifier
+
+File `firmicute_Spo0A_prot_train.msa` is a multiple alignment of known Spo0A
+sequences extracted from UniProtKB. 
+
+File `firmicute_genera.nw` is a Newick-formatted phylogeny of Firmicutes,
+downloaded from NCBI Taxonomy and edited so as to have genus labels instead of
+IDs at the tree tips.
+
+A protein model of Spo0A is created by the following command:
+
+```shell
+$ mlgsc_train -v 2 -o firmicutes_Spo0A.mod Prot firmicute_Spo0A_prot_train.msa
+firmicute_genera.nw
+MLGSC - building model 
+input alignment:  firmicute_Spo0A_prot_train.msa
+input tree: firmicute_genera.nw
+output: firmicutes_Spo0A.mod
+molecule: Prot
+small prob: 1.0e-4
+scale factor: 1000.0
+```
+
+Option `-v 2` (verbosity level 2) causes run information to be printed. Option
+`-o` specifies a name for the output file, that is, he classifier itself.
+
+#### Classifying environmental Amplicons
+
+File `Spo0A_env_ampl_prot.pep` contains translated amplicons of Spo0A from
+environmental samples (sediment from Lake Geneva). To classify these sequences,
+do:
+
+```bash
+$ mlgsc Spo0A_env_ampl_prot.pep firmicutes_Spo0A.mod
+IEQTHJI02DW663_1 [1 - 588]  -> unnamed (50); unnamed (44); Brevibacillus (140)
+IEQTHJI02DW663_2 [492 - 1] (REVERSE SENSE)  -> unnamed (135); unnamed (182);
+Clostridium (98)
+IEQTHJI02DXXW9_1 [587 - 3] (REVERSE SENSE)  -> unnamed (3); unnamed (23);
+Paenibacillus (5)
+IEQTHJI02D2KPX_1 [404 - 3] (REVERSE SENSE)  -> unnamed (23); unnamed (86);
+Clostridium (80)
+IEQTHJI02D8PM8_1 [1 - 546]  -> unnamed (14); unnamed (147); Clostridium (162)
+IEQTHJI02D28VO_1 [183 - 593]  -> unnamed (90); unnamed (191); Clostridium (104)
+IEQTHJI02D28VO_2 [593 - 3] (REVERSE SENSE)  -> unnamed (25); unnamed (66);
+Paenibacillus (96)
+IEQTHJI02C9B6J_1 [1 - 534]  -> unnamed (60); unnamed (96); Clostridium (117)
+IEQTHJI02EN3F3_1 [1 - 480]  -> unnamed (5); unnamed (137); Clostridium (151)
+IEQTHJI02C74FC_1 [1 - 438]  -> unnamed (8); unnamed (124); Clostridium (152)
+...
+```
