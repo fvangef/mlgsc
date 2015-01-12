@@ -256,7 +256,25 @@ ID_006 Bacillus -> Bacilli (84); Bacillaceae (89); Bacillus (104)
 ...
 }}}
 
+where `Spo0A.pep` contains the (unaligned) Spo0A sequences. As we can see, the
+first six queries are predicted correctly. However, since these queries were
+part of the training set, this cannot be used to validate the classifier's
+accuracy. To do this, we need to evaluate it on queries that are _not_ part of
+the training set, and this is the function of the third program in the package,
+`mlgsc_xval`.
 
+
+#### `mlgsc_xval`
+
+The function of `mlgsc_xval` is to validate a classifier. To do so, it takes
+the same inputs as `mlgsc_train` (namely, an alignment and a tree), but instead
+of directly building a classifier, it does the following:
+
+1. Randomly draw one sequence from the alignment. This sequence becomes the _test sequence_, while all the other sequences form the _training set_.
+2. Build a classifier using the training set and the tree.
+3. Classify the test sequence using the classifier.
+
+This procedure is repeated one hundred times (the number can be changed with option `-r`).
 
 ##### Reference Multiple Alignment
 
