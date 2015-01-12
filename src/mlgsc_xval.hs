@@ -34,6 +34,7 @@ import NewickDumper
 import Weights
 import Shuffle
 import Output
+import OutputFormatStringParser
 
 data Params = Params {
                 optSmallProb        :: Double
@@ -43,6 +44,7 @@ data Params = Params {
                 , optMinSeqInOTU    :: Int
                 , optVerbosity      :: Int
                 , optNoHenikoffWt   :: Bool
+                , optOutFmtString   :: String
                 , molType           :: Molecule
                 , alnFname          :: String
                 , treeFname         :: String
@@ -107,6 +109,12 @@ parseOptions = Params
                 <*> switch (
                         short 'W' <> long "no-Henikoff-weighting"
                         <> help "don't perform Henikoff weighting of input aln")
+                <*> option str
+                    (long "output-format"
+                    <> short 'f'
+                    <> metavar "OUTPUT FORMAT STRING"
+                    <> value "%h (%l) -> %p"
+                    <> help "printf-like format string for output")
                 <*> argument auto (metavar "<DNA|Prot>")
                 <*> argument str (metavar "<alignment file>")
                 <*> argument str (metavar "<tree file>")
@@ -135,7 +143,8 @@ main = do
     let noHWt = optNoHenikoffWt params
     putStrLn $ runInfo params randomIndices gen
     mapM_ (STIO.putStrLn .
-        leaveOneOut mol noHWt smallProb scaleFactor tree fastARecs) randomIndices
+        leaveOneOut (optOutFmtString params) mol noHWt smallProb
+        scaleFactor tree fastARecs) randomIndices
 
 -- gets a random number generator. If the seed is negative, gets the global
 -- generator, else use the seed.
@@ -194,10 +203,10 @@ spliceElemAt seq n = (elem, head >< tail)
 -- TODO: rmove the hard-coded constants below!
 -- TODO: use output f()s from Output.hs
 
-leaveOneOut :: Molecule -> Bool -> SmallProb -> ScaleFactor ->
+leaveOneOut :: FmtString -> Molecule -> Bool -> SmallProb -> ScaleFactor ->
     OTUTree -> Seq FastA -> Int -> ST.Text
-leaveOneOut mol noHWt smallProb scaleFactor tree fastaRecs n =
-    ST.concat [header, ST.pack " -> ", prediction] 
+leaveOneOut fmtString mol noHWt smallProb scaleFactor tree fastaRecs n =
+    formatResult fmtString testRec alignedTestSeq prediction 
     where   header = LT.toStrict $ FastA.header testRec
             prediction = trailToExtendedTaxo $ classifySequenceWithExtendedTrail
                 classifier alignedTestSeq
