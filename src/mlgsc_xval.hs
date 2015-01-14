@@ -207,8 +207,7 @@ leaveOneOut :: FmtString -> Molecule -> Bool -> SmallProb -> ScaleFactor ->
 leaveOneOut fmtString mol noHWt smallProb scaleFactor tree fastaRecs n =
     formatResult fmtString origRec alignedTestSeq prediction 
     where   header = LT.toStrict $ FastA.header testRec
-            prediction = trailToExtendedTaxo $ classifySequenceWithExtendedTrail
-                classifier alignedTestSeq
+            prediction = classifySequenceWithExtendedTrail classifier alignedTestSeq
             alignedTestSeq = msalign scoringScheme rootMod testSeq
             scoringScheme = ScoringScheme (-2)
                 (scoringSchemeMap (absentResScore rootMod))

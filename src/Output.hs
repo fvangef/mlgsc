@@ -25,18 +25,19 @@ import OutputFormatStringParser
 -- are: format string, original query as a FastA record, query sequence after
 -- alignment, and path through the tree (as returned by trailToExtendedTaxo).
 
-formatResult :: FmtString -> FastA -> Sequence -> ST.Text -> ST.Text
-formatResult fmtString query alnQry path = 
-    ST.concat $ map (evalFmtComponent query alnQry path) format
+formatResult :: FmtString -> FastA -> Sequence -> OutputData -> ST.Text
+formatResult fmtString query alnQry prediction = 
+    ST.concat $ map (evalFmtComponent query alnQry prediction) format
         where (Right format) = parseOutputFormatString fmtString
 
-evalFmtComponent :: FastA -> Sequence -> ST.Text -> FmtComponent -> ST.Text
+evalFmtComponent :: FastA -> Sequence -> OutputData -> FmtComponent -> ST.Text
 evalFmtComponent query _ _ Header = LT.toStrict $ FastA.header query
 evalFmtComponent query _ _ QueryLength = ST.pack $ show $
     LT.length $ FastA.sequence query
 evalFmtComponent query _ _ ID = LT.toStrict $ fastAId query
 evalFmtComponent _ alnQry _ AlignedQuery = alnQry
-evalFmtComponent _ _ path Path = path
+evalFmtComponent _ _ prediction Path = trailToExtendedTaxo $ trail prediction
+evalFmtComponent _ _ prediction Score = ST.pack $ show $ score prediction
 evalFmtComponent _ _ _ (Literal c) = ST.pack [c]
 
 -- Takes an extended trail (i.e., a list of (OTU name, best score, secod-best
