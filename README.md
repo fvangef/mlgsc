@@ -368,6 +368,7 @@ indicate that the wrong file(s) are being used, hence the warnings. At any
 rate, any actual _Listeria_ among the queries will be misclassified. To
 suppress all warnings, pass `-v 0` (verbosity level 0: quiet).
 
+The classification now shows internal tree labels:
 
 ```
 $ mlgsc Spo0A_env_ampl_prot.pep firmicutes_Spo0A.mod | head
