@@ -10,15 +10,16 @@ import Control.Monad.Writer
 
 import CladeModel
 
+data ScoredPathStep = ScoredPathStep {
+                childIndex  :: Int
+                , gold      :: Int  -- best score
+                , silver    :: Int  -- second-best score (no bronze...)
+                }
+
+type ScoredPath = [ScoredPathStep]
+
 type ExtCrumb = (Int, Int, Int)
 type ExtCrumbs = [ExtCrumb]
-
-{- TODO: 
- * simple Crumbs are not used anymore
- * extended crumbs should be (Int, Int, Int)
- -}
-
-emptyExt = (undefined, -1, 1, 1)
 
 {-
  - Extended Crumbs: these crumbs not only track the _index_ of the "best" child
