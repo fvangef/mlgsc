@@ -16,8 +16,7 @@ import Data.Tree
 --
 import MlgscTypes
 import FastA
-import Crumbs (dropCrumbs, followCrumbs, followCrumbsWithTrail,
-    followExtendedCrumbsWithTrail)
+import Crumbs (followExtendedCrumbsWithTrail)
 import NucModel
 import OutputFormatStringParser
 
@@ -26,31 +25,20 @@ import OutputFormatStringParser
 -- are: format string, original query as a FastA record, query sequence after
 -- alignment, and path through the tree (as returned by trailToExtendedTaxo).
 
-formatResult :: FmtString -> FastA -> Sequence -> ST.Text -> ST.Text
-formatResult fmtString query alnQry path = 
-    ST.concat $ map (evalFmtComponent query alnQry path) format
+formatResult :: FmtString -> FastA -> Sequence -> OutputData -> ST.Text
+formatResult fmtString query alnQry prediction = 
+    ST.concat $ map (evalFmtComponent query alnQry prediction) format
         where (Right format) = parseOutputFormatString fmtString
 
-evalFmtComponent :: FastA -> Sequence -> ST.Text -> FmtComponent -> ST.Text
+evalFmtComponent :: FastA -> Sequence -> OutputData -> FmtComponent -> ST.Text
 evalFmtComponent query _ _ Header = LT.toStrict $ FastA.header query
-evalFmtComponent _ alnQry _ AlignedQuery = alnQry
 evalFmtComponent query _ _ QueryLength = ST.pack $ show $
     LT.length $ FastA.sequence query
-evalFmtComponent _ _ path Path = path
+evalFmtComponent query _ _ ID = LT.toStrict $ fastAId query
+evalFmtComponent _ alnQry _ AlignedQuery = alnQry
+evalFmtComponent _ _ prediction Path = trailToExtendedTaxo $ trail prediction
+evalFmtComponent _ _ prediction Score = ST.pack $ show $ score prediction
 evalFmtComponent _ _ _ (Literal c) = ST.pack [c]
-
--- formats a header and a classification, with an arrow ('->') in between 
-
-stdOutputLine :: LT.Text -> ST.Text -> ST.Text
-stdOutputLine header pred =
-    ST.concat [LT.toStrict header, ST.pack "\t->\t", pred]
-
--- as above, but prints the query as well.
-
-extOutputLine :: LT.Text -> ST.Text -> Sequence -> ST.Text
-extOutputLine header pred query =
-    ST.concat [LT.toStrict header, ST.pack "\t->\t", pred,
-        ST.pack " [", query, ST.pack "]"]
 
 -- Takes an extended trail (i.e., a list of (OTU name, best score, secod-best
 -- score) tuples) and formats it as a taxonomy line, with empty labels remplaced

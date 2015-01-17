@@ -19,8 +19,7 @@ import Data.Binary (decodeFile)
 import Data.Tree
 import MlgscTypes
 import FastA
-import Crumbs (dropCrumbs, followCrumbs, followCrumbsWithTrail,
-    followExtendedCrumbsWithTrail)
+import Crumbs (followExtendedCrumbsWithTrail)
 import CladeModel
 import NucModel
 import Align
@@ -70,9 +69,7 @@ main = do
     let processedQueries =
             map (processQuery . ST.toUpper .
                 LT.toStrict. FastA.sequence) queryRecs
-    let predictions =
-            map (trailToExtendedTaxo .
-                classifySequenceWithExtendedTrail classifier) processedQueries
+    let predictions = map (classifySequenceWithExtendedTrail classifier) processedQueries
     let outLines = getZipList $ (formatResult $ optOutFmtString params)
                                 <$> ZipList queryRecs
                                 <*> ZipList processedQueries

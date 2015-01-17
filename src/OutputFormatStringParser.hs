@@ -9,11 +9,13 @@ import Text.ParserCombinators.Parsec
 import qualified Data.Text as T
 
 data FmtComponent = Literal Char
-                        | Header
-                        | Path
-                        | QueryLength
-                        | AlignedQuery
-                        deriving (Show)
+                    | ID
+                    | Header
+                    | Path
+                    | QueryLength
+                    | AlignedQuery
+                    | Score
+                    deriving (Show)
                        
 type Format = [FmtComponent]
 type FmtString = String
@@ -26,13 +28,15 @@ literalChar = do
 escape :: Parser FmtComponent
 escape = do
     char '%'
-    f <- oneOf "ahlp%"
+    f <- oneOf "%ahilps"
     return $ case f of
-                'h' -> Header
-                'p' -> Path
-                'l' -> QueryLength
-                'a' -> AlignedQuery
                 '%' -> Literal '%'
+                'a' -> AlignedQuery
+                'l' -> QueryLength
+                'h' -> Header
+                'i' -> ID
+                'p' -> Path
+                's' -> Score
 
 fmtComponent :: Parser FmtComponent
 fmtComponent = literalChar <|> escape

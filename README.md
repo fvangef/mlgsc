@@ -10,6 +10,9 @@ consists of the following:
 * `mlgsc_xval`: performs leave-one-out cross-validation on an alignment and a
   tree
 
+The distribution contains source code, binaries and example data, including data
+used in the article (submitted). 
+
 Example
 -------
 
@@ -237,3 +240,190 @@ The output is a binary file. For this reason, it is not written to standard
 output, but directly to a file. By default, that file's name is derived from
 the alignment's name. In this case, the name is `Spo0A.bcls` ("binary
 classifier"). To specify another name, use option `-o`.
+
+#### `mlgsc`
+
+The classifier can now be used to classify unknown ("query") sequences. This is
+done with program `mlgsc`, which takes two arguments: the name of the queries
+file, and the name of the classifier. Let's run it on its own input, to see if
+its predicted classifications make sense:
+
+
+```
+$ mlgsc Spo0A.pep Spo0A.bcls
+ID_001 Bacillus -> Bacilli (56); Bacillaceae (97); Bacillus (87)
+ID_002 Clostridium -> Clostridia (106); unnamed (138); Clostridium (83)
+ID_003 Clostridium -> Clostridia (106); unnamed (138); Clostridium (83)
+ID_004 Bacillus -> Bacilli (79); Bacillaceae (95); Bacillus (99)
+ID_005 Bacillus -> Bacilli (84); Bacillaceae (89); Bacillus (104)
+ID_006 Bacillus -> Bacilli (84); Bacillaceae (89); Bacillus (104)
+...
+```
+
+where `Spo0A.pep` contains the (unaligned) Spo0A sequences. As we can see, the
+first six queries are predicted correctly. However, since these queries were
+part of the training set, this cannot be used to validate the classifier's
+accuracy. To do this, we need to evaluate it on queries that are _not_ part of
+the training set, and this is the function of the third program in the package,
+`mlgsc_xval`.
+
+
+#### `mlgsc_xval`
+
+The function of `mlgsc_xval` is to validate a classifier. To do so, it takes
+the same inputs as `mlgsc_train` (namely, an alignment and a tree), but instead
+of directly building a classifier, it does the following:
+
+1. Randomly draw one sequence from the alignment. This sequence becomes the
+   _test sequence_, while all the other sequences form the _training set_. The
+   test sequence is thus not part of the training set;
+2. Build a classifier using the training set and the tree;
+3. Classify the test sequence using the classifier.
+
+This procedure is repeated one hundred times (the number can be changed with option `-r`).
+
+This form of cross-validation where the test set contains one datum and the
+training set contains all other data is called _Leave-one-out_. In the case of
+`mlgsc_xval`, we are constrained by the fact that an OTU in the tree must be
+represented by _at least one_ sequence in the alignment, otherwise there is no
+way for that OTU to be predicted as a classification. Therefore, a sequence can
+become a test sequence only if at least one sequence of the same OTU is left in
+the training set. By default, it is required that an OTU contain at least three,
+but this number can be changed with option `-m`.
+
+### Example
+
+The following is an example using real data referred to in the article
+(submitted). The data are found in subdirectory `data/manuscript`.
+
+#### Building the classifier
+
+File `firmicute_Spo0A_prot_train.msa` is a multiple alignment of known Spo0A
+sequences extracted from UniProtKB. 
+
+File `firmicute_genera.nw` is a Newick-formatted phylogeny of Firmicutes,
+downloaded from NCBI Taxonomy and edited so as to have genus labels instead of
+IDs at the tree tips.
+
+A protein model of Spo0A is created by the following command:
+
+```shell
+$ mlgsc_train -v 2 -o firmicutes_Spo0A.mod Prot firmicute_Spo0A_prot_train.msa
+firmicute_genera.nw
+MLGSC - building model 
+input alignment:  firmicute_Spo0A_prot_train.msa
+input tree: firmicute_genera.nw
+output: firmicutes_Spo0A.mod
+molecule: Prot
+small prob: 1.0e-4
+scale factor: 1000.0
+```
+
+Option `-v 2` (verbosity level 2) causes run information to be printed. Option
+`-o` specifies a name for the output file, that is, he classifier itself.
+
+#### Classifying environmental Amplicons
+
+File `Spo0A_env_ampl_prot.pep` contains translated amplicons of Spo0A from
+environmental samples (sediment from Lake Geneva). To classify these sequences,
+do:
+
+```bash
+$ mlgsc Spo0A_env_ampl_prot.pep firmicutes_Spo0A.mod
+IEQTHJI02DW663_1 [1 - 588]  -> unnamed (50); unnamed (44); Brevibacillus (140)
+IEQTHJI02DW663_2 [492 - 1] (REVERSE SENSE)  -> unnamed (135); unnamed (182);
+Clostridium (98)
+IEQTHJI02DXXW9_1 [587 - 3] (REVERSE SENSE)  -> unnamed (3); unnamed (23);
+Paenibacillus (5)
+IEQTHJI02D2KPX_1 [404 - 3] (REVERSE SENSE)  -> unnamed (23); unnamed (86);
+Clostridium (80)
+IEQTHJI02D8PM8_1 [1 - 546]  -> unnamed (14); unnamed (147); Clostridium (162)
+IEQTHJI02D28VO_1 [183 - 593]  -> unnamed (90); unnamed (191); Clostridium (104)
+IEQTHJI02D28VO_2 [593 - 3] (REVERSE SENSE)  -> unnamed (25); unnamed (66);
+Paenibacillus (96)
+IEQTHJI02C9B6J_1 [1 - 534]  -> unnamed (60); unnamed (96); Clostridium (117)
+IEQTHJI02EN3F3_1 [1 - 480]  -> unnamed (5); unnamed (137); Clostridium (151)
+IEQTHJI02C74FC_1 [1 - 438]  -> unnamed (8); unnamed (124); Clostridium (152)
+...
+```
+
+This example uses a tree in which only the leaves are labeled. Leaves must be
+labeled with OTU names for classification to work at all, but MLgsc can also
+use trees with internal labels, as shown below.
+
+File `firmicute_genera_fully-labeled.nw` contains a tree in which all internal
+nodes are labeled as well. It also contains an additional genus not found in
+the alignment.
+
+```
+$ mlgsc_train -o firmicutes_Spo0A.mod Prot firmicute_Spo0A_prot_train.msa firmicute_genera_fully-labeled.nw 
+The following tree OTUs are NOT found in the alignment:
+Listeria
+```
+
+MLgsc outputs a warning about the OTU name found in the tree but not in the
+alignment. The OTU is simply ignored and this does not prevent MLgsc from
+building a classifier, but discrepancies between alignment and tree may
+indicate that the wrong file(s) are being used, hence the warnings. At any
+rate, any actual _Listeria_ among the queries will be misclassified. To
+suppress all warnings, pass `-v 0` (verbosity level 0: quiet).
+
+The classification now shows internal tree labels:
+
+```
+$ mlgsc Spo0A_env_ampl_prot.pep firmicutes_Spo0A.mod | head
+IEQTHJI02DW663_1 [1 - 588]  -> Bacilli (50); Paenibacillaceae (44); Brevibacillus (140)
+IEQTHJI02DW663_2 [492 - 1] (REVERSE SENSE)  -> Clostridia (135); Clostridiales (182); Clostridium (98)
+IEQTHJI02DXXW9_1 [587 - 3] (REVERSE SENSE)  -> Bacilli (3); Paenibacillaceae (23); Paenibacillus (5)
+IEQTHJI02D2KPX_1 [404 - 3] (REVERSE SENSE)  -> Clostridia (23); Clostridiales (86); Clostridium (80)
+IEQTHJI02D8PM8_1 [1 - 546]  -> Clostridia (14); Clostridiales (147); Clostridium (162)
+IEQTHJI02D28VO_1 [183 - 593]  -> Clostridia (90); Clostridiales (191); Clostridium (104)
+IEQTHJI02D28VO_2 [593 - 3] (REVERSE SENSE)  -> Bacilli (25); Paenibacillaceae (66); Paenibacillus (96)
+IEQTHJI02C9B6J_1 [1 - 534]  -> Clostridia (60); Clostridiales (96); Clostridium (117)
+IEQTHJI02EN3F3_1 [1 - 480]  -> Clostridia (5); Clostridiales (137); Clostridium (151)
+IEQTHJI02C74FC_1 [1 - 438]  -> Clostridia (8); Clostridiales (124); Clostridium (152)
+```
+
+By default, `mlgsc` output the whole header of the query sequence - often it
+contains just an ID. Sometimes, as is the case here, the header contains extra
+information that may not be essential. The format of `mlgsc`'s output can be
+controlled via a printf-like format string, as in the following example:
+
+```bash
+$ mlgsc -f "%i -> %p" Spo0A_env_ampl_prot.pep firmicutes_Spo0A.mod | head
+IEQTHJI02DW663_1 -> Bacilli (50); Paenibacillaceae (44); Brevibacillus (140)
+IEQTHJI02DW663_2 -> Clostridia (135); Clostridiales (182); Clostridium (98)
+IEQTHJI02DXXW9_1 -> Bacilli (3); Paenibacillaceae (23); Paenibacillus (5)
+IEQTHJI02D2KPX_1 -> Clostridia (23); Clostridiales (86); Clostridium (80)
+IEQTHJI02D8PM8_1 -> Clostridia (14); Clostridiales (147); Clostridium (162)
+IEQTHJI02D28VO_1 -> Clostridia (90); Clostridiales (191); Clostridium (104)
+IEQTHJI02D28VO_2 -> Bacilli (25); Paenibacillaceae (66); Paenibacillus (96)
+IEQTHJI02C9B6J_1 -> Clostridia (60); Clostridiales (96); Clostridium (117)
+IEQTHJI02EN3F3_1 -> Clostridia (5); Clostridiales (137); Clostridium (151)
+IEQTHJI02C74FC_1 -> Clostridia (8); Clostridiales (124); Clostridium (152)
+```
+
+Here, option `-f` specifies the format via its argument, `%i -> %p`. The `%i` is a placeholder for the ID, which is taken to be the first word (whitespace-separated) in the header; the `%p` is a placeholder for the predicted classification. The following placeholders are recognized:
+
+placeholder | meaning
+------------|--------
+`%a`        | aligned query sequence (useful for diagnosing alignment problems)
+`%h`        | full FastA header
+`%i`        | query ID (1st word of header)
+`%l`	    | query length (unaligned)
+`%p`	    | predicted classification (path through the tree)
+`%%`	    | literal % sign
+
+For example, it may be useful to display the length of the query, since short
+sequence carry less information and may be harder to classify. The following
+format string shows the query length in parentheses, prefixed by "`l=`":
+
+```bash
+$ mlgsc -f "%i (l=%l) -> %p" Spo0A_env_ampl_prot.pep firmicutes_Spo0A.mod
+IEQTHJI02DW663_1 (l=196) -> Bacilli (50); Paenibacillaceae (44); Brevibacillus
+(140)
+IEQTHJI02DW663_2 (l=164) -> Clostridia (135); Clostridiales (182); Clostridium
+(98)
+IEQTHJI02DXXW9_1 (l=195) -> Bacilli (3); Paenibacillaceae (23); Paenibacillus (5
+...
+```

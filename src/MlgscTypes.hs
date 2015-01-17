@@ -7,6 +7,11 @@ import qualified Data.Map.Strict as M
 data Molecule = DNA | Prot
     deriving (Show, Eq, Read)
 
+data OutputData = OutputData {
+                    trail   :: Trail,
+                    score   :: Int
+                    }
+
 type Sequence       = Text
 type Column         = Text
 type Residue        = Char

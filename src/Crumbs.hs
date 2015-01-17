@@ -1,13 +1,7 @@
 -- module Crumbs (followCrumbs) where
 module Crumbs (
-    Crumbs,
-    followCrumbs,
-    followCrumbsWithTrail,
-    dropCrumbs,
     dropExtendedCrumbs,
     followExtendedCrumbsWithTrail,
-    bestByWithIndex, 
-    empty,
     ) where
 
 import Data.Tree
@@ -16,66 +10,16 @@ import Control.Monad.Writer
 
 import CladeModel
 
-type Crumb = Int
-type Crumbs = [Crumb]
+data ScoredPathStep = ScoredPathStep {
+                childIndex  :: Int
+                , gold      :: Int  -- best score
+                , silver    :: Int  -- second-best score (no bronze...)
+                }
+
+type ScoredPath = [ScoredPathStep]
 
 type ExtCrumb = (Int, Int, Int)
 type ExtCrumbs = [ExtCrumb]
-
-{- TODO: 
- * simple Crumbs are not used anymore
- * extended crumbs should be (Int, Int, Int)
- -}
-
-empty = (undefined, -1)
-emptyExt = (undefined, -1, 1, 1)
-
--- Follows a list of crumbs. Returns the rootLabel of the node corresponding to
--- the last crumb. No error recovery!
-
-followCrumbs :: Crumbs -> Tree a -> a
-followCrumbs (c:cs) (Node _ kids) = followCrumbs cs (kids !! c)
-followCrumbs [] node = rootLabel node
-
--- As above, but returns a list containing the rootLabels of all nodes visited
--- on the path through the tree.
-
-followCrumbsWithTrail :: Crumbs -> Tree a -> [a]
-followCrumbsWithTrail (c:cs) (Node rl kids) =
-    rl : (followCrumbsWithTrail cs (kids !! c))
-followCrumbsWithTrail [] node = [rootLabel node]
-
--- A wrapper around the monadic dropCrumbsM below
-
-dropCrumbs :: (Ord b) => (a -> b) -> Tree a -> (b, Crumbs)
-dropCrumbs m tree = runWriter $ dropCrumbsM m tree
-
--- Given a tree and some metric m (which will typically be a function that
--- scores a sequence according to a model held at the tree node), generates a
--- list of crumbs by recursively applying m to a node's children and calling
--- itself on the best-scoring child, until a leaf is reached. Returns the score
--- of that leaf, as well as a list of crumbs followed to reach it, as a Writer
--- monad.
-
-dropCrumbsM :: (Ord b) => (a -> b) -> Tree a -> Writer [Int] b
-dropCrumbsM m (Node rl []) = return $ m rl
-dropCrumbsM m (Node rl kids) = do
-    let (bestKid, bestNdx) = bestByWithIndex kids m'
-    tell [bestNdx]
-    dropCrumbsM m $ bestKid
-    where m' (Node rl _) = m rl
-
--- finds the (first) object in a list that maximizes some metric m, returns
--- that object and its index in the list. Not efficient, but should be ok for
--- short lists.
-
-bestByWithIndex :: (Ord b) => [a] -> (a -> b) -> (a, Int)
-bestByWithIndex [] m    = empty
-bestByWithIndex objs m  = (bestObj, head ndx) 
-    where   bestObj     = objs !! (head ndx)
-            ndx         = elemIndices max_metric obj_metrics 
-            max_metric  = maximum obj_metrics
-            obj_metrics = map m objs
 
 {-
  - Extended Crumbs: these crumbs not only track the _index_ of the "best" child

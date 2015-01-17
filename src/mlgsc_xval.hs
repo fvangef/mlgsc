@@ -226,6 +226,7 @@ leaveOneOut fmtString mol noHWt smallProb scaleFactor tree fastaRecs n =
             -- sure alignment works.
             origRec = FastA.degap testRec
 
+
 oneRoundLOO :: Params -> OTUTree -> Seq FastA -> Int -> ST.Text
 oneRoundLOO params otuTree fastARecs testRecNdx = 
     runReader (looReader otuTree fastARecs testRecNdx) params
