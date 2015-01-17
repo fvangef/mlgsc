@@ -6,6 +6,7 @@
 
 import System.Environment (getArgs)
 import System.Random
+import Control.Monad.Reader
 import qualified Data.Map.Strict as M
 import Data.Map.Strict ((!))
 import qualified Data.Set as S
@@ -141,9 +142,7 @@ main = do
     let mol = molType params
     let noHWt = optNoHenikoffWt params
     putStrLn $ runInfo params randomIndices gen
-    mapM_ (STIO.putStrLn .
-        leaveOneOut (optOutFmtString params) mol noHWt smallProb
-        scaleFactor tree fastARecs) randomIndices
+    mapM_ (STIO.putStrLn . oneRoundLOO params tree fastARecs) randomIndices
 
 -- gets a random number generator. If the seed is negative, gets the global
 -- generator, else use the seed.
@@ -227,10 +226,41 @@ leaveOneOut fmtString mol noHWt smallProb scaleFactor tree fastaRecs n =
             origRec = FastA.degap testRec
 
 
+-- These two perform the same as leaveOneOut, but using a Reader monad for
+-- passing the parameters. It is essentially a matter of style, both functions
+-- do the same thing. The first has nine arguments, which seems a lot; the
+-- second has four, which seems more manageable. The fact that it relies on
+-- "hidden" arguments is visible from its signature (Reader Params). 
+-- A third possibility would be to simply pass the Params object directly. I'm
+-- not sure which is best.
+
 oneRoundLOO :: Params -> OTUTree -> Seq FastA -> Int -> ST.Text
 oneRoundLOO params otuTree fastARecs testRecNdx = 
     runReader (looReader otuTree fastARecs testRecNdx) params
 
 
 looReader :: OTUTree -> Seq FastA -> Int -> Reader Params ST.Text
-looReader otuTree fastaRecs testRecNdx = undefined
+looReader otuTree fastaRecs testRecNdx = do
+    fmtString <- asks optOutFmtString
+    noHwt <- asks optNoHenikoffWt
+    let wtOtuAln = if noHwt
+            then otuAln
+            else henikoffWeightAln otuAln
+    let otuAlnMap = alnToAlnMap wtOtuAln
+    mol <- asks molType
+    smallProb <- asks optSmallProb
+    scaleFactor <- asks optScaleFactor
+    let classifier@(Classifier _ modTree) =
+            buildClassifier mol smallProb scaleFactor otuAlnMap otuTree
+    let rootMod = rootLabel modTree 
+    let scoringScheme =
+            ScoringScheme (-2) (scoringSchemeMap (absentResScore rootMod))
+    let alignedTestSeq = msalign scoringScheme rootMod testSeq
+    let prediction = classifySequenceWithExtendedTrail classifier alignedTestSeq
+    return $ formatResult fmtString origRec alignedTestSeq prediction
+    where   header = LT.toStrict $ FastA.header testRec
+            testSeq = LT.toStrict $ FastA.sequence origRec
+            otuAln = fastARecordsToAln trainSet
+            trainSet = Data.Foldable.toList trainSetSeq
+            (testRec, trainSetSeq) = spliceElemAt fastaRecs testRecNdx
+            origRec = FastA.degap testRec
