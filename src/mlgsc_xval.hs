@@ -45,6 +45,7 @@ data Params = Params {
                 , optVerbosity      :: Int
                 , optNoHenikoffWt   :: Bool
                 , optOutFmtString   :: String
+                , optOnlyFalse      :: Bool
                 , molType           :: Molecule
                 , alnFname          :: String
                 , treeFname         :: String
@@ -115,6 +116,9 @@ parseOptions = Params
                     <> metavar "OUTPUT FORMAT STRING"
                     <> value "%h (%l) -> %p"
                     <> help "printf-like format string for output")
+                <*> switch (
+                        short 'x' <> long "only-wrong"
+                        <> help "only show wrong classifications")
                 <*> argument auto (metavar "<DNA|Prot>")
                 <*> argument str (metavar "<alignment file>")
                 <*> argument str (metavar "<tree file>")
@@ -257,9 +261,11 @@ looReader otuTree fastaRecs testRecNdx = do
             ScoringScheme (-2) (scoringSchemeMap (absentResScore rootMod))
     let alignedTestSeq = msalign scoringScheme rootMod testSeq
     let prediction = classifySequenceWithExtendedTrail classifier alignedTestSeq
-    if  (leafOTU prediction) == (LT.toStrict $ fastAOTU testRec)
-        then return $ Just $ formatResult fmtString origRec alignedTestSeq prediction
-        else return Nothing
+    onlyFalse <- asks optOnlyFalse
+    if  (onlyFalse && 
+         (leafOTU prediction) == (LT.toStrict $ fastAOTU testRec))
+        then return Nothing
+        else return $ Just $ formatResult fmtString origRec alignedTestSeq prediction
     where   header = LT.toStrict $ FastA.header testRec
             testSeq = LT.toStrict $ FastA.sequence origRec
             otuAln = fastARecordsToAln trainSet
