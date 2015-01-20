@@ -7,6 +7,7 @@ import qualified Data.Map.Strict as M
 data Molecule = DNA | Prot
     deriving (Show, Eq, Read)
 
+-- shouldn't this go into Classifier.hs?
 data OutputData = OutputData {
                     trail   :: Trail,
                     score   :: Int

@@ -9,6 +9,7 @@ import System.Random
 import Control.Monad.Reader
 import qualified Data.Map.Strict as M
 import Data.Map.Strict ((!))
+import Data.Maybe
 import qualified Data.Set as S
 import Data.Foldable (toList)
 import Data.Sequence ((><), Seq)
@@ -18,7 +19,6 @@ import qualified Data.Text.Lazy as LT
 import qualified Data.Text as ST
 import qualified Data.Text.IO as STIO
 import Options.Applicative
-
 import Data.Binary (decodeFile)
 import Data.Tree
 
@@ -28,7 +28,7 @@ import Alignment
 import Align
 import CladeModel
 import NucModel
-import Classifier (Classifier(..), buildClassifier, classifySequenceWithExtendedTrail)
+import Classifier (Classifier(..), buildClassifier, classifySequenceWithExtendedTrail, leafOTU)
 import NewickParser
 import NewickDumper
 import Weights
@@ -140,9 +140,9 @@ main = do
     gen <- getGen $ optSeed params
     let randomIndices = take nbRounds $ shuffleList gen $ validIndices fastARecs
     let mol = molType params
-    let noHWt = optNoHenikoffWt params
     putStrLn $ runInfo params randomIndices gen
-    mapM_ (STIO.putStrLn . oneRoundLOO params tree fastARecs) randomIndices
+    mapM_ STIO.putStrLn $ catMaybes $
+        map (oneRoundLOO params tree fastARecs) randomIndices
 
 -- gets a random number generator. If the seed is negative, gets the global
 -- generator, else use the seed.
@@ -234,12 +234,12 @@ leaveOneOut fmtString mol noHWt smallProb scaleFactor tree fastaRecs n =
 -- A third possibility would be to simply pass the Params object directly. I'm
 -- not sure which is best.
 
-oneRoundLOO :: Params -> OTUTree -> Seq FastA -> Int -> ST.Text
+oneRoundLOO :: Params -> OTUTree -> Seq FastA -> Int -> Maybe ST.Text
 oneRoundLOO params otuTree fastARecs testRecNdx = 
     runReader (looReader otuTree fastARecs testRecNdx) params
 
 
-looReader :: OTUTree -> Seq FastA -> Int -> Reader Params ST.Text
+looReader :: OTUTree -> Seq FastA -> Int -> Reader Params (Maybe ST.Text)
 looReader otuTree fastaRecs testRecNdx = do
     fmtString <- asks optOutFmtString
     noHwt <- asks optNoHenikoffWt
@@ -257,7 +257,9 @@ looReader otuTree fastaRecs testRecNdx = do
             ScoringScheme (-2) (scoringSchemeMap (absentResScore rootMod))
     let alignedTestSeq = msalign scoringScheme rootMod testSeq
     let prediction = classifySequenceWithExtendedTrail classifier alignedTestSeq
-    return $ formatResult fmtString origRec alignedTestSeq prediction
+    if  (leafOTU prediction) == (LT.toStrict $ fastAOTU testRec)
+        then return $ Just $ formatResult fmtString origRec alignedTestSeq prediction
+        else return Nothing
     where   header = LT.toStrict $ FastA.header testRec
             testSeq = LT.toStrict $ FastA.sequence origRec
             otuAln = fastARecordsToAln trainSet

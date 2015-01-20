@@ -1,13 +1,15 @@
 module Classifier (
     Classifier(..),
     buildClassifier,
-    classifySequenceWithExtendedTrail) where
+    classifySequenceWithExtendedTrail,
+    leafOTU) where
 
 import Data.Tree
 import qualified Data.Map.Strict as M
 import qualified Data.List as L
 import Data.Binary (Binary, put, get, Get)
 import Data.Text.Binary
+import qualified Data.Text.Lazy as LT
 
 import MlgscTypes
 -- import CladeModel
@@ -85,3 +87,6 @@ mergeAlns (Node _ kids) = Node mergedKidAlns mergedKids
     where   mergedKids = L.map mergeAlns kids
             mergedKidAlns = concatMap rootLabel mergedKids
 
+leafOTU :: OutputData -> OTUName
+leafOTU od = otuName
+    where (otuName, _, _) = last $ trail od
