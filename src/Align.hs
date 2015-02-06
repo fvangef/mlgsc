@@ -1,6 +1,10 @@
 module Align (msalign, ScoringScheme(..), defScScheme, scoringSchemeMap) where
 
 import Data.Array
+import qualified Data.Array.Unboxed as UBA
+import Data.Array.ST
+import Control.Monad
+import Control.Monad.ST
 import Data.List
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
@@ -89,6 +93,29 @@ msdpmat scsc hmod vseq  = dpmat
 				vGap  = val (dpmat!(i  ,j-1)) + penalty
 				penalty = gapOP scsc
 				match_score = scoreModVseq (scThresholds scsc) hmod vseq i j 
+
+msdpmatMA :: ScoringScheme -> CladeModel -> VSequence -> UBA.UArray (Int, Int) Int
+msdpmatMA scsc hmod vseq = runSTUArray $ do
+                let seq_len = U.length vseq
+                let mat_len = modLength hmod
+                let penalty = gapOP scsc
+                dpmat <- newArray ((0,0), (seq_len, mat_len)) 0 :: ST s (STUArray s (Int, Int) Int)
+                forM_ [1..seq_len] $ \i -> do
+                    writeArray dpmat (i, 0) 0
+                forM_ [0..mat_len] $ \j -> do
+                    writeArray dpmat (0, j) (j * penalty)
+                forM_ [1..seq_len] $ \i -> do
+                    forM_ [1..mat_len] $ \j -> do
+                        let match_score = scoreModVseq (scThresholds scsc) hmod vseq i j               
+                        match <- readArray dpmat (i-1,j-1)
+                        hGap  <- readArray dpmat (i-1, j)
+                        vGap  <- readArray dpmat (i, j-1) 
+                        writeArray dpmat (i,j) $ maximum [
+                            match + match_score,
+                            hGap + penalty,
+                            vGap + penalty ]
+                return dpmat 
+
 
 -- A score function for seq-vs-mat (ISLProbMatrix)
 
