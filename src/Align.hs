@@ -37,6 +37,8 @@ type VSequence = U.Vector Char
 
 type DPMatrix = Array (Int,Int) DPCell
 
+type MADPMat = UBA.UArray (Int,Int) (Int,Char)
+
 type GapPenalty = Int
 
 -- A ScoringScheme has two components: a gap opening penality (gap penalties are
@@ -94,26 +96,33 @@ msdpmat scsc hmod vseq  = dpmat
 				penalty = gapOP scsc
 				match_score = scoreModVseq (scThresholds scsc) hmod vseq i j 
 
-msdpmatMA :: ScoringScheme -> CladeModel -> VSequence -> UBA.UArray (Int, Int) Int
+-- A version with a mutable array.
+
+msdpmatMA :: ScoringScheme -> CladeModel -> VSequence -> MADPMat
 msdpmatMA scsc hmod vseq = runSTUArray $ do
                 let seq_len = U.length vseq
                 let mat_len = modLength hmod
                 let penalty = gapOP scsc
-                dpmat <- newArray ((0,0), (seq_len, mat_len)) 0 :: ST s (STUArray s (Int, Int) Int)
+                dpmat <- newArray ((0,0), (seq_len, mat_len)) (0,'.') :: ST s (STUArray s (Int, Int) (Int, Char))
+                {-
                 forM_ [1..seq_len] $ \i -> do
-                    writeArray dpmat (i, 0) 0
+                    writeArray dpmat (i, 0) (0, '-')
                 forM_ [0..mat_len] $ \j -> do
-                    writeArray dpmat (0, j) (j * penalty)
+                    writeArray dpmat (0, j) ((j * penalty), '|')
                 forM_ [1..seq_len] $ \i -> do
                     forM_ [1..mat_len] $ \j -> do
                         let match_score = scoreModVseq (scThresholds scsc) hmod vseq i j               
-                        match <- readArray dpmat (i-1,j-1)
-                        hGap  <- readArray dpmat (i-1, j)
-                        vGap  <- readArray dpmat (i, j-1) 
-                        writeArray dpmat (i,j) $ maximum [
-                            match + match_score,
-                            hGap + penalty,
-                            vGap + penalty ]
+                        (match_cell_val,_) <- readArray dpmat (i-1,j-1) 
+                        (hGap_cell_val,_)  <- readArray dpmat (i-1, j) 
+                        (vGap_cell_val,_)  <- readArray dpmat (i, j-1) 
+                        let match_sc = match_cell_val + match_score
+                        let hGap_sc  = hGap_cell_val  + penalty
+                        let vGap_sc  = vGap_cell_val  + penalty
+                        case maximum [match_sc, hGap_sc, vGap_sc] of
+                            match_sc -> writeArray dpmat (i,j) (match_sc, '\\')
+                            hGap_sc  -> writeArray dpmat (i,j) (hGap_sc, '|')
+                            vGap_sc  -> writeArray dpmat (i,j) (vGap_sc, '-')
+                -}
                 return dpmat 
 
 
