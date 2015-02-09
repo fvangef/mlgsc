@@ -6,8 +6,10 @@
 
 import System.Environment (getArgs)
 import System.Random
+import Control.Monad.Reader
 import qualified Data.Map.Strict as M
 import Data.Map.Strict ((!))
+import Data.Maybe
 import qualified Data.Set as S
 import Data.Foldable (toList)
 import Data.Sequence ((><), Seq)
@@ -17,7 +19,6 @@ import qualified Data.Text.Lazy as LT
 import qualified Data.Text as ST
 import qualified Data.Text.IO as STIO
 import Options.Applicative
-
 import Data.Binary (decodeFile)
 import Data.Tree
 
@@ -27,7 +28,7 @@ import Alignment
 import Align
 import CladeModel
 import NucModel
-import Classifier (Classifier(..), buildClassifier, classifySequenceWithExtendedTrail)
+import Classifier (Classifier(..), buildClassifier, classifySequenceWithExtendedTrail, leafOTU)
 import NewickParser
 import NewickDumper
 import Weights
@@ -44,6 +45,7 @@ data Params = Params {
                 , optVerbosity      :: Int
                 , optNoHenikoffWt   :: Bool
                 , optOutFmtString   :: String
+                , optOnlyFalse      :: Bool
                 , molType           :: Molecule
                 , alnFname          :: String
                 , treeFname         :: String
@@ -114,6 +116,9 @@ parseOptions = Params
                     <> metavar "OUTPUT FORMAT STRING"
                     <> value "%h (%l) -> %p"
                     <> help "printf-like format string for output")
+                <*> switch (
+                        short 'x' <> long "only-wrong"
+                        <> help "only show wrong classifications")
                 <*> argument auto (metavar "<DNA|Prot>")
                 <*> argument str (metavar "<alignment file>")
                 <*> argument str (metavar "<tree file>")
@@ -139,11 +144,9 @@ main = do
     gen <- getGen $ optSeed params
     let randomIndices = take nbRounds $ shuffleList gen $ validIndices fastARecs
     let mol = molType params
-    let noHWt = optNoHenikoffWt params
     putStrLn $ runInfo params randomIndices gen
-    mapM_ (STIO.putStrLn .
-        leaveOneOut (optOutFmtString params) mol noHWt smallProb
-        scaleFactor tree fastARecs) randomIndices
+    mapM_ STIO.putStrLn $ catMaybes $
+        map (oneRoundLOO params tree fastARecs) randomIndices
 
 -- gets a random number generator. If the seed is negative, gets the global
 -- generator, else use the seed.
@@ -224,4 +227,48 @@ leaveOneOut fmtString mol noHWt smallProb scaleFactor tree fastaRecs n =
             (testRec, trainSetSeq) = spliceElemAt fastaRecs n
             -- we also need the ungapped sequence, e.g. for output and to make
             -- sure alignment works.
+            origRec = FastA.degap testRec
+
+
+-- These two perform the same as leaveOneOut, but using a Reader monad for
+-- passing the parameters. It is essentially a matter of style, both functions
+-- do the same thing. The first has nine arguments, which seems a lot; the
+-- second has four, which seems more manageable. The fact that it relies on
+-- "hidden" arguments is visible from its signature (Reader Params). 
+-- A third possibility would be to simply pass the Params object directly. I'm
+-- not sure which is best.
+
+oneRoundLOO :: Params -> OTUTree -> Seq FastA -> Int -> Maybe ST.Text
+oneRoundLOO params otuTree fastARecs testRecNdx = 
+    runReader (looReader otuTree fastARecs testRecNdx) params
+
+
+looReader :: OTUTree -> Seq FastA -> Int -> Reader Params (Maybe ST.Text)
+looReader otuTree fastaRecs testRecNdx = do
+    fmtString <- asks optOutFmtString
+    noHwt <- asks optNoHenikoffWt
+    let wtOtuAln = if noHwt
+            then otuAln
+            else henikoffWeightAln otuAln
+    let otuAlnMap = alnToAlnMap wtOtuAln
+    mol <- asks molType
+    smallProb <- asks optSmallProb
+    scaleFactor <- asks optScaleFactor
+    let classifier@(Classifier _ modTree) =
+            buildClassifier mol smallProb scaleFactor otuAlnMap otuTree
+    let rootMod = rootLabel modTree 
+    let scoringScheme =
+            ScoringScheme (-2) (scoringSchemeMap (absentResScore rootMod))
+    let alignedTestSeq = msalign scoringScheme rootMod testSeq
+    let prediction = classifySequenceWithExtendedTrail classifier alignedTestSeq
+    onlyFalse <- asks optOnlyFalse
+    if  (onlyFalse && 
+         (leafOTU prediction) == (LT.toStrict $ fastAOTU testRec))
+        then return Nothing
+        else return $ Just $ formatResult fmtString origRec alignedTestSeq prediction
+    where   header = LT.toStrict $ FastA.header testRec
+            testSeq = LT.toStrict $ FastA.sequence origRec
+            otuAln = fastARecordsToAln trainSet
+            trainSet = Data.Foldable.toList trainSetSeq
+            (testRec, trainSetSeq) = spliceElemAt fastaRecs testRecNdx
             origRec = FastA.degap testRec
