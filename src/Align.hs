@@ -37,7 +37,7 @@ type VSequence = U.Vector Char
 
 type DPMatrix = Array (Int,Int) DPCell
 
-type MADPMat = UBA.UArray (Int,Int) (Int,Char)
+type MADPMat = UBA.UArray (Int,Int) Int
 
 type GapPenalty = Int
 
@@ -98,31 +98,54 @@ msdpmat scsc hmod vseq  = dpmat
 
 -- A version with a mutable array.
 
+-- Int constants for backtracking in the same array as NW scores, but different
+-- cells.
+left = 1
+up = 2
+both = 3
+
+
 msdpmatMA :: ScoringScheme -> CladeModel -> VSequence -> MADPMat
 msdpmatMA scsc hmod vseq = runSTUArray $ do
                 let seq_len = U.length vseq
                 let mat_len = modLength hmod
                 let penalty = gapOP scsc
-                dpmat <- newArray ((0,0), (seq_len, mat_len)) (0,'.') :: ST s (STUArray s (Int, Int) (Int, Char))
-                {-
+                -- dpmat has the scores and backtracking info in two contiguous
+                -- arrays (STUArray does not support arrays of tuples). The
+                -- left-hand array (0 <= j <= mat_len) is for the scores, and
+                -- the right-hand array (mat_len+1 <= j <= 2 * mat_len  + 1) is
+                -- for backtracking symbols, coded as integers (see above).
+                dpmat <- newArray ((0,0), (seq_len, (2 * mat_len) + 1)) 0 :: ST s (STUArray s (Int, Int) Int)
+                -- initialize leftmost columns (j = 0 and j = mat_len+1)
                 forM_ [1..seq_len] $ \i -> do
-                    writeArray dpmat (i, 0) (0, '-')
+                    writeArray dpmat (i, 0) 0
+                    writeArray dpmat (i, mat_len + 1) up
+                -- initialize top row of left array
                 forM_ [0..mat_len] $ \j -> do
-                    writeArray dpmat (0, j) ((j * penalty), '|')
+                    writeArray dpmat (0, j) (j * penalty)
+                -- and of right array
+                forM_ [mat_len+1 .. ((2*mat_len)+1)] $ \j -> do
+                    writeArray dpmat (0, j) left
+                -- now fill rest of matrices
                 forM_ [1..seq_len] $ \i -> do
                     forM_ [1..mat_len] $ \j -> do
                         let match_score = scoreModVseq (scThresholds scsc) hmod vseq i j               
-                        (match_cell_val,_) <- readArray dpmat (i-1,j-1) 
-                        (hGap_cell_val,_)  <- readArray dpmat (i-1, j) 
-                        (vGap_cell_val,_)  <- readArray dpmat (i, j-1) 
+                        match_cell_val <- readArray dpmat (i-1,j-1) 
+                        hGap_cell_val  <- readArray dpmat (i-1, j) 
+                        vGap_cell_val  <- readArray dpmat (i, j-1) 
                         let match_sc = match_cell_val + match_score
                         let hGap_sc  = hGap_cell_val  + penalty
                         let vGap_sc  = vGap_cell_val  + penalty
                         case maximum [match_sc, hGap_sc, vGap_sc] of
-                            match_sc -> writeArray dpmat (i,j) (match_sc, '\\')
-                            hGap_sc  -> writeArray dpmat (i,j) (hGap_sc, '|')
-                            vGap_sc  -> writeArray dpmat (i,j) (vGap_sc, '-')
-                -}
+                            match_sc -> do
+                                writeArray dpmat (i,j) match_sc
+                                writeArray dpmat (i,j+mat_len+1) both
+                            hGap_sc  -> do
+                                writeArray dpmat (i,j) hGap_sc
+                                writeArray dpmat (i,j+mat_len+1) up
+                            vGap_sc  -> do 
+                                writeArray dpmat (i,j) vGap_sc
+                                writeArray dpmat (i,j+mat_len+1) left
                 return dpmat 
 
 
