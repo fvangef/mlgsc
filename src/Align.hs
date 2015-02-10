@@ -1,4 +1,5 @@
-module Align (msalign, ScoringScheme(..), defScScheme, scoringSchemeMap) where
+module Align (msalign, msalignMA,
+    ScoringScheme(..), defScScheme, scoringSchemeMap) where
 
 import Data.Array
 import qualified Data.Array.Unboxed as UBA
@@ -199,6 +200,11 @@ msalign :: ScoringScheme -> CladeModel -> Sequence -> Sequence
 msalign scsc mat seq = T.pack $ nwMatBacktrack (msdpmat scsc mat vseq) vseq
 	where vseq = U.fromList $ T.unpack seq 
 
+-- mutable-array - based version
+
+msalignMA :: ScoringScheme -> CladeModel -> Sequence -> Sequence
+msalignMA scsc mat seq = T.pack $ nwMatBacktrackMA (msdpmatMA scsc mat vseq) vseq
+	where vseq = U.fromList $ T.unpack seq 
 {-
 nwMatPath :: RawProbMatrix -> String -> String
 nwMatPath hm vs = toPathMatrix (fmap dirSym (nw seqMatScore (-1) hra vra))
@@ -244,6 +250,30 @@ nwMatBacktrack' mat (i,j) vseq =
 			where vRest = nwMatBacktrack' mat (i, j-1) vseq
 		Down -> vRest
 			where vRest = nwMatBacktrack' mat (i-1, j) vseq
+
+-- Same, but for the mutable array version (though the array here is immutable,
+-- it is derived from a mutable array, see msdpmatMA).
+
+nwMatBacktrackMA :: MADPMat -> VSequence -> String
+nwMatBacktrackMA mat vseq = reverse trace
+    where   trace = nwMatBacktrackMA' mat bottomright vseq
+            bottomright = snd $ UBA.bounds mat
+
+nwMatBacktrackMA' :: MADPMat -> (Int,Int) -> VSequence -> String
+nwMatBacktrackMA' _ (0,0) _ = ""
+-- These two cases may actually be covered by the general case
+nwMatBacktrackMA' mat (0,j) vseq = '-':vRest
+	where vRest = nwMatBacktrackMA' mat (0,j-1) vseq
+nwMatBacktrackMA' mat (i,0) vseq = ""
+	where vRest = nwMatBacktrackMA' mat (i-1,0) vseq
+nwMatBacktrackMA' mat (i,j) vseq = 
+	case mat UBA.! (i,j) of
+		both -> (vseq U.! (i-1)):vRest
+			where vRest = nwMatBacktrackMA' mat (i-1,j-1) vseq
+		left -> '-':vRest
+			where vRest = nwMatBacktrackMA' mat (i, j-1) vseq
+		up -> vRest
+			where vRest = nwMatBacktrackMA' mat (i-1, j) vseq
 --
 -- These are for debugging
 -- TODO: uncomment (and adapt) when switch to ByteString works
