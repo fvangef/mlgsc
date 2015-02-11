@@ -100,10 +100,25 @@ msdpmat scsc hmod vseq  = dpmat
 -- A version with a mutable array.
 
 -- Int constants for backtracking in the same array as NW scores, but different
--- cells.
+-- cells. I have to use an ADT to be able to case ... of on it, but I need a
+-- mapping to (and from) Int since I use unboxed arrays and these do not accept
+-- any ADT.
+
 left = 1
 up = 2
 both = 3
+
+data Backtrack = GoLeft | GoUp | Both
+
+bt2Int :: Backtrack -> Int
+bt2Int GoLeft = 1
+bt2Int GoUp   = 2
+bt2Int Both = 3
+
+int2bt :: Int -> Backtrack
+int2bt 1    = GoLeft
+int2bt 2    = GoUp
+int2bt 3    = Both
 
 
 msdpmatMA :: ScoringScheme -> CladeModel -> VSequence -> MADPMat
@@ -256,7 +271,7 @@ nwMatBacktrack' mat (i,j) vseq =
 
 nwMatBacktrackMA :: MADPMat -> VSequence -> String
 nwMatBacktrackMA mat vseq = reverse trace
-    where   trace = nwMatBacktrackMA' mat bottomright vseq
+    where   trace = nwMatBacktrackMA'' mat bottomright vseq
             bottomright = snd $ UBA.bounds mat
 
 nwMatBacktrackMA' :: MADPMat -> (Int,Int) -> VSequence -> String
@@ -274,7 +289,23 @@ nwMatBacktrackMA' mat (i,j) vseq =
 			where vRest = nwMatBacktrackMA' mat (i, j-1) vseq
 		up -> vRest
 			where vRest = nwMatBacktrackMA' mat (i-1, j) vseq
---
+
+nwMatBacktrackMA'' :: MADPMat -> (Int,Int) -> VSequence -> String
+nwMatBacktrackMA'' mat (i,j) vseq
+    | (i == 0) && (j == k)  = "" -- isn't this a special case of #3?
+    | (i == 0)              = '-':(nwMatBacktrackMA'' mat (0,j-1) vseq)
+    |             (j == k)  = ""    
+    | otherwise             = case mat UBA.! (i,j) of
+                                both -> (vseq U.! (i-1)):(nwMatBacktrackMA'' mat (i-1,j-1) vseq)
+                                left -> '-':(nwMatBacktrackMA'' mat (i,j-1) vseq)
+                                up   -> nwMatBacktrackMA'' mat (i-1,j) vseq
+    -- TODO: k is constant - should it not be computed before the recursion, or
+    -- can the compiler figure this one out?
+    where   k = mat_len + 1
+            mat_len = (array_width - 1) `div` 2
+            array_width = snd $ snd $ UBA.bounds mat
+
+
 -- These are for debugging
 -- TODO: uncomment (and adapt) when switch to ByteString works
 --
