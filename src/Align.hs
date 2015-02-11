@@ -1,4 +1,4 @@
-module Align (msalign, msalignMA,
+module Align (msalign,
     ScoringScheme(..), defScScheme, scoringSchemeMap) where
 
 import Data.Array
@@ -71,13 +71,14 @@ scoringSchemeMap smallScore = M.fromList $ zip thresholds [-1, 1, 2, 3]
 -- inputs. The result can be used for backtracking. Like Needleman-Wunsch, but
 -- with adaptations to matching sequences to a matrix, i.e. the first column is
 -- 0 instead of (i * insertion penalty), etc. -- think of the ISLProbMatrix as
--- horizontal, and of the sequence as vertical.
+-- horizontal, and of the sequence as vertical. Uses an immutable array filled
+-- with a list.
 
 -- TODO: the gap opening penalty and scoring map for scoreModVseq should be
 -- parameters, not hard-coded.
 
-msdpmat :: ScoringScheme -> CladeModel -> VSequence -> DPMatrix
-msdpmat scsc hmod vseq  = dpmat
+msdpmatIA :: ScoringScheme -> CladeModel -> VSequence -> DPMatrix
+msdpmatIA scsc hmod vseq  = dpmat
 	where	dpmat = array ((0,0), (seq_len, mat_len)) 
 			[((i,j), cell i j) | i <- [0..seq_len], j <- [0..mat_len]]
 		seq_len = U.length vseq
@@ -121,8 +122,8 @@ int2bt 2    = GoUp
 int2bt 3    = Both
 
 
-msdpmatMA :: ScoringScheme -> CladeModel -> VSequence -> MADPMat
-msdpmatMA scsc hmod vseq = runSTUArray $ do
+msdpmat :: ScoringScheme -> CladeModel -> VSequence -> MADPMat
+msdpmat scsc hmod vseq = runSTUArray $ do
                 let seq_len = U.length vseq
                 let mat_len = modLength hmod
                 let penalty = gapOP scsc
@@ -152,16 +153,19 @@ msdpmatMA scsc hmod vseq = runSTUArray $ do
                         let match_sc = match_cell_val + match_score
                         let hGap_sc  = hGap_cell_val  + penalty
                         let vGap_sc  = vGap_cell_val  + penalty
-                        case maximum [match_sc, hGap_sc, vGap_sc] of
-                            match_sc -> do
-                                writeArray dpmat (i,j) match_sc
-                                writeArray dpmat (i,j+mat_len+1) both
-                            hGap_sc  -> do
+                        let best     =  maximum [match_sc, hGap_sc, vGap_sc]
+                        -- writeArray dpmat (i,j) best would be simpler
+                        if best == hGap_sc
+                            then do
                                 writeArray dpmat (i,j) hGap_sc
                                 writeArray dpmat (i,j+mat_len+1) up
-                            vGap_sc  -> do 
-                                writeArray dpmat (i,j) vGap_sc
-                                writeArray dpmat (i,j+mat_len+1) left
+                            else if best == vGap_sc
+                                then do
+                                    writeArray dpmat (i,j) vGap_sc
+                                    writeArray dpmat (i,j+mat_len+1) left
+                                else do -- match_sc
+                                    writeArray dpmat (i,j) match_sc
+                                    writeArray dpmat (i,j+mat_len+1) both
                 return dpmat 
 
 
@@ -211,14 +215,14 @@ topCell mat = fst $ maximumBy cellCmp (assocs mat)
 		| otherwise	= LT
 -}
 
-msalign :: ScoringScheme -> CladeModel -> Sequence -> Sequence
-msalign scsc mat seq = T.pack $ nwMatBacktrack (msdpmat scsc mat vseq) vseq
+msalignIA :: ScoringScheme -> CladeModel -> Sequence -> Sequence
+msalignIA scsc mat seq = T.pack $ nwMatBacktrackIA (msdpmatIA scsc mat vseq) vseq
 	where vseq = U.fromList $ T.unpack seq 
 
 -- mutable-array - based version
 
-msalignMA :: ScoringScheme -> CladeModel -> Sequence -> Sequence
-msalignMA scsc mat seq = T.pack $ nwMatBacktrackMA (msdpmatMA scsc mat vseq) vseq
+msalign :: ScoringScheme -> CladeModel -> Sequence -> Sequence
+msalign scsc mat seq = T.pack $ nwMatBacktrack (msdpmat scsc mat vseq) vseq
 	where vseq = U.fromList $ T.unpack seq 
 {-
 nwMatPath :: RawProbMatrix -> String -> String
@@ -245,60 +249,47 @@ topCellInLastCol mat = fst $ maximumBy cellCmp $
 -- "sequence" is a matrix (the vertical sequence is still a sequence, though);
 -- yields only the aligned sequence (not the matrix).
 
-nwMatBacktrack :: DPMatrix -> VSequence -> String
-nwMatBacktrack mat v = reverse va
-	where  	va = nwMatBacktrack' mat topLastCol v
+nwMatBacktrackIA :: DPMatrix -> VSequence -> String
+nwMatBacktrackIA mat v = reverse va
+	where  	va = nwMatBacktrackIA' mat topLastCol v
 		topLastCol = topCellInLastCol mat
 
-nwMatBacktrack' :: DPMatrix -> (Int,Int) -> VSequence -> String
-nwMatBacktrack' _ (0,0) _ = ""
+nwMatBacktrackIA' :: DPMatrix -> (Int,Int) -> VSequence -> String
+nwMatBacktrackIA' _ (0,0) _ = ""
 -- These two cases may actually be covered by the general case
-nwMatBacktrack' mat (0,j) vseq = '-':vRest
-	where vRest = nwMatBacktrack' mat (0,j-1) vseq
-nwMatBacktrack' mat (i,0) vseq = ""
-	where vRest = nwMatBacktrack' mat (i-1,0) vseq
-nwMatBacktrack' mat (i,j) vseq = 
+nwMatBacktrackIA' mat (0,j) vseq = '-':vRest
+	where vRest = nwMatBacktrackIA' mat (0,j-1) vseq
+nwMatBacktrackIA' mat (i,0) vseq = ""
+	where vRest = nwMatBacktrackIA' mat (i-1,0) vseq
+nwMatBacktrackIA' mat (i,j) vseq = 
 	case dir (mat!(i,j)) of
 		Diag -> (vseq U.! (i-1)):vRest
-			where vRest = nwMatBacktrack' mat (i-1,j-1) vseq
+			where vRest = nwMatBacktrackIA' mat (i-1,j-1) vseq
 		Righ -> '-':vRest
-			where vRest = nwMatBacktrack' mat (i, j-1) vseq
+			where vRest = nwMatBacktrackIA' mat (i, j-1) vseq
 		Down -> vRest
-			where vRest = nwMatBacktrack' mat (i-1, j) vseq
+			where vRest = nwMatBacktrackIA' mat (i-1, j) vseq
 
 -- Same, but for the mutable array version (though the array here is immutable,
 -- it is derived from a mutable array, see msdpmatMA).
 
-nwMatBacktrackMA :: MADPMat -> VSequence -> String
-nwMatBacktrackMA mat vseq = reverse trace
-    where   trace = nwMatBacktrackMA'' mat bottomright vseq
+nwMatBacktrack :: MADPMat -> VSequence -> String
+nwMatBacktrack mat vseq = reverse trace
+    where   trace = nwMatBacktrack' mat bottomright vseq
             bottomright = snd $ UBA.bounds mat
 
-nwMatBacktrackMA' :: MADPMat -> (Int,Int) -> VSequence -> String
-nwMatBacktrackMA' _ (0,0) _ = ""
--- These two cases may actually be covered by the general case
-nwMatBacktrackMA' mat (0,j) vseq = '-':vRest
-	where vRest = nwMatBacktrackMA' mat (0,j-1) vseq
-nwMatBacktrackMA' mat (i,0) vseq = ""
-	where vRest = nwMatBacktrackMA' mat (i-1,0) vseq
-nwMatBacktrackMA' mat (i,j) vseq = 
-	case mat UBA.! (i,j) of
-		both -> (vseq U.! (i-1)):vRest
-			where vRest = nwMatBacktrackMA' mat (i-1,j-1) vseq
-		left -> '-':vRest
-			where vRest = nwMatBacktrackMA' mat (i, j-1) vseq
-		up -> vRest
-			where vRest = nwMatBacktrackMA' mat (i-1, j) vseq
-
-nwMatBacktrackMA'' :: MADPMat -> (Int,Int) -> VSequence -> String
-nwMatBacktrackMA'' mat (i,j) vseq
+nwMatBacktrack' :: MADPMat -> (Int,Int) -> VSequence -> String
+nwMatBacktrack' mat (i,j) vseq
     | (i == 0) && (j == k)  = "" -- isn't this a special case of #3?
-    | (i == 0)              = '-':(nwMatBacktrackMA'' mat (0,j-1) vseq)
+    | (i == 0)              = '-':(nwMatBacktrack' mat (0,j-1) vseq)
     |             (j == k)  = ""    
-    | otherwise             = case mat UBA.! (i,j) of
-                                both -> (vseq U.! (i-1)):(nwMatBacktrackMA'' mat (i-1,j-1) vseq)
-                                left -> '-':(nwMatBacktrackMA'' mat (i,j-1) vseq)
-                                up   -> nwMatBacktrackMA'' mat (i-1,j) vseq
+    | otherwise             = if (mat UBA.! (i,j)) == left
+                                then '-':(nwMatBacktrack' mat (i,j-1) vseq)
+                                else if (mat UBA.! (i,j)) == up
+                                    then nwMatBacktrack' mat (i-1,j) vseq
+                                    else (vseq U.! (i-1)):(nwMatBacktrack' mat (i-1,j-1) vseq)
+                                
+                                
     -- TODO: k is constant - should it not be computed before the recursion, or
     -- can the compiler figure this one out?
     where   k = mat_len + 1
