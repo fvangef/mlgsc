@@ -2,6 +2,7 @@ module Align (msalign,
     ScoringScheme(..), defScScheme, scoringSchemeMap) where
 
 import Data.Array
+import qualified Data.Array.Base as B
 import qualified Data.Array.Unboxed as UBA
 import Data.Array.ST
 import Control.Monad
@@ -122,11 +123,15 @@ int2bt 2    = GoUp
 int2bt 3    = Both
 
 
+twoDto1D :: Int -> (Int, Int) -> Int
+twoDto1D width (i,j) = i * width + j
+
 msdpmat :: ScoringScheme -> CladeModel -> VSequence -> MADPMat
 msdpmat scsc hmod vseq = runSTUArray $ do
                 let seq_len = U.length vseq
                 let mat_len = modLength hmod
                 let penalty = gapOP scsc
+                let array_width = 2 * (mat_len + 1)
                 -- dpmat has the scores and backtracking info in two contiguous
                 -- arrays (STUArray does not support arrays of tuples). The
                 -- left-hand array (0 <= j <= mat_len) is for the scores, and
@@ -135,37 +140,34 @@ msdpmat scsc hmod vseq = runSTUArray $ do
                 dpmat <- newArray ((0,0), (seq_len, (2 * mat_len) + 1)) 0 :: ST s (STUArray s (Int, Int) Int)
                 -- initialize leftmost columns (j = 0 and j = mat_len+1)
                 forM_ [1..seq_len] $ \i -> do
-                    writeArray dpmat (i, 0) 0
-                    writeArray dpmat (i, mat_len + 1) up
+                    B.unsafeWrite dpmat (twoDto1D array_width (i, 0)) 0
+                    B.unsafeWrite dpmat (twoDto1D array_width (i, mat_len + 1)) up
                 -- initialize top row of left array
                 forM_ [0..mat_len] $ \j -> do
-                    writeArray dpmat (0, j) (j * penalty)
+                    B.unsafeWrite dpmat (twoDto1D array_width (0, j)) (j * penalty)
                 -- and of right array
                 forM_ [mat_len+1 .. ((2*mat_len)+1)] $ \j -> do
-                    writeArray dpmat (0, j) left
+                    B.unsafeWrite dpmat (twoDto1D array_width (0, j)) left
                 -- now fill rest of matrices
                 forM_ [1..seq_len] $ \i -> do
                     forM_ [1..mat_len] $ \j -> do
                         let match_score = scoreModVseq (scThresholds scsc) hmod vseq i j               
-                        match_cell_val <- readArray dpmat (i-1,j-1) 
-                        hGap_cell_val  <- readArray dpmat (i-1, j) 
-                        vGap_cell_val  <- readArray dpmat (i, j-1) 
+                        match_cell_val <- B.unsafeRead dpmat (twoDto1D array_width (i-1,j-1))
+                        hGap_cell_val  <- B.unsafeRead dpmat (twoDto1D array_width (i-1, j))
+                        vGap_cell_val  <- B.unsafeRead dpmat (twoDto1D array_width (i, j-1)) 
                         let match_sc = match_cell_val + match_score
                         let hGap_sc  = hGap_cell_val  + penalty
                         let vGap_sc  = vGap_cell_val  + penalty
                         let best     =  maximum [match_sc, hGap_sc, vGap_sc]
-                        -- writeArray dpmat (i,j) best would be simpler
+                        B.unsafeWrite dpmat (twoDto1D array_width (i,j)) best
                         if best == hGap_sc
                             then do
-                                writeArray dpmat (i,j) hGap_sc
-                                writeArray dpmat (i,j+mat_len+1) up
+                                B.unsafeWrite dpmat (twoDto1D array_width (i,j+mat_len+1)) up
                             else if best == vGap_sc
                                 then do
-                                    writeArray dpmat (i,j) vGap_sc
-                                    writeArray dpmat (i,j+mat_len+1) left
+                                    B.unsafeWrite dpmat (twoDto1D array_width (i,j+mat_len+1)) left
                                 else do -- match_sc
-                                    writeArray dpmat (i,j) match_sc
-                                    writeArray dpmat (i,j+mat_len+1) both
+                                    B.unsafeWrite dpmat (twoDto1D array_width (i,j+mat_len+1)) both
                 return dpmat 
 
 
