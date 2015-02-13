@@ -36,7 +36,8 @@ evalFmtComponent query _ _ QueryLength = ST.pack $ show $
     LT.length $ FastA.sequence query
 evalFmtComponent query _ _ ID = LT.toStrict $ fastAId query
 evalFmtComponent _ alnQry _ AlignedQuery = alnQry
-evalFmtComponent _ _ prediction Path = trailToExtendedTaxo $ trail prediction
+evalFmtComponent _ _ prediction (Path min_er) =
+    trailToExtendedTaxo min_er $ trail prediction
 evalFmtComponent _ _ prediction Score = ST.pack $ show $ score prediction
 evalFmtComponent _ _ _ (Literal c) = ST.pack [c]
 
@@ -45,8 +46,8 @@ evalFmtComponent _ _ _ (Literal c) = ST.pack [c]
 -- by 'unnamed' and labels followed by the log10 of the evidence ratio between
 -- the best and second-best likelihoods.
 
-trailToExtendedTaxo :: Trail -> ST.Text
-trailToExtendedTaxo trail = ST.intercalate (ST.pack "; ") $ getZipList erLbls
+trailToExtendedTaxo :: Int -> Trail -> ST.Text
+trailToExtendedTaxo min_er trail = ST.intercalate (ST.pack "; ") $ getZipList erLbls
     where   labels = ZipList $ tail $ map (\(lbl,_,_) -> lbl) trail
             bests = ZipList $ init $ map (\(_,best,_) -> best) trail
             seconds = ZipList $ init $ map (\(_,_,second) -> second) trail
