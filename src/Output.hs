@@ -41,7 +41,7 @@ evalFmtComponent _ _ prediction (Path min_er) =
 evalFmtComponent _ _ prediction Score = ST.pack $ show $ score prediction
 evalFmtComponent _ _ _ (Literal c) = ST.pack [c]
 
--- Takes an extended trail (i.e., a list of (OTU name, best score, secod-best
+-- Takes an extended trail (i.e., a list of (OTU name, bes
 -- score) tuples) and formats it as a taxonomy line, with empty labels remplaced
 -- by 'unnamed' and labels followed by the log10 of the evidence ratio between
 -- the best and second-best likelihoods.
@@ -51,28 +51,29 @@ trailToExtendedTaxo min_er trail = ST.intercalate (ST.pack "; ") $ getZipList er
     where   labels = ZipList $ tail $ map (\(lbl,_,_) -> lbl) trail
             bests = ZipList $ init $ map (\(_,best,_) -> best) trail
             seconds = ZipList $ init $ map (\(_,_,second) -> second) trail
-            ers = evidenceRatio <$> (ZipList $ repeat 1000) <*> seconds <*> bests
+            ers = log10evidenceRatio <$> (ZipList $ repeat 1000) <*> seconds <*> bests
+            good_ers = cutAtFirstPoorER min_er ers
             erLbls = toERlbl <$> labels <*> ers
             toERlbl lbl er = ST.concat [lblOrUndef,
                                  ST.pack " (", 
                                  ST.pack erStr,
                                  ST.pack ")"]
-                where erStr = case printf "%.0g" (logBase 10 er) :: String of
+                where erStr = case printf "%.0g" er :: String of
                             "Infinity" -> "*"
-                            otherwise -> printf "%.0g" (logBase 10 er) :: String
+                            otherwise -> printf "%.0g" er :: String
                       lblOrUndef = if ST.empty == lbl
                                         then ST.pack "unnamed"
                                         else lbl
 
--- Computes the evidence ratio, i.e. exp(delta-AIC / 2), except that I use
--- delta-AIC' (in which the factor 2 is dropped, so I avoid having to multiply
--- by 2 only to divide by 2 again just after).
+-- Computes the base-10 log of the evidence ratio, i.e. exp(delta-AIC / 2),
+-- except that I use delta-AIC' (in which the factor 2 is dropped, so I avoid
+-- having to multiply by 2 only to divide by 2 again just after).
 
-evidenceRatio :: Int -> Int -> Int -> Double
-evidenceRatio scaleFactor bestScore secondBestScore = 
-        exp(deltaAIC' l_min l_sec)
+log10evidenceRatio :: Int -> Int -> Int -> Double
+log10evidenceRatio scaleFactor bestScore secondBestScore = logBase 10 er
     where   l_min = scoreTologLikelihood scaleFactor bestScore
             l_sec = scoreTologLikelihood scaleFactor secondBestScore
+            er = exp(deltaAIC' l_min l_sec) 
 
 -- Converts a model score (which is a scaled, rounded log-likelihood (log base
 -- 10)) to a log-likelihood (log base e, i.e. ln). To do this, we _divide_ by
@@ -92,5 +93,14 @@ scoreTologLikelihood scaleFactor score = log10Likelihood / logBase 10 e
 -- ln(L_1), etc. I also drop the constant 2, since we'd be dividing by 2 right
 -- away in evidenceRatio anyway.
 
+-- TODO: deltaAIC' -> deltaAIC
 deltaAIC' :: Double -> Double -> Double
 deltaAIC' l1 l2 = - (l1 - l2)
+
+-- Takes a threshold and a ZipList of evidence ratios and drops any and all
+-- after the first below the threshold. The idea is to keep those nodes in the
+-- path that are well enough supprted, but to drop anything beyond (and
+-- including) the first poorly-supported node.
+
+cutAtFirstPoorER :: Int -> ZipList Double -> ZipList Double
+cutAtFirstPoorER min_er ers = ZipList $ takeWhile (>= fromIntegral min_er) $ getZipList ers 
