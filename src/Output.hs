@@ -24,7 +24,13 @@ import OutputFormatStringParser
 -- formats an output line according to a format string (à la printf). ARguments
 -- are: format string, original query as a FastA record, query sequence after
 -- alignment, and path through the tree (as returned by trailToExtendedTaxo).
+-- TODO: shouldn't the parsing of the fmt string be done just once? The format
+-- itself is constant, even though the resulting string is different for every
+-- query.
 
+-- TODO: pass only the argments that vary from query to query, and the rest
+-- using a Reader monad.
+-- TODO: could add a high-level way of passing an ER threshold
 formatResult :: FmtString -> FastA -> Sequence -> OutputData -> ST.Text
 formatResult fmtString query alnQry prediction = 
     ST.concat $ map (evalFmtComponent query alnQry prediction) format
@@ -51,9 +57,9 @@ trailToExtendedTaxo min_er trail = ST.intercalate (ST.pack "; ") $ getZipList er
     where   labels = ZipList $ tail $ map (\(lbl,_,_) -> lbl) trail
             bests = ZipList $ init $ map (\(_,best,_) -> best) trail
             seconds = ZipList $ init $ map (\(_,_,second) -> second) trail
-            ers = log10evidenceRatio <$> (ZipList $ repeat 1000) <*> seconds <*> bests
-            good_ers = cutAtFirstPoorER min_er ers
-            erLbls = toERlbl <$> labels <*> ers
+            log10ers = log10evidenceRatio <$> (ZipList $ repeat 1000) <*> seconds <*> bests
+            good_log10ers = cutAtFirstPoorER min_er log10ers
+            erLbls = toERlbl <$> labels <*> good_log10ers
             toERlbl lbl er = ST.concat [lblOrUndef,
                                  ST.pack " (", 
                                  ST.pack erStr,
