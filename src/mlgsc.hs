@@ -31,6 +31,7 @@ import OutputFormatStringParser
 data Params = Params {
                 optNoAlign          :: Bool
                 , optOutFmtString   :: String
+                , optERCutoff       :: Int
                 , queryFname        :: String
                 , clsfrFname        :: String
                 }
@@ -44,8 +45,13 @@ parseOptions = Params
                 <*> option str
                     (long "output-format"
                     <> short 'f'
-                    <> help "printf-like format string for output"
+                    <> help "printf-like format string for output. OVERRIDES -e"
                     <> value "%h -> %p")
+                <*> option auto
+                    (long "ER-cutoff"
+                    <> short 'e'
+                    <> help "drop clades with ER lower than this"
+                    <> value 0)
                 <*> argument str (metavar "<query seq file>")
                 <*> argument str (metavar "<classifier file>")
 
@@ -91,6 +97,7 @@ formatResultWrapper params query alnQry prediction =
 
 formatResultReader :: FastA -> Sequence -> OutputData -> Reader Params ST.Text 
 formatResultReader query alnQry prediction = do
-   fmtString <- asks optOutFmtString
+   fmtString    <- asks optOutFmtString
+   minER        <- asks optERCutoff 
    let (Right format) = parseOutputFormatString fmtString 
-   return $ ST.concat $ map (evalFmtComponent 0 query alnQry prediction) format
+   return $ ST.concat $ map (evalFmtComponent minER query alnQry prediction) format

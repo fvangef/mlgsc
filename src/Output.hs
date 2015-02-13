@@ -36,21 +36,28 @@ formatResult fmtString query alnQry prediction =
     ST.concat $ map (evalFmtComponent 0 query alnQry prediction) format
         where (Right format) = parseOutputFormatString fmtString
 
+{- This function should NOT take parameters as a record, or as a data type, or
+ - from a Reader, because it is used from different programs (at least mlgsc and
+ - mlgsc_xval) which have their own types for params, etc. Accordingly, all
+ - parameters to this function are explicit. It is possible, however, to call it
+ - from Reader functions (e.g. in mlgsc). -}
+
 evalFmtComponent :: Int 
                     -> FastA
                     -> Sequence
                     -> OutputData
                     -> FmtComponent
                     -> ST.Text
-evalFmtComponent _ query _ _ Header = LT.toStrict $ FastA.header query
-evalFmtComponent _ query _ _ QueryLength = ST.pack $ show $
-                                            LT.length $ FastA.sequence query
-evalFmtComponent _ query _ _ ID = LT.toStrict $ fastAId query
-evalFmtComponent _ _ alnQry _ AlignedQuery = alnQry
-evalFmtComponent _ _ _ prediction (Path min_er) =
-                                trailToExtendedTaxo min_er $ trail prediction
-evalFmtComponent _ _ _ prediction Score = ST.pack $ show $ score prediction
-evalFmtComponent _ _ _ _ (Literal c) = ST.pack [c]
+evalFmtComponent hlMinER query alnQry prediction component = case component of
+    Header          -> LT.toStrict $ FastA.header query
+    QueryLength     -> ST.pack $ show $ LT.length $ FastA.sequence query
+    ID              -> LT.toStrict $ fastAId query
+    AlignedQuery    -> alnQry
+    (Path min_er)   -> if min_er > 0 -- precedence to low-level
+                        then trailToExtendedTaxo min_er $ trail prediction
+                        else trailToExtendedTaxo hlMinER $ trail prediction
+    Score           -> ST.pack $ show $ score prediction
+    (Literal c)     -> ST.pack [c]
 
 -- Takes an extended trail (i.e., a list of (OTU name, bes
 -- score) tuples) and formats it as a taxonomy line, with empty labels remplaced
