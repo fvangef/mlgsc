@@ -51,7 +51,7 @@ trailToExtendedTaxo min_er trail = ST.intercalate (ST.pack "; ") $ getZipList er
     where   labels = ZipList $ tail $ map (\(lbl,_,_) -> lbl) trail
             bests = ZipList $ init $ map (\(_,best,_) -> best) trail
             seconds = ZipList $ init $ map (\(_,_,second) -> second) trail
-            ers = evidenceRatio' <$> (ZipList $ repeat 1000) <*> seconds <*> bests
+            ers = evidenceRatio <$> (ZipList $ repeat 1000) <*> seconds <*> bests
             erLbls = toERlbl <$> labels <*> ers
             toERlbl lbl er = ST.concat [lblOrUndef,
                                  ST.pack " (", 
@@ -68,8 +68,8 @@ trailToExtendedTaxo min_er trail = ST.intercalate (ST.pack "; ") $ getZipList er
 -- delta-AIC' (in which the factor 2 is dropped, so I avoid having to multiply
 -- by 2 only to divide by 2 again just after).
 
-evidenceRatio' :: Int -> Int -> Int -> Double
-evidenceRatio' scaleFactor bestScore secondBestScore = 
+evidenceRatio :: Int -> Int -> Int -> Double
+evidenceRatio scaleFactor bestScore secondBestScore = 
         exp(deltaAIC' l_min l_sec)
     where   l_min = scoreTologLikelihood scaleFactor bestScore
             l_sec = scoreTologLikelihood scaleFactor secondBestScore
