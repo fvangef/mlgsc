@@ -11,7 +11,7 @@ import qualified Data.Text as T
 data FmtComponent = Literal Char
                     | ID
                     | Header
-                    | Path
+                    | Path Int
                     | QueryLength
                     | AlignedQuery
                     | Score
@@ -28,6 +28,7 @@ literalChar = do
 escape :: Parser FmtComponent
 escape = do
     char '%'
+    any_digits <- optionMaybe $ many1 digit
     f <- oneOf "%ahilps"
     return $ case f of
                 '%' -> Literal '%'
@@ -35,7 +36,9 @@ escape = do
                 'l' -> QueryLength
                 'h' -> Header
                 'i' -> ID
-                'p' -> Path
+                'p' -> case any_digits of
+                        Nothing     -> Path 0
+                        (Just n)    -> Path $ (read n :: Int)
                 's' -> Score
 
 fmtComponent :: Parser FmtComponent
