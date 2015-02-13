@@ -13,6 +13,7 @@ import qualified Data.Text as ST
 import qualified Data.Text.IO as STIO
 import Text.Printf
 import Control.Applicative
+import Control.Monad.Reader
 import Options.Applicative
 
 import Data.Binary (decodeFile)
@@ -25,6 +26,7 @@ import NucModel
 import Align
 import Classifier (Classifier(..), classifySequenceWithExtendedTrail)
 import Output
+import OutputFormatStringParser
 
 data Params = Params {
                 optNoAlign          :: Bool
@@ -70,8 +72,25 @@ main = do
             map (processQuery . ST.toUpper .
                 LT.toStrict. FastA.sequence) queryRecs
     let predictions = map (classifySequenceWithExtendedTrail classifier) processedQueries
-    let outLines = getZipList $ (formatResult $ optOutFmtString params)
+    let outLines = getZipList $ (formatResultWrapper params)
                                 <$> ZipList queryRecs
                                 <*> ZipList processedQueries
                                 <*> ZipList predictions
     mapM_ STIO.putStrLn outLines
+
+{- I like to apply the output formatter in aplicative style to the lists of
+ - arguments. However, I'm not sure how to make this play with the Reader monad,
+ - except by using a wrapper like below. -}
+
+formatResultWrapper :: Params -> FastA -> Sequence -> OutputData -> ST.Text  
+formatResultWrapper params query alnQry prediction =
+    runReader (formatResultReader query alnQry prediction) params
+
+{- This works, but it's not quite clear what should go in Output,
+ - OutputFormatStringParser, or just plain here in Main. -}
+
+formatResultReader :: FastA -> Sequence -> OutputData -> Reader Params ST.Text 
+formatResultReader query alnQry prediction = do
+   fmtString <- asks optOutFmtString
+   let (Right format) = parseOutputFormatString fmtString 
+   return $ ST.concat $ map (evalFmtComponent 0 query alnQry prediction) format

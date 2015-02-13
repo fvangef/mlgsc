@@ -20,7 +20,6 @@ import Crumbs (followExtendedCrumbsWithTrail)
 import NucModel
 import OutputFormatStringParser
 
-
 -- formats an output line according to a format string (à la printf). ARguments
 -- are: format string, original query as a FastA record, query sequence after
 -- alignment, and path through the tree (as returned by trailToExtendedTaxo).
@@ -31,21 +30,27 @@ import OutputFormatStringParser
 -- TODO: pass only the argments that vary from query to query, and the rest
 -- using a Reader monad.
 -- TODO: could add a high-level way of passing an ER threshold
+
 formatResult :: FmtString -> FastA -> Sequence -> OutputData -> ST.Text
 formatResult fmtString query alnQry prediction = 
-    ST.concat $ map (evalFmtComponent query alnQry prediction) format
+    ST.concat $ map (evalFmtComponent 0 query alnQry prediction) format
         where (Right format) = parseOutputFormatString fmtString
 
-evalFmtComponent :: FastA -> Sequence -> OutputData -> FmtComponent -> ST.Text
-evalFmtComponent query _ _ Header = LT.toStrict $ FastA.header query
-evalFmtComponent query _ _ QueryLength = ST.pack $ show $
-    LT.length $ FastA.sequence query
-evalFmtComponent query _ _ ID = LT.toStrict $ fastAId query
-evalFmtComponent _ alnQry _ AlignedQuery = alnQry
-evalFmtComponent _ _ prediction (Path min_er) =
-    trailToExtendedTaxo min_er $ trail prediction
-evalFmtComponent _ _ prediction Score = ST.pack $ show $ score prediction
-evalFmtComponent _ _ _ (Literal c) = ST.pack [c]
+evalFmtComponent :: Int 
+                    -> FastA
+                    -> Sequence
+                    -> OutputData
+                    -> FmtComponent
+                    -> ST.Text
+evalFmtComponent _ query _ _ Header = LT.toStrict $ FastA.header query
+evalFmtComponent _ query _ _ QueryLength = ST.pack $ show $
+                                            LT.length $ FastA.sequence query
+evalFmtComponent _ query _ _ ID = LT.toStrict $ fastAId query
+evalFmtComponent _ _ alnQry _ AlignedQuery = alnQry
+evalFmtComponent _ _ _ prediction (Path min_er) =
+                                trailToExtendedTaxo min_er $ trail prediction
+evalFmtComponent _ _ _ prediction Score = ST.pack $ show $ score prediction
+evalFmtComponent _ _ _ _ (Literal c) = ST.pack [c]
 
 -- Takes an extended trail (i.e., a list of (OTU name, bes
 -- score) tuples) and formats it as a taxonomy line, with empty labels remplaced
