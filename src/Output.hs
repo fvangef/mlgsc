@@ -20,58 +20,78 @@ import Crumbs (followExtendedCrumbsWithTrail)
 import NucModel
 import OutputFormatStringParser
 
-
 -- formats an output line according to a format string (à la printf). ARguments
 -- are: format string, original query as a FastA record, query sequence after
 -- alignment, and path through the tree (as returned by trailToExtendedTaxo).
+-- TODO: shouldn't the parsing of the fmt string be done just once? The format
+-- itself is constant, even though the resulting string is different for every
+-- query.
+
+-- TODO: pass only the argments that vary from query to query, and the rest
+-- using a Reader monad.
+-- TODO: could add a high-level way of passing an ER threshold
 
 formatResult :: FmtString -> FastA -> Sequence -> OutputData -> ST.Text
 formatResult fmtString query alnQry prediction = 
-    ST.concat $ map (evalFmtComponent query alnQry prediction) format
+    ST.concat $ map (evalFmtComponent 0 query alnQry prediction) format
         where (Right format) = parseOutputFormatString fmtString
 
-evalFmtComponent :: FastA -> Sequence -> OutputData -> FmtComponent -> ST.Text
-evalFmtComponent query _ _ Header = LT.toStrict $ FastA.header query
-evalFmtComponent query _ _ QueryLength = ST.pack $ show $
-    LT.length $ FastA.sequence query
-evalFmtComponent query _ _ ID = LT.toStrict $ fastAId query
-evalFmtComponent _ alnQry _ AlignedQuery = alnQry
-evalFmtComponent _ _ prediction Path = trailToExtendedTaxo $ trail prediction
-evalFmtComponent _ _ prediction Score = ST.pack $ show $ score prediction
-evalFmtComponent _ _ _ (Literal c) = ST.pack [c]
+{- This function should NOT take parameters as a record, or as a data type, or
+ - from a Reader, because it is used from different programs (at least mlgsc and
+ - mlgsc_xval) which have their own types for params, etc. Accordingly, all
+ - parameters to this function are explicit. It is possible, however, to call it
+ - from Reader functions (e.g. in mlgsc). -}
 
--- Takes an extended trail (i.e., a list of (OTU name, best score, secod-best
+evalFmtComponent :: Int 
+                    -> FastA
+                    -> Sequence
+                    -> OutputData
+                    -> FmtComponent
+                    -> ST.Text
+evalFmtComponent hlMinER query alnQry prediction component = case component of
+    Header          -> LT.toStrict $ FastA.header query
+    QueryLength     -> ST.pack $ show $ LT.length $ FastA.sequence query
+    ID              -> LT.toStrict $ fastAId query
+    AlignedQuery    -> alnQry
+    (Path min_er)   -> if min_er > 0 -- precedence to low-level
+                        then trailToExtendedTaxo min_er $ trail prediction
+                        else trailToExtendedTaxo hlMinER $ trail prediction
+    Score           -> ST.pack $ show $ score prediction
+    (Literal c)     -> ST.pack [c]
+
+-- Takes an extended trail (i.e., a list of (OTU name, bes
 -- score) tuples) and formats it as a taxonomy line, with empty labels remplaced
 -- by 'unnamed' and labels followed by the log10 of the evidence ratio between
 -- the best and second-best likelihoods.
 
-trailToExtendedTaxo :: Trail -> ST.Text
-trailToExtendedTaxo trail = ST.intercalate (ST.pack "; ") $ getZipList erLbls
+trailToExtendedTaxo :: Int -> Trail -> ST.Text
+trailToExtendedTaxo min_er trail = ST.intercalate (ST.pack "; ") $ getZipList erLbls
     where   labels = ZipList $ tail $ map (\(lbl,_,_) -> lbl) trail
             bests = ZipList $ init $ map (\(_,best,_) -> best) trail
             seconds = ZipList $ init $ map (\(_,_,second) -> second) trail
-            ers = evidenceRatio' <$> (ZipList $ repeat 1000) <*> seconds <*> bests
-            erLbls = toERlbl <$> labels <*> ers
+            log10ers = log10evidenceRatio <$> (ZipList $ repeat 1000) <*> seconds <*> bests
+            good_log10ers = cutAtFirstPoorER min_er log10ers
+            erLbls = toERlbl <$> labels <*> good_log10ers
             toERlbl lbl er = ST.concat [lblOrUndef,
                                  ST.pack " (", 
                                  ST.pack erStr,
                                  ST.pack ")"]
-                where erStr = case printf "%.0g" (logBase 10 er) :: String of
+                where erStr = case printf "%.0g" er :: String of
                             "Infinity" -> "*"
-                            otherwise -> printf "%.0g" (logBase 10 er) :: String
+                            otherwise -> printf "%.0g" er :: String
                       lblOrUndef = if ST.empty == lbl
                                         then ST.pack "unnamed"
                                         else lbl
 
--- Computes the evidence ratio, i.e. exp(delta-AIC / 2), except that I use
--- delta-AIC' (in which the factor 2 is dropped, so I avoid having to multiply
--- by 2 only to divide by 2 again just after).
+-- Computes the base-10 log of the evidence ratio, i.e. exp(delta-AIC / 2),
+-- except that I use delta-AIC' (in which the factor 2 is dropped, so I avoid
+-- having to multiply by 2 only to divide by 2 again just after).
 
-evidenceRatio' :: Int -> Int -> Int -> Double
-evidenceRatio' scaleFactor bestScore secondBestScore = 
-        exp(deltaAIC' l_min l_sec)
+log10evidenceRatio :: Int -> Int -> Int -> Double
+log10evidenceRatio scaleFactor bestScore secondBestScore = logBase 10 er
     where   l_min = scoreTologLikelihood scaleFactor bestScore
             l_sec = scoreTologLikelihood scaleFactor secondBestScore
+            er = exp(deltaAIC' l_min l_sec) 
 
 -- Converts a model score (which is a scaled, rounded log-likelihood (log base
 -- 10)) to a log-likelihood (log base e, i.e. ln). To do this, we _divide_ by
@@ -91,5 +111,14 @@ scoreTologLikelihood scaleFactor score = log10Likelihood / logBase 10 e
 -- ln(L_1), etc. I also drop the constant 2, since we'd be dividing by 2 right
 -- away in evidenceRatio anyway.
 
+-- TODO: deltaAIC' -> deltaAIC
 deltaAIC' :: Double -> Double -> Double
 deltaAIC' l1 l2 = - (l1 - l2)
+
+-- Takes a threshold and a ZipList of evidence ratios and drops any and all
+-- after the first below the threshold. The idea is to keep those nodes in the
+-- path that are well enough supprted, but to drop anything beyond (and
+-- including) the first poorly-supported node.
+
+cutAtFirstPoorER :: Int -> ZipList Double -> ZipList Double
+cutAtFirstPoorER min_er ers = ZipList $ takeWhile (>= fromIntegral min_er) $ getZipList ers 
