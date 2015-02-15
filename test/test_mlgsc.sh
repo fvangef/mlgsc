@@ -25,6 +25,8 @@ function run_case
 	fi
 }
 
-# TODO: read test name and arguments from test_mlgsc_args
-
-run_case "firmic-Spo0A-prot-def" "final_prot_seq.pep final_prot_aln.bcls"
+while read -a args; do
+	test_name=${args[0]}
+	test_args=${args[*]:1}
+	run_case "$test_name" "$test_args"
+done < test_mlgsc_args
