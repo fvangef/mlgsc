@@ -29,4 +29,4 @@ while read -a args; do
 	test_name=${args[0]}
 	test_args=${args[*]:1}
 	run_case "$test_name" "$test_args"
-done < test_mlgsc_args
+done < test_${PROGNAME}_args
