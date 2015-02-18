@@ -28,7 +28,7 @@ import Alignment
 import Align
 import CladeModel
 import NucModel
-import Classifier (Classifier(..), buildClassifier, classifySequenceWithExtendedTrail, leafOTU)
+import TCClassifier (Classifier(..), buildClassifier, classifySequenceWithExtendedTrail, leafOTU)
 import NewickParser
 import NewickDumper
 import Weights
@@ -46,6 +46,7 @@ data Params = Params {
                 , optNoHenikoffWt   :: Bool
                 , optOutFmtString   :: String
                 , optOnlyFalse      :: Bool
+                , optIndices        :: String
                 , molType           :: Molecule
                 , alnFname          :: String
                 , treeFname         :: String
@@ -119,6 +120,11 @@ parseOptions = Params
                 <*> switch (
                         short 'x' <> long "only-wrong"
                         <> help "only show wrong classifications")
+                <*> option str
+                    (long "aln-seq-indices"
+                    <> short 'i'
+                    <> value ""
+                    <> help "whitespace-separated list of indices of sequences to use [testing]")
                 <*> argument auto (metavar "<DNA|Prot>")
                 <*> argument str (metavar "<alignment file>")
                 <*> argument str (metavar "<tree file>")
@@ -142,11 +148,13 @@ main = do
     let fastARecs = Sq.fromList $ fastATextToRecords fastAInput
     let bounds = (0, Sq.length fastARecs)
     gen <- getGen $ optSeed params
-    let randomIndices = take nbRounds $ shuffleList gen $ validIndices fastARecs
+    let seqIndices = if null $ optIndices params 
+        then take nbRounds $ shuffleList gen $ validIndices fastARecs
+        else map read $ words $ optIndices params
     let mol = molType params
-    putStrLn $ runInfo params randomIndices gen
+    putStrLn $ runInfo params seqIndices gen
     mapM_ STIO.putStrLn $ catMaybes $
-        map (oneRoundLOO params tree fastARecs) randomIndices
+        map (oneRoundLOO params tree fastARecs) seqIndices
 
 -- gets a random number generator. If the seed is negative, gets the global
 -- generator, else use the seed.
@@ -173,14 +181,14 @@ validIndices fastARecs = map snd validFreqIdxPairs
                 where   freq = otu2freq ! (fastAOTU fasta)
 
 runInfo :: Params -> [Int] -> StdGen -> String
-runInfo params randomIndices gen
+runInfo params seqIndices gen
     | (optVerbosity params <= 1) = ""
     | otherwise = unlines [
         ("Performing " ++ (show $ optNbRounds params) ++  " rounds of LOO"),
         ("alignment:\t" ++ alnFname params),
         ("phylogeny:\t" ++ treeFname params),
         ("seed:\t" ++ (head $ words $ show gen)),
-        ("indices:\t" ++ (show randomIndices)),
+        ("indices:\t" ++ (show seqIndices)),
         ("min #nb seq / OTU:\t" ++ (show $ optMinSeqInOTU params)),
         ("Henikoff weighting:\t" ++ (show $ not $ optNoHenikoffWt params))
 

@@ -1,1 +1,1 @@
-firmic-Spo0A-prot-def -R 123 -r 10 Prot final_prot_aln.msa final_prot_tree.nw
+firmic-Spo0A-prot-def -i "166 210 335 152 354 299 361 193 168 69" Prot final_prot_aln.msa final_prot_tree.nw
