@@ -62,11 +62,11 @@ instance Binary SimplePepModel where
 -- Builds a PepMOdel from a (weighted) Alignment
 -- G, T are ignored, but gaps (-) are modelled.
 
-alnToPepModel :: SmallProb -> ScaleFactor -> CladeName -> Alignment
+alnToSimplePepModel :: SmallProb -> ScaleFactor -> CladeName -> Alignment
     -> SimplePepModel
-alnToPepModel smallProb scale name [] = SimplePepModel name V.empty smallScore 0
+alnToSimplePepModel smallProb scale name [] = SimplePepModel name V.empty smallScore 0
     where   smallScore = round (scale * (logBase 10 smallProb))
-alnToPepModel smallProb scale name aln = SimplePepModel name scoreMapVector smallScore length
+alnToSimplePepModel smallProb scale name aln = SimplePepModel name scoreMapVector smallScore length
     where   scoreMapVector = V.fromList scoreMapList
             scoreMapList = fmap (freqMapToScoreMap scale
                                 . countsMapToRelFreqMap wsize

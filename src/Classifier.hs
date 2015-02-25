@@ -55,12 +55,16 @@ buildPepClassifier smallprob scale map otuTree = Classifier otuTree modTree
             treeOfAlns      = mergeAlns treeOfLeafAlns
             treeOfLeafAlns  = fmap (\k -> M.findWithDefault [] k map) otuTree
 
-buildSimplePepClassifier  :: SmallProb -> ScaleFactor
-                    -> AlnMap -> OTUTree -> Classifier
+buildSimplePepClassifier  :: SmallProb -> ScaleFactor -> AlnMap -> OTUTree -> Classifier
+buildSimplePepClassifier smallprob scale map otuTree = undefined
+    where treeOfLeafNamedAlns =
+            fmap (\k -> (k, M.findWithDefault [] k map)) otuTree
+{-
 buildSimplePepClassifier smallprob scale map otuTree = Classifier otuTree modTree
-    where   modTree         = fmap (SimplePepCladeModel . alnToPepModel smallprob scale) treeOfAlns
+    where   modTree         = fmap (SimplePepCladeModel . alnToSimplePepModel smallprob scale) treeOfAlns
             treeOfAlns      = mergeAlns treeOfLeafAlns
             treeOfLeafAlns  = fmap (\k -> M.findWithDefault [] k map) otuTree
+-}
 
 
 -- Classifies a Sequence according to a NucClassifier, yielding an OutputData
