@@ -16,6 +16,7 @@ import MlgscTypes
 import Alignment
 import NucModel
 import PepModel
+import SimplePepModel
 import Crumbs
 import CladeModel (CladeModel(..), scoreSeq)
 
@@ -37,7 +38,8 @@ buildClassifier :: Molecule -> SmallProb -> ScaleFactor ->
 buildClassifier mol smallProb scale alnMap otuTree 
     = case mol of
         DNA -> buildNucClassifier smallProb scale alnMap otuTree
-        Prot -> buildPepClassifier smallProb scale alnMap otuTree
+        -- Prot -> buildPepClassifier smallProb scale alnMap otuTree
+        Prot -> buildSimplePepClassifier smallProb scale alnMap otuTree
 
 buildNucClassifier  :: SmallProb -> ScaleFactor
                     -> AlnMap -> OTUTree -> Classifier
@@ -50,6 +52,13 @@ buildPepClassifier  :: SmallProb -> ScaleFactor
                     -> AlnMap -> OTUTree -> Classifier
 buildPepClassifier smallprob scale map otuTree = Classifier otuTree modTree
     where   modTree         = fmap (PepCladeModel . alnToPepModel smallprob scale) treeOfAlns
+            treeOfAlns      = mergeAlns treeOfLeafAlns
+            treeOfLeafAlns  = fmap (\k -> M.findWithDefault [] k map) otuTree
+
+buildSimplePepClassifier  :: SmallProb -> ScaleFactor
+                    -> AlnMap -> OTUTree -> Classifier
+buildSimplePepClassifier smallprob scale map otuTree = Classifier otuTree modTree
+    where   modTree         = fmap (SimplePepCladeModel . alnToPepModel smallprob scale) treeOfAlns
             treeOfAlns      = mergeAlns treeOfLeafAlns
             treeOfLeafAlns  = fmap (\k -> M.findWithDefault [] k map) otuTree
 

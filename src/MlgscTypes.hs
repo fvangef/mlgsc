@@ -18,6 +18,7 @@ type Column         = Text
 type Residue        = Char
 type Position       = Int
 type OTUName        = Text
+type CladeName      = Text
 type OTUTree        = Tree OTUName
 type ScaleFactor    = Double
 type SmallProb      = Double
