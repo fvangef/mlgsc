@@ -48,6 +48,8 @@ fastaRecs1 = fastATextToRecords $ LT.pack fastaInput1
 aln1 = fastARecordsToAln fastaRecs1
 map1 = alnToAlnMap aln1
 
+{-
+ -
 clssfr1 = buildClassifier DNA smallprob scale map1 tree1
 
 -- TODO: should use extended crumbs, and not call these functions directly.
@@ -101,4 +103,4 @@ tests = TestList [
 
 main = do
 	runTestTT tests
-
+-}

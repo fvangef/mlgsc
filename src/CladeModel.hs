@@ -11,26 +11,32 @@ import Data.Binary (Binary, put, get, Get, Word8)
 import MlgscTypes
 import NucModel (NucModel, nucScoreOf, nucScoreSeq, nucModLength, nucAbsentResScore)
 import PepModel
+import SimplePepModel
 
 data CladeModel = NucCladeModel NucModel
                 | PepCladeModel PepModel
+                | SimplePepCladeModel SimplePepModel
                 deriving (Show, Eq)
 
 scoreOf :: CladeModel -> Residue -> Position -> Int
 scoreOf (NucCladeModel nm) res pos = nucScoreOf nm res pos
 scoreOf (PepCladeModel pm) res pos = pepScoreOf pm res pos
+scoreOf (SimplePepCladeModel spm) res pos = simplePepScoreOf spm res pos
 
 scoreSeq :: CladeModel -> Sequence -> Int
 scoreSeq (NucCladeModel nm) seq = nucScoreSeq nm seq
 scoreSeq (PepCladeModel pm) seq = pepScoreSeq pm seq
+scoreSeq (SimplePepCladeModel spm) seq = simplePepScoreSeq spm seq
 
 modLength :: CladeModel -> Int
 modLength (NucCladeModel nm) = nucModLength nm
 modLength (PepCladeModel pm) = pepModLength pm
+modLength (SimplePepCladeModel spm) = simplePepModLength spm
 
 absentResScore :: CladeModel -> Int
 absentResScore (NucCladeModel nm) = nucAbsentResScore nm
 absentResScore (PepCladeModel pm) = pepAbsentResScore pm
+absentResScore (SimplePepCladeModel spm) = simplePepAbsentResScore spm
 
 instance Binary CladeModel where
     put (NucCladeModel nm) = do
