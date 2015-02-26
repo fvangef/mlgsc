@@ -6,6 +6,7 @@
 
 import System.Environment (getArgs)
 import System.Random
+import System.IO
 import Control.Monad.Reader
 import qualified Data.Map.Strict as M
 import Data.Map.Strict ((!))
@@ -28,7 +29,7 @@ import Alignment
 import Align
 import CladeModel
 import NucModel
-import TCClassifier (Classifier(..), buildClassifier, classifySequenceWithExtendedTrail, leafOTU)
+import Classifier (Classifier(..), buildClassifier, classifySequenceWithExtendedTrail, leafOTU)
 import NewickParser
 import NewickDumper
 import Weights
@@ -141,20 +142,39 @@ main = do
     params <- execParser parseOptionsInfo
     let smallProb = optSmallProb params
     let scaleFactor = optScaleFactor params
-    let nbRounds = optNbRounds params
     newickString <- readFile $ treeFname params
     let (Right tree) = parseNewickTree newickString
     fastAInput <-  LTIO.readFile $ alnFname params
     let fastARecs = Sq.fromList $ fastATextToRecords fastAInput
     let bounds = (0, Sq.length fastARecs)
     gen <- getGen $ optSeed params
-    let seqIndices = if null $ optIndices params 
-        then take nbRounds $ shuffleList gen $ validIndices fastARecs
-        else map read $ words $ optIndices params
+    seqIndices <- getSeqIndices gen params fastARecs
     let mol = molType params
     putStrLn $ runInfo params seqIndices gen
     mapM_ STIO.putStrLn $ catMaybes $
         map (oneRoundLOO params tree fastARecs) seqIndices
+
+warn :: String -> IO ()
+warn msg = hPutStrLn stderr $ "WARNING: " ++ msg
+
+getSeqIndices :: StdGen -> Params -> Seq FastA -> IO [Int]
+getSeqIndices gen params fastARecs = do
+        let nbRounds = optNbRounds params
+        let outputWarnings = (optVerbosity params > 0)
+        let validNdx = validIndices fastARecs
+        if null $ optIndices params 
+        then do if nbRounds > length validNdx
+                then do
+                    if outputWarnings
+                        then warn $ "More LOO rounds (" ++ show nbRounds ++ ") than valid indices (" ++ show (length validNdx) ++ ")."
+                        else return ()
+                    return validNdx
+                else return $ take nbRounds $ shuffleList gen $ validNdx
+        else do
+            if outputWarnings
+                then warn "User-specified indices are not checked."
+                else return ()
+            return $ map read $ words $ optIndices params
 
 -- gets a random number generator. If the seed is negative, gets the global
 -- generator, else use the seed.
@@ -184,7 +204,7 @@ runInfo :: Params -> [Int] -> StdGen -> String
 runInfo params seqIndices gen
     | (optVerbosity params <= 1) = ""
     | otherwise = unlines [
-        ("Performing " ++ (show $ optNbRounds params) ++  " rounds of LOO"),
+        ("Performing " ++ (show $ length seqIndices) ++  " rounds of LOO"),
         ("alignment:\t" ++ alnFname params),
         ("phylogeny:\t" ++ treeFname params),
         ("seed:\t" ++ (head $ words $ show gen)),
