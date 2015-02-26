@@ -157,6 +157,35 @@ main = do
 warn :: String -> IO ()
 warn msg = hPutStrLn stderr $ "WARNING: " ++ msg
 
+{- Determine which sequences in the input FastA will be used as queries for LOO
+ - runs, and return their indices in the Sequence of FastA records (that's a
+ - Data.Sequence, not a molecular sequence, of course...). Not all sequences are
+ - eligible: if an OTU contains only one sequence, and we remove it from the
+ - training set, then the modeling step will be unable to model that OTU at all,
+ - and the removed sequence, when used as a LOO query, will always be
+ - misclassified. Therefore, a for a sequence to be used as an LOO query, there
+ - must be at least one other sequence in the same OTU, IOW there is a minimum
+ - OTU size of 2. Even this is rather small, because of the potential for
+ - overfitting when using a single sequence as a training set for a given OTU.
+ - Therefore, the default minimal OTU size is 3 (and can be overridden with
+ - option -m).
+ - OTUs with sufficient sizes and sequences that belong to such OTUs are called
+ - 'valid'.
+ - The behaviour is as follows:
+ - (1) if the user supplies indices directly (option -i), those indices are
+ - used. NO CHECK IS PERFORMED, whether of sequence validity, or of bounds. This
+ - option should only be used for testing; it has the advantage of being
+ - portable.
+ - (2) if the user specifies a number n of LOO rounds (option -r), then n
+ - indices are drawn at random (without replacement) from the valid indices,
+ - UNLESS n is larger than (or equal to) the number of valid indices. In that
+ - case, all valid sequences are used, and without permutation (i.e., in the
+ - order in which they appear in the FastA).
+ - (3) otherwise, a default of 100 is used, i.e. the program behaves as in (2),
+ - as if the user had specified 100 rounds. (in particular, if there are fewer
+ - than 100 valid sequences, then they are all used in turn). 
+ -}
+
 getSeqIndices :: StdGen -> Params -> Seq FastA -> IO [Int]
 getSeqIndices gen params fastARecs = do
         let nbRounds = optNbRounds params
