@@ -56,8 +56,13 @@ buildPepClassifier smallprob scale map otuTree = Classifier otuTree modTree
             treeOfLeafAlns  = fmap (\k -> M.findWithDefault [] k map) otuTree
 
 buildSimplePepClassifier  :: SmallProb -> ScaleFactor -> AlnMap -> OTUTree -> Classifier
-buildSimplePepClassifier smallprob scale map otuTree = undefined
-    where   treeOfNamedAlns = mergeNamedAlns treeOfLeafNamedAlns
+buildSimplePepClassifier smallprob scale map otuTree =
+    Classifier otuTree cladeModTree
+    where   cladeModTree = fmap SimplePepCladeModel modTree
+            modTree = fmap (\(name, aln) -> 
+                            alnToSimplePepModel smallprob scale name aln)
+                            treeOfNamedAlns
+            treeOfNamedAlns = mergeNamedAlns treeOfLeafNamedAlns
             treeOfLeafNamedAlns =
                 fmap (\k -> (k, M.findWithDefault [] k map)) otuTree
 {-
