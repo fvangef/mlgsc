@@ -22,7 +22,7 @@ import Alignment
 import CladeModelAux
 
 data SimplePepModel = SimplePepModel {
-                    cladeName       :: CladeName
+                    clade           :: CladeName
                     , matrix        :: V.Vector (M.Map Residue Int)
                     , smallScore    :: Int
                     , modelLength   :: Int
@@ -45,9 +45,11 @@ simplePepModLength = modelLength
 
 simplePepAbsentResScore = smallScore
 
+simplePepCladeName = clade
+
 instance Binary SimplePepModel where
     put mod = do
-        put $ cladeName mod
+        put $ clade mod
         put $ matrix mod
         put $ smallScore mod
         put $ modelLength mod

@@ -38,6 +38,10 @@ absentResScore (NucCladeModel nm) = nucAbsentResScore nm
 absentResScore (PepCladeModel pm) = pepAbsentResScore pm
 absentResScore (SimplePepCladeModel spm) = simplePepAbsentResScore spm
 
+cladeName :: CladeModel -> CladeName
+cladeName (SimplePepCladeModel spm) = simplePepCladeName spm
+cladeName _ = T.empty
+
 instance Binary CladeModel where
     put (NucCladeModel nm) = do
         put (0 :: Word8) >> put nm

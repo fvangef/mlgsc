@@ -56,7 +56,7 @@ bestByExtended objs m = (bestObj, bestNdx, bestMetricValue, secondBestMetricValu
             secondBestMetricValue = sorted !! 1
             bestNdx = head $ elemIndices bestMetricValue metricValues
             bestObj = objs !! bestNdx
-            
+
 -- Follows an extended crumbs trail, returning labels and score ratios
 
 -- followExtendedCrumbsWithTrail :: Ord b => [(Int, b, b)] -> Tree a -> [a]

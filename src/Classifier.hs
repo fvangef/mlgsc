@@ -10,6 +10,7 @@ import qualified Data.List as L
 import Data.Binary (Binary, put, get, Get)
 import Data.Text.Binary
 import qualified Data.Text.Lazy as LT
+import qualified Data.Text as ST
 
 import MlgscTypes
 -- import CladeModel
@@ -65,15 +66,55 @@ buildSimplePepClassifier smallprob scale map otuTree =
             treeOfNamedAlns = mergeNamedAlns treeOfLeafNamedAlns
             treeOfLeafNamedAlns =
                 fmap (\k -> (k, M.findWithDefault [] k map)) otuTree
+
+-- TODO: OutputData seems too complex, as the score is actually found in the
+-- trail.
+--
+classifySequence :: Classifier -> Sequence -> OutputData
+classifySequence (Classifier _ modTree) seq = OutputData trail 1
+    where trail = scoreSequence (flip scoreSeq seq) modTree
+
+-- dropExtendedCrumbs :: (Ord b) => (a -> b) -> Tree a -> (b, Crumbs)
+scoreSequence :: (CladeModel -> Int) -> Tree CladeModel -> Trail
+scoreSequence scoreFunction tree = scoreSequence' scoreFunction tree []
+
+scoreSequence' :: (CladeModel -> Int) -> Tree CladeModel -> Trail -> Trail
+scoreSequence' scoreFunction (Node model []) trail =
+    (ST.empty, scoreFunction model, 1) : trail
+scoreSequence' scoreFunction (Node model kids) trail =  
+    scoreSequence' scoreFunction bestKid ((cladeName model, bestScore, secondBestScore) : trail)
+    where   (bestKid, bestNdx, bestScore, secondBestScore) = bestByExtended kids scoreFunction'
+            scoreFunction' (Node rl _) = scoreFunction rl
+
+
+-- like dropCrumbsM, but with extended crumbs.
+
 {-
-buildSimplePepClassifier smallprob scale map otuTree = Classifier otuTree modTree
-    where   modTree         = fmap (SimplePepCladeModel . alnToSimplePepModel smallprob scale) treeOfAlns
-            treeOfAlns      = mergeAlns treeOfLeafAlns
-            treeOfLeafAlns  = fmap (\k -> M.findWithDefault [] k map) otuTree
+scoreSequenceM :: (CladeModel -> Int) -> Tree CladeModel -> Writer ExtCrumbs Int
+scoreSequenceM scoreFunction (Node rl []) = return $ scoreFunction rl
+scoreSequenceM scoreFunction (Node rl kids) = do
+    let (bestKid, bestNdx, bestScore, secondBestScore) = bestByExtended kids scoreFunction'
+    tell [(bestNdx, bestScore, secondBestScore)] 
+    dropExtendedCrumbsM scoreFunction $ bestKid
+    where scoreFunction' (Node rl _) = scoreFunction rl
 -}
 
+-- finds the (first) object in a list that maximizes some metric m (think score
+-- of a sequence according to a model), returns that object and its index in
+-- the list, as well as the best score and second-best score themselves. Not
+-- efficient, but should be ok for short lists.
 
--- Classifies a Sequence according to a NucClassifier, yielding an OutputData
+-- TODO: if we no longer need the indices, this is way to complicated.
+bestByExtended :: Ord b => [a] -> (a -> b) -> (a, Int, b, b)
+bestByExtended objs m = (bestObj, bestNdx, bestMetricValue, secondBestMetricValue)
+    where   sorted = reverse $ L.sort $ metricValues
+            metricValues = map m objs
+            bestMetricValue = sorted !! 0
+            secondBestMetricValue = sorted !! 1
+            bestNdx = head $ L.elemIndices bestMetricValue metricValues
+            bestObj = objs !! bestNdx
+
+-- Classifies a Sequence according to a Classifier, yielding an OutputData
 
 classifySequenceWithExtendedTrail :: Classifier -> Sequence -> OutputData
 classifySequenceWithExtendedTrail classifier@(Classifier otuTree _) query
