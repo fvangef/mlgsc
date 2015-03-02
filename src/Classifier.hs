@@ -19,7 +19,7 @@ import NucModel
 import PepModel
 import SimplePepModel
 import Crumbs
-import CladeModel (CladeModel(..), scoreSeq)
+import CladeModel (CladeModel(..), scoreSeq, cladeName)
 
 data Classifier = Classifier OTUTree (Tree CladeModel)
                 deriving (Show, Eq)
