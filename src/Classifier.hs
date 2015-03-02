@@ -3,6 +3,8 @@ module Classifier (
     buildClassifier,
     classifySequenceWithExtendedTrail,
     classifySequence,
+    scoreSeq,
+    scseq,          -- TODO: streamline exports
     leafOTU) where
 
 import Data.Tree
@@ -12,6 +14,7 @@ import Data.Binary (Binary, put, get, Get)
 import Data.Text.Binary
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text as ST
+import Data.Ord
 
 import MlgscTypes
 -- import CladeModel
@@ -88,6 +91,14 @@ scoreSequence' scoreFunction (Node model kids) trail =
             scoreFunction' (Node rl _) = scoreFunction rl
 
 
+-- the use of Down is to reverse the order according to sortBy
+--
+scseq :: Sequence -> Tree CladeModel -> Int
+scseq seq (Node model []) = scoreSeq model seq
+scseq seq (Node _ kids) = scseq seq bestKid
+    where   bestKid = fst $ head orderedKids
+            orderedKids = L.sortBy (comparing snd) $ zip kids (map Down scores)
+            scores = map (flip scoreSeq seq . rootLabel) kids
 
 -- like dropCrumbsM, but with extended crumbs.
 

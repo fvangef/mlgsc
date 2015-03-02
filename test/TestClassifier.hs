@@ -2,7 +2,7 @@ import Test.HUnit
 import qualified Data.Text as ST
 import qualified Data.Text.Lazy as LT
 import Data.Binary
-
+import Data.Tree    -- TODO: rm when debugged
 import TestFileUtils
 import NewickParser
 import FastA
@@ -48,7 +48,13 @@ fastaRecs1 = fastATextToRecords $ LT.pack fastaInput1
 aln1 = fastARecordsToAln fastaRecs1
 map1 = alnToAlnMap aln1
 
-clfr1 = buildClassifier Prot smallprob scale map1 tree1 
+clfr1@(Classifier _ modtree1) = buildClassifier Prot smallprob scale map1 tree1 
+
+q1 = ST.pack "ACGTACGT"
+
+kids = subForest modtree1
+scores = map (flip scoreSeq q1 . rootLabel) kids
+
 {-
  -
 clssfr1 = buildClassifier DNA smallprob scale map1 tree1
