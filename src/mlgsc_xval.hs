@@ -262,6 +262,7 @@ spliceElemAt seq n = (elem, head >< tail)
 -- TODO: rmove the hard-coded constants below!
 -- TODO: refactor, passing params as a single argument, or using a Reader monad
 
+{-
 leaveOneOut :: FmtString -> Molecule -> Bool -> SmallProb -> ScaleFactor ->
     OTUTree -> Seq FastA -> Int -> ST.Text
 leaveOneOut fmtString mol noHWt smallProb scaleFactor tree fastaRecs n =
@@ -285,7 +286,7 @@ leaveOneOut fmtString mol noHWt smallProb scaleFactor tree fastaRecs n =
             -- we also need the ungapped sequence, e.g. for output and to make
             -- sure alignment works.
             origRec = FastA.degap testRec
-
+-}
 
 -- These two perform the same as leaveOneOut, but using a Reader monad for
 -- passing the parameters. It is essentially a matter of style, both functions
