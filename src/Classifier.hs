@@ -2,6 +2,7 @@ module Classifier (
     Classifier(..),
     buildClassifier,
     classifySequenceWithExtendedTrail,
+    classifySequence,
     leafOTU) where
 
 import Data.Tree
@@ -85,6 +86,7 @@ scoreSequence' scoreFunction (Node model kids) trail =
     scoreSequence' scoreFunction bestKid ((cladeName model, bestScore, secondBestScore) : trail)
     where   (bestKid, bestNdx, bestScore, secondBestScore) = bestByExtended kids scoreFunction'
             scoreFunction' (Node rl _) = scoreFunction rl
+
 
 
 -- like dropCrumbsM, but with extended crumbs.

@@ -29,7 +29,7 @@ import Alignment
 import Align
 import CladeModel
 import NucModel
-import Classifier (Classifier(..), buildClassifier, classifySequenceWithExtendedTrail, leafOTU)
+import Classifier (Classifier(..), buildClassifier, classifySequence, classifySequenceWithExtendedTrail, leafOTU)
 import NewickParser
 import NewickDumper
 import Weights
@@ -318,7 +318,7 @@ looReader otuTree fastaRecs testRecNdx = do
     let scoringScheme =
             ScoringScheme (-2) (scoringSchemeMap (absentResScore rootMod))
     let alignedTestSeq = msalign scoringScheme rootMod testSeq
-    let prediction = classifySequenceWithExtendedTrail classifier alignedTestSeq
+    let prediction = classifySequence classifier alignedTestSeq
     onlyFalse <- asks optOnlyFalse
     if  (onlyFalse && 
          (leafOTU prediction) == (LT.toStrict $ fastAOTU testRec))

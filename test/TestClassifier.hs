@@ -48,6 +48,7 @@ fastaRecs1 = fastATextToRecords $ LT.pack fastaInput1
 aln1 = fastARecordsToAln fastaRecs1
 map1 = alnToAlnMap aln1
 
+clfr1 = buildClassifier Prot smallprob scale map1 tree1 
 {-
  -
 clssfr1 = buildClassifier DNA smallprob scale map1 tree1
