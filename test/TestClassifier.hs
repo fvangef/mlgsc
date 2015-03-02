@@ -35,13 +35,19 @@ fastaInput1 = unlines [
     ">ID11 Clostridium", 
     "CCGTACGT",
     ">ID12 Clostridium", 
-    "CCGTACGT"
+    "CCGTACGT",
+    ">ID13 Geobacillus", 
+    "GCGTACGT",
+    ">ID14 Geobacillus", 
+    "GCGTACGT",
+    ">ID15 Geobacillus", 
+    "GCGTACGT"
     ]
 
 smallprob = 0.0001
 scale = 1000
 
-newick1 = "(Aeromonas,(Bacillus,Clostridium));"
+newick1 = "(Aeromonas,((Geobacillus,Bacillus)Bacillaceae,Clostridium));"
 (Right tree1) = parseNewickTree newick1
 
 fastaRecs1 = fastATextToRecords $ LT.pack fastaInput1

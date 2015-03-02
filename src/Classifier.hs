@@ -4,7 +4,7 @@ module Classifier (
     classifySequenceWithExtendedTrail,
     classifySequence,
     scoreSeq,
-    scseq,          -- TODO: streamline exports
+    scseq, scseqp, scseqpe,          -- TODO: streamline exports
     leafOTU) where
 
 import Data.Tree
@@ -91,8 +91,10 @@ scoreSequence' scoreFunction (Node model kids) trail =
             scoreFunction' (Node rl _) = scoreFunction rl
 
 
--- the use of Down is to reverse the order according to sortBy
---
+-- The simplest scoring function - gets the best score through
+-- divide-and-conquer, by following the tree until it hits a leaf.
+-- (the use of Down is to reverse the order according to sortBy).
+
 scseq :: Sequence -> Tree CladeModel -> Int
 scseq seq (Node model []) = scoreSeq model seq
 scseq seq (Node _ kids) = scseq seq bestKid
@@ -100,8 +102,29 @@ scseq seq (Node _ kids) = scseq seq bestKid
             orderedKids = L.sortBy (comparing snd) $ zip kids (map Down scores)
             scores = map (flip scoreSeq seq . rootLabel) kids
 
--- like dropCrumbsM, but with extended crumbs.
+-- As above, but records scores along the path. This one is straightforward but
+-- inefficient, since scores are cmputed twice (OTOH, scoring a sequence is
+-- linear in sequence length, so it's likely that alignment is still the most
+-- time-consuming step).
 
+scseqp :: Sequence -> Tree CladeModel -> [Int]
+scseqp seq (Node model []) = [scoreSeq model seq]
+scseqp seq (Node model kids) =  scoreSeq model seq : (scseqp seq bestKid)
+    where   bestKid = fst $ head orderedKids
+            orderedKids = L.sortBy (comparing snd) $ zip kids (map Down scores)
+            scores = map (flip scoreSeq seq . rootLabel) kids
+
+-- This one avoids scoring against the same model twice. It also skips the
+-- tree's root, which is usually a good thing anyway, because all paths through
+-- the tree start at the root so we don't need to explicitly include it in the
+-- scoring output.
+
+scseqpe :: Sequence -> Tree CladeModel -> [Int]
+scseqpe seq (Node model []) = []
+scseqpe seq (Node model kids) =  bestKidScore : (scseqpe seq bestKid)
+    where   (bestKid, (Down bestKidScore)) = head orderedKids
+            orderedKids = L.sortBy (comparing snd) $ zip kids (map Down scores)
+            scores = map (flip scoreSeq seq . rootLabel) kids
 {-
 scoreSequenceM :: (CladeModel -> Int) -> Tree CladeModel -> Writer ExtCrumbs Int
 scoreSequenceM scoreFunction (Node rl []) = return $ scoreFunction rl
