@@ -11,7 +11,7 @@ data Molecule = DNA | Prot
 data OutputData = OutputData {
                     trail   :: Trail,
                     score   :: Int
-                    }
+                    } deriving (Show)
 
 type Sequence       = Text
 type Column         = Text

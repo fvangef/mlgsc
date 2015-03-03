@@ -58,9 +58,6 @@ clfr1@(Classifier _ modtree1) = buildClassifier Prot smallprob scale map1 tree1
 
 q1 = ST.pack "ACGTACGT"
 
-kids = subForest modtree1
-scores = map (flip scoreSeq q1 . rootLabel) kids
-
 {-
  -
 clssfr1 = buildClassifier DNA smallprob scale map1 tree1

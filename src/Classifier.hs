@@ -3,8 +3,6 @@ module Classifier (
     buildClassifier,
     classifySequenceWithExtendedTrail,
     classifySequence,
-    scoreSeq,
-    scseq, scseqp, scseqpe, scseqpet,          -- TODO: streamline exports
     leafOTU) where
 
 import Data.Tree
@@ -76,63 +74,12 @@ buildSimplePepClassifier smallprob scale map otuTree =
 --
 classifySequence :: Classifier -> Sequence -> OutputData
 classifySequence (Classifier _ modTree) seq = OutputData trail 1
-    where trail = scoreSequence (flip scoreSeq seq) modTree
+    where trail = scoreSequence seq modTree
 
--- dropExtendedCrumbs :: (Ord b) => (a -> b) -> Tree a -> (b, Crumbs)
-scoreSequence :: (CladeModel -> Int) -> Tree CladeModel -> Trail
-scoreSequence scoreFunction tree = scoreSequence' scoreFunction tree []
-
-scoreSequence' :: (CladeModel -> Int) -> Tree CladeModel -> Trail -> Trail
-scoreSequence' scoreFunction (Node model []) trail =
-    (ST.empty, scoreFunction model, 1) : trail
-scoreSequence' scoreFunction (Node model kids) trail =  
-    scoreSequence' scoreFunction bestKid ((cladeName model, bestScore, secondBestScore) : trail)
-    where   (bestKid, bestNdx, bestScore, secondBestScore) = bestByExtended kids scoreFunction'
-            scoreFunction' (Node rl _) = scoreFunction rl
-
-
--- The simplest scoring function - gets the best score through
--- divide-and-conquer, by following the tree until it hits a leaf.
--- (the use of Down is to reverse the order according to sortBy).
-
-scseq :: Sequence -> Tree CladeModel -> Int
-scseq seq (Node model []) = scoreSeq model seq
-scseq seq (Node _ kids) = scseq seq bestKid
-    where   bestKid = fst $ head orderedKids
-            orderedKids = L.sortBy (comparing snd) $ zip kids (map Down scores)
-            scores = map (flip scoreSeq seq . rootLabel) kids
-
--- As above, but records scores along the path. This one is straightforward but
--- inefficient, since scores are cmputed twice (OTOH, scoring a sequence is
--- linear in sequence length, so it's likely that alignment is still the most
--- time-consuming step).
-
-scseqp :: Sequence -> Tree CladeModel -> [Int]
-scseqp seq (Node model []) = [scoreSeq model seq]
-scseqp seq (Node model kids) =  scoreSeq model seq : (scseqp seq bestKid)
-    where   bestKid = fst $ head orderedKids
-            orderedKids = L.sortBy (comparing snd) $ zip kids (map Down scores)
-            scores = map (flip scoreSeq seq . rootLabel) kids
-
--- This one avoids scoring against the same model twice. It also skips the
--- tree's root, which is usually a good thing anyway, because all paths through
--- the tree start at the root so we don't need to explicitly include it in the
--- scoring output.
-
-scseqpe :: Sequence -> Tree CladeModel -> [Int]
-scseqpe seq (Node model []) = []
-scseqpe seq (Node model kids) =  bestKidScore : (scseqpe seq bestKid)
-    where   (bestKid, (Down bestKidScore)) = head orderedKids
-            orderedKids = L.sortBy (comparing snd) $ zip kids (map Down scores)
-            scores = map (flip scoreSeq seq . rootLabel) kids
-
--- As above, but returns a Trail, i.e., with clade name, best score, and
--- second-best score.
-
-scseqpet :: Sequence -> Tree CladeModel -> Trail
-scseqpet seq (Node model []) = []
-scseqpet seq (Node model kids) = 
-    (bestKidName, bestKidScore, sndBestKidScore)  : (scseqpet seq bestKid)
+scoreSequence :: Sequence -> Tree CladeModel -> Trail
+scoreSequence seq (Node model []) = []
+scoreSequence seq (Node model kids) = 
+    (bestKidName, bestKidScore, sndBestKidScore)  : (scoreSequence seq bestKid)
     where   bestKidName = cladeName $ rootLabel bestKid
             (bestKid, (Down bestKidScore)) = orderedKids !! 0
             (sndBestKid, (Down sndBestKidScore)) = orderedKids !! 1
