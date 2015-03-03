@@ -116,7 +116,7 @@ parseOptions = Params
                     (long "output-format"
                     <> short 'f'
                     <> metavar "OUTPUT FORMAT STRING"
-                    <> value "%h (%l) -> %p"
+                    <> value "%h (len=%l) -> %p"
                     <> help "printf-like format string for output")
                 <*> switch (
                         short 'x' <> long "only-wrong"
