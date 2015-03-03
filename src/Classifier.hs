@@ -4,7 +4,7 @@ module Classifier (
     classifySequenceWithExtendedTrail,
     classifySequence,
     scoreSeq,
-    scseq, scseqp, scseqpe,          -- TODO: streamline exports
+    scseq, scseqp, scseqpe, scseqpet,          -- TODO: streamline exports
     leafOTU) where
 
 import Data.Tree
@@ -125,6 +125,20 @@ scseqpe seq (Node model kids) =  bestKidScore : (scseqpe seq bestKid)
     where   (bestKid, (Down bestKidScore)) = head orderedKids
             orderedKids = L.sortBy (comparing snd) $ zip kids (map Down scores)
             scores = map (flip scoreSeq seq . rootLabel) kids
+
+-- As above, but returns a Trail, i.e., with clade name, best score, and
+-- second-best score.
+
+scseqpet :: Sequence -> Tree CladeModel -> Trail
+scseqpet seq (Node model []) = []
+scseqpet seq (Node model kids) = 
+    (bestKidName, bestKidScore, sndBestKidScore)  : (scseqpet seq bestKid)
+    where   bestKidName = cladeName $ rootLabel bestKid
+            (bestKid, (Down bestKidScore)) = orderedKids !! 0
+            (sndBestKid, (Down sndBestKidScore)) = orderedKids !! 1
+            orderedKids = L.sortBy (comparing snd) $ zip kids (map Down scores)
+            scores = map (flip scoreSeq seq . rootLabel) kids
+
 {-
 scoreSequenceM :: (CladeModel -> Int) -> Tree CladeModel -> Writer ExtCrumbs Int
 scoreSequenceM scoreFunction (Node rl []) = return $ scoreFunction rl
