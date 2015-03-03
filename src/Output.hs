@@ -54,8 +54,8 @@ evalFmtComponent hlMinER query alnQry prediction component = case component of
     ID              -> LT.toStrict $ fastAId query
     AlignedQuery    -> alnQry
     (Path min_er)   -> if min_er > 0 -- precedence to low-level
-                        then trailToExtendedTaxo min_er $ trail prediction
-                        else trailToExtendedTaxo hlMinER $ trail prediction
+                        then trailToPath min_er $ trail prediction
+                        else trailToPath hlMinER $ trail prediction
     Score           -> ST.pack $ show $ score prediction
     (Literal c)     -> ST.pack [c]
 
@@ -83,6 +83,25 @@ trailToExtendedTaxo min_er trail = ST.intercalate (ST.pack "; ") $ getZipList er
                                         then ST.pack "unnamed"
                                         else lbl
 
+trailToPath :: Int -> Trail -> ST.Text
+trailToPath min_er trail = ST.intercalate (ST.pack "; ") $ getZipList erLbls
+    where   labels  = ZipList $ map (\(lbl,_,_)   -> lbl) trail
+            bests   = ZipList $ map (\(_,best,_) -> best) trail
+            seconds = ZipList $ map (\(_,_,snd)   -> snd) trail
+            log10ers = log10evidenceRatio <$>
+                       (ZipList $ repeat 1000) <*> seconds <*> bests
+            good_log10ers = cutAtFirstPoorER min_er log10ers
+            erLbls = toERlbl <$> labels <*> good_log10ers
+            toERlbl lbl er = ST.concat [lblOrUndef,
+                                 ST.pack " (", 
+                                 ST.pack erStr,
+                                 ST.pack ")"]
+                where erStr = case printf "%.0g" er :: String of
+                            "Infinity" -> "*"
+                            otherwise -> printf "%.0g" er :: String
+                      lblOrUndef = if ST.empty == lbl
+                                        then ST.pack "unnamed"
+                                        else lbl
 -- Computes the base-10 log of the evidence ratio, i.e. exp(delta-AIC / 2),
 -- except that I use delta-AIC' (in which the factor 2 is dropped, so I avoid
 -- having to multiply by 2 only to divide by 2 again just after).

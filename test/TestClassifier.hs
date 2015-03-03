@@ -10,6 +10,7 @@ import Alignment
 import Classifier
 import Crumbs
 import MlgscTypes
+import Output
 
 fastaInput1 = unlines [
     ">ID0 Aeromonas", 
@@ -47,7 +48,7 @@ fastaInput1 = unlines [
 smallprob = 0.0001
 scale = 1000
 
-newick1 = "(Aeromonas,((Geobacillus,Bacillus)Bacillaceae,Clostridium));"
+newick1 = "(Aeromonas,((Geobacillus,Bacillus)Bacillaceae,Clostridium)Firmicutes);"
 (Right tree1) = parseNewickTree newick1
 
 fastaRecs1 = fastATextToRecords $ LT.pack fastaInput1

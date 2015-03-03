@@ -71,7 +71,7 @@ buildSimplePepClassifier smallprob scale map otuTree =
 
 -- TODO: OutputData seems too complex, as the score is actually found in the
 -- trail.
---
+
 classifySequence :: Classifier -> Sequence -> OutputData
 classifySequence (Classifier _ modTree) seq = OutputData trail 1
     where trail = scoreSequence seq modTree
