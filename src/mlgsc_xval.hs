@@ -311,7 +311,7 @@ looReader otuTree fastaRecs testRecNdx = do
     mol <- asks molType
     smallProb <- asks optSmallProb
     scaleFactor <- asks optScaleFactor
-    let classifier@(Classifier _ modTree) =
+    let classifier@(Classifier modTree) =
             buildClassifier mol smallProb scaleFactor otuAlnMap otuTree
     let rootMod = rootLabel modTree 
     let scoringScheme =

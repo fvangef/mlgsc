@@ -20,18 +20,16 @@ import NucModel
 import PepModel
 import CladeModel (CladeModel(..), scoreSeq, cladeName)
 
-data Classifier = Classifier OTUTree (Tree CladeModel)
+data Classifier = Classifier (Tree CladeModel)
                 deriving (Show, Eq)
 
 instance Binary Classifier where
-    put (Classifier otuTree modTree) = do
-        put otuTree
+    put (Classifier modTree) = do
         put modTree
 
     get = do
-        otuTree <- get :: Get OTUTree
         modTree <- get :: Get (Tree CladeModel)
-        return $ Classifier otuTree modTree
+        return $ Classifier modTree
 
 buildClassifier :: Molecule -> SmallProb -> ScaleFactor ->
     AlnMap -> OTUTree -> Classifier
@@ -55,7 +53,7 @@ buildNucClassifier smallprob scale map otuTree = Classifier otuTree modTree
 buildNucClassifier  :: SmallProb -> ScaleFactor -> AlnMap -> OTUTree
     -> Classifier
 buildNucClassifier smallprob scale map otuTree =
-    Classifier otuTree cladeModTree
+    Classifier cladeModTree
     where   cladeModTree = fmap NucCladeModel modTree
             modTree = fmap (\(name, aln) -> 
                             alnToNucModel smallprob scale name aln)
@@ -67,7 +65,7 @@ buildNucClassifier smallprob scale map otuTree =
 buildPepClassifier  :: SmallProb -> ScaleFactor -> AlnMap -> OTUTree
     -> Classifier
 buildPepClassifier smallprob scale map otuTree =
-    Classifier otuTree cladeModTree
+    Classifier cladeModTree
     where   cladeModTree = fmap PepCladeModel modTree
             modTree = fmap (\(name, aln) -> 
                             alnToPepModel smallprob scale name aln)
@@ -80,7 +78,7 @@ buildPepClassifier smallprob scale map otuTree =
 -- trail.
 
 classifySequence :: Classifier -> Sequence -> Trail
-classifySequence (Classifier _ modTree) seq = scoreSequence seq modTree
+classifySequence (Classifier modTree) seq = scoreSequence seq modTree
 
 scoreSequence :: Sequence -> Tree CladeModel -> Trail
 scoreSequence seq (Node model []) = []

@@ -65,7 +65,7 @@ main = do
     params <- execParser parseOptionsInfo
     queryFastA <- LTIO.readFile $ queryFname params
     let queryRecs = fastATextToRecords queryFastA
-    classifier@(Classifier _ modTree) <- (decodeFile $ clsfrFname params) :: IO Classifier
+    classifier@(Classifier modTree) <- (decodeFile $ clsfrFname params) :: IO Classifier
     let rootMod = rootLabel modTree
     let scoringScheme = ScoringScheme (-2) (scoringSchemeMap (absentResScore rootMod))
     let processQuery = if (optNoAlign params)
