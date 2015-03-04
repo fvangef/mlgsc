@@ -10,7 +10,7 @@ INSTALLDIR = /usr/local/bin
 
 all: $(targets)
 
-mlgsc: MlgscTypes.hs FastA.hs NucModel.hs Classifier.hs Align.hs \
+mlgsc: MlgscTypes.hs FastA.hs SimpleNucModel.hs Classifier.hs Align.hs \
 	CladeModel.hs CladeModelAux.hs Output.hs \
 	OutputFormatStringParser.hs
 
@@ -19,7 +19,7 @@ mlgsc_train: MlgscTypes.hs NewickParser.hs FastA.hs Classifier.hs \
 
 mlgsc_xval: Align.hs Alignment.hs CladeModelAux.hs CladeModel.hs \
 	Classifier.hs FastA.hs MlgscTypes.hs MlgscTypes.hs \
-	NewickParser.hs NucModel.hs Weights.hs Output.hs \
+	NewickParser.hs SimpleNucModel.hs Weights.hs Output.hs \
 	OutputFormatStringParser.hs
 
 install: all

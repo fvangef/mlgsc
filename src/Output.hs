@@ -16,7 +16,6 @@ import Data.Tree
 --
 import MlgscTypes
 import FastA
-import NucModel
 import OutputFormatStringParser
 
 -- formats an output line according to a format string (à la printf). ARguments

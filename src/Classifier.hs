@@ -16,7 +16,7 @@ import Data.Ord
 import MlgscTypes
 -- import CladeModel
 import Alignment
-import NucModel
+import SimpleNucModel
 import SimplePepModel
 import CladeModel (CladeModel(..), scoreSeq, cladeName)
 
@@ -38,17 +38,34 @@ buildClassifier :: Molecule -> SmallProb -> ScaleFactor ->
 buildClassifier mol smallProb scale alnMap otuTree 
     = case mol of
         DNA -> buildNucClassifier smallProb scale alnMap otuTree
-        -- Prot -> buildPepClassifier smallProb scale alnMap otuTree
         Prot -> buildSimplePepClassifier smallProb scale alnMap otuTree
 
+{-
 buildNucClassifier  :: SmallProb -> ScaleFactor
                     -> AlnMap -> OTUTree -> Classifier
 buildNucClassifier smallprob scale map otuTree = Classifier otuTree modTree
-    where   modTree         = fmap (NucCladeModel . alnToNucModel smallprob scale) treeOfAlns
+    where   modTree         = fmap (NucCladeModel . alnToSimpleNucModel smallprob scale) treeOfAlns
             treeOfAlns      = mergeAlns treeOfLeafAlns
             treeOfLeafAlns  = fmap (\k -> M.findWithDefault [] k map) otuTree
+-}
 
-buildSimplePepClassifier  :: SmallProb -> ScaleFactor -> AlnMap -> OTUTree -> Classifier
+-- TODO: these two are almost identical: refactor and pass the alnt-to-model
+-- function as a parameter in the case clause of buildClassifier above.
+
+buildNucClassifier  :: SmallProb -> ScaleFactor -> AlnMap -> OTUTree
+    -> Classifier
+buildNucClassifier smallprob scale map otuTree =
+    Classifier otuTree cladeModTree
+    where   cladeModTree = fmap NucCladeModel modTree
+            modTree = fmap (\(name, aln) -> 
+                            alnToSimpleNucModel smallprob scale name aln)
+                            treeOfNamedAlns
+            treeOfNamedAlns = mergeNamedAlns treeOfLeafNamedAlns
+            treeOfLeafNamedAlns =
+                fmap (\k -> (k, M.findWithDefault [] k map)) otuTree
+
+buildSimplePepClassifier  :: SmallProb -> ScaleFactor -> AlnMap -> OTUTree
+    -> Classifier
 buildSimplePepClassifier smallprob scale map otuTree =
     Classifier otuTree cladeModTree
     where   cladeModTree = fmap SimplePepCladeModel modTree
@@ -106,11 +123,13 @@ bestByExtended objs m = (bestObj, bestNdx, bestMetricValue, secondBestMetricValu
 --   putStrLn $ drawTree $ fmap show $ mergeAlns treeOfLeafAlns
 -- in GHCi.
 
+{-
 mergeAlns :: Tree Alignment -> Tree Alignment
 mergeAlns leaf@(Node _ []) = leaf
 mergeAlns (Node _ kids) = Node mergedKidAlns mergedKids
     where   mergedKids = L.map mergeAlns kids
             mergedKidAlns = concatMap rootLabel mergedKids
+-}
 
 mergeNamedAlns :: Tree (CladeName, Alignment) -> Tree (CladeName, Alignment)
 mergeNamedAlns leaf@(Node _ []) = leaf

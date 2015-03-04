@@ -21,7 +21,6 @@ import Data.Tree
 import MlgscTypes
 import FastA
 import CladeModel
-import NucModel
 import Align
 import Classifier (Classifier(..), classifySequence)
 import Output

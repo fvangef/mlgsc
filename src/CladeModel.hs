@@ -8,33 +8,34 @@ import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import Data.Binary (Binary, put, get, Get, Word8)
 
+-- TODO: streamline imports
 import MlgscTypes
-import NucModel (NucModel, nucScoreOf, nucScoreSeq, nucModLength, nucAbsentResScore)
+import SimpleNucModel 
 import SimplePepModel
 
-data CladeModel = NucCladeModel NucModel
+data CladeModel = NucCladeModel SimpleNucModel
                 | SimplePepCladeModel SimplePepModel
                 deriving (Show, Eq)
 
 scoreOf :: CladeModel -> Residue -> Position -> Int
-scoreOf (NucCladeModel nm) res pos = nucScoreOf nm res pos
+scoreOf (NucCladeModel nm) res pos = simpleNucScoreOf nm res pos
 scoreOf (SimplePepCladeModel spm) res pos = simplePepScoreOf spm res pos
 
 scoreSeq :: CladeModel -> Sequence -> Int
-scoreSeq (NucCladeModel nm) seq = nucScoreSeq nm seq
+scoreSeq (NucCladeModel nm) seq = simpleNucScoreSeq nm seq
 scoreSeq (SimplePepCladeModel spm) seq = simplePepScoreSeq spm seq
 
 modLength :: CladeModel -> Int
-modLength (NucCladeModel nm) = nucModLength nm
+modLength (NucCladeModel nm) = simpleNucModLength nm
 modLength (SimplePepCladeModel spm) = simplePepModLength spm
 
 absentResScore :: CladeModel -> Int
-absentResScore (NucCladeModel nm) = nucAbsentResScore nm
+absentResScore (NucCladeModel nm) = simpleNucAbsentResScore nm
 absentResScore (SimplePepCladeModel spm) = simplePepAbsentResScore spm
 
 cladeName :: CladeModel -> CladeName
 cladeName (SimplePepCladeModel spm) = simplePepCladeName spm
-cladeName _ = T.empty
+cladeName (NucCladeModel nm) = simpleNucCladeName nm
 
 instance Binary CladeModel where
     put (NucCladeModel nm) = do
@@ -46,7 +47,7 @@ instance Binary CladeModel where
         mol <- get :: Get Word8
         case mol of
             0 -> do
-                nm <- get :: Get NucModel
+                nm <- get :: Get SimpleNucModel
                 return $ NucCladeModel nm
             1 -> do
                 pm <- get :: Get SimplePepModel

@@ -28,7 +28,6 @@ import FastA
 import Alignment
 import Align
 import CladeModel
-import NucModel
 import Classifier (Classifier(..), buildClassifier, classifySequence, leafOTU)
 import NewickParser
 import NewickDumper
