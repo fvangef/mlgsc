@@ -10,47 +10,47 @@ import Data.Binary (Binary, put, get, Get, Word8)
 
 -- TODO: streamline imports
 import MlgscTypes
-import SimpleNucModel 
-import SimplePepModel
+import NucModel 
+import PepModel
 
-data CladeModel = NucCladeModel SimpleNucModel
-                | SimplePepCladeModel SimplePepModel
+data CladeModel = NucCladeModel NucModel
+                | PepCladeModel PepModel
                 deriving (Show, Eq)
 
 scoreOf :: CladeModel -> Residue -> Position -> Int
 scoreOf (NucCladeModel nm) res pos = simpleNucScoreOf nm res pos
-scoreOf (SimplePepCladeModel spm) res pos = simplePepScoreOf spm res pos
+scoreOf (PepCladeModel spm) res pos = simplePepScoreOf spm res pos
 
 scoreSeq :: CladeModel -> Sequence -> Int
 scoreSeq (NucCladeModel nm) seq = simpleNucScoreSeq nm seq
-scoreSeq (SimplePepCladeModel spm) seq = simplePepScoreSeq spm seq
+scoreSeq (PepCladeModel spm) seq = simplePepScoreSeq spm seq
 
 modLength :: CladeModel -> Int
 modLength (NucCladeModel nm) = simpleNucModLength nm
-modLength (SimplePepCladeModel spm) = simplePepModLength spm
+modLength (PepCladeModel spm) = simplePepModLength spm
 
 absentResScore :: CladeModel -> Int
 absentResScore (NucCladeModel nm) = simpleNucAbsentResScore nm
-absentResScore (SimplePepCladeModel spm) = simplePepAbsentResScore spm
+absentResScore (PepCladeModel spm) = simplePepAbsentResScore spm
 
 cladeName :: CladeModel -> CladeName
-cladeName (SimplePepCladeModel spm) = simplePepCladeName spm
+cladeName (PepCladeModel spm) = simplePepCladeName spm
 cladeName (NucCladeModel nm) = simpleNucCladeName nm
 
 instance Binary CladeModel where
     put (NucCladeModel nm) = do
         put (0 :: Word8) >> put nm
-    put (SimplePepCladeModel pm) = do
+    put (PepCladeModel pm) = do
         put (1 :: Word8) >> put pm
     
     get = do
         mol <- get :: Get Word8
         case mol of
             0 -> do
-                nm <- get :: Get SimpleNucModel
+                nm <- get :: Get NucModel
                 return $ NucCladeModel nm
             1 -> do
-                pm <- get :: Get SimplePepModel
-                return $ SimplePepCladeModel pm
+                pm <- get :: Get PepModel
+                return $ PepCladeModel pm
 
 -- TODO: factor out these two

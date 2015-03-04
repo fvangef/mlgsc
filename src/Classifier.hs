@@ -16,8 +16,8 @@ import Data.Ord
 import MlgscTypes
 -- import CladeModel
 import Alignment
-import SimpleNucModel
-import SimplePepModel
+import NucModel
+import PepModel
 import CladeModel (CladeModel(..), scoreSeq, cladeName)
 
 data Classifier = Classifier OTUTree (Tree CladeModel)
@@ -38,13 +38,13 @@ buildClassifier :: Molecule -> SmallProb -> ScaleFactor ->
 buildClassifier mol smallProb scale alnMap otuTree 
     = case mol of
         DNA -> buildNucClassifier smallProb scale alnMap otuTree
-        Prot -> buildSimplePepClassifier smallProb scale alnMap otuTree
+        Prot -> buildPepClassifier smallProb scale alnMap otuTree
 
 {-
 buildNucClassifier  :: SmallProb -> ScaleFactor
                     -> AlnMap -> OTUTree -> Classifier
 buildNucClassifier smallprob scale map otuTree = Classifier otuTree modTree
-    where   modTree         = fmap (NucCladeModel . alnToSimpleNucModel smallprob scale) treeOfAlns
+    where   modTree         = fmap (NucCladeModel . alnToNucModel smallprob scale) treeOfAlns
             treeOfAlns      = mergeAlns treeOfLeafAlns
             treeOfLeafAlns  = fmap (\k -> M.findWithDefault [] k map) otuTree
 -}
@@ -58,19 +58,19 @@ buildNucClassifier smallprob scale map otuTree =
     Classifier otuTree cladeModTree
     where   cladeModTree = fmap NucCladeModel modTree
             modTree = fmap (\(name, aln) -> 
-                            alnToSimpleNucModel smallprob scale name aln)
+                            alnToNucModel smallprob scale name aln)
                             treeOfNamedAlns
             treeOfNamedAlns = mergeNamedAlns treeOfLeafNamedAlns
             treeOfLeafNamedAlns =
                 fmap (\k -> (k, M.findWithDefault [] k map)) otuTree
 
-buildSimplePepClassifier  :: SmallProb -> ScaleFactor -> AlnMap -> OTUTree
+buildPepClassifier  :: SmallProb -> ScaleFactor -> AlnMap -> OTUTree
     -> Classifier
-buildSimplePepClassifier smallprob scale map otuTree =
+buildPepClassifier smallprob scale map otuTree =
     Classifier otuTree cladeModTree
-    where   cladeModTree = fmap SimplePepCladeModel modTree
+    where   cladeModTree = fmap PepCladeModel modTree
             modTree = fmap (\(name, aln) -> 
-                            alnToSimplePepModel smallprob scale name aln)
+                            alnToPepModel smallprob scale name aln)
                             treeOfNamedAlns
             treeOfNamedAlns = mergeNamedAlns treeOfLeafNamedAlns
             treeOfLeafNamedAlns =

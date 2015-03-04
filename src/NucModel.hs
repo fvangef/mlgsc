@@ -19,9 +19,9 @@
  -}
 
 -- TODO: once it works, restrict exports to the minimal needed set.
-module SimpleNucModel (SimpleNucModel, simpleNucScoreOf, simpleNucScoreSeq, simpleNucModLength, simpleNucAbsentResScore, simpleNucCladeName, matrix, alnToSimpleNucModel) where
+module NucModel (NucModel, simpleNucScoreOf, simpleNucScoreSeq, simpleNucModLength, simpleNucAbsentResScore, simpleNucCladeName, matrix, alnToNucModel) where
 
--- module  SimpleNucModel where -- 
+-- module  NucModel where -- 
 
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as U
@@ -36,7 +36,7 @@ import MlgscTypes
 import Alignment
 import CladeModelAux
 
-data SimpleNucModel = SimpleNucModel {
+data NucModel = NucModel {
                     clade           :: CladeName
                     , matrix        :: V.Vector (U.Vector Int)
                     , smallScore    :: Int
@@ -68,7 +68,7 @@ simpleNucAbsentResScore = smallScore
 
 simpleNucCladeName = clade
 
-instance Binary SimpleNucModel where
+instance Binary NucModel where
     put nm = do
         put $ clade nm
         put $ matrix nm
@@ -78,15 +78,15 @@ instance Binary SimpleNucModel where
         clade <- get :: Get CladeName
         mat <- get :: Get (V.Vector (U.Vector Int))
         smallScore <- get :: Get Int
-        return $ SimpleNucModel clade mat smallScore
+        return $ NucModel clade mat smallScore
 
--- Builds a SimpleNucMOdel from a (weighted) Alignment
+-- Builds a NucModel from a (weighted) Alignment
 -- G, T are ignored, but gaps (-) are modelled.
 
-alnToSimpleNucModel :: SmallProb -> ScaleFactor -> CladeName -> Alignment
-    -> SimpleNucModel
-alnToSimpleNucModel smallProb scale name aln = 
-    SimpleNucModel name (scoreMapListToVectors smallScore scoreMapList) smallScore
+alnToNucModel :: SmallProb -> ScaleFactor -> CladeName -> Alignment
+    -> NucModel
+alnToNucModel smallProb scale name aln = 
+    NucModel name (scoreMapListToVectors smallScore scoreMapList) smallScore
     where   scoreMapList = fmap (freqMapToScoreMap scale
                                 . countsMapToRelFreqMap wsize
                                 . weightedColToCountsMap weights)

@@ -6,7 +6,7 @@
  -}
 
 -- TODO: once it works, restrict exports to the minimal needed set.
-module SimplePepModel where
+module PepModel where
 
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as U
@@ -21,7 +21,7 @@ import MlgscTypes
 import Alignment
 import CladeModelAux
 
-data SimplePepModel = SimplePepModel {
+data PepModel = PepModel {
                     clade           :: CladeName
                     , matrix        :: V.Vector (M.Map Residue Int)
                     , smallScore    :: Int
@@ -30,14 +30,14 @@ data SimplePepModel = SimplePepModel {
 
 --Remember: sequence positions start -- at 1, but vector indexes (sensibly)
 -- start at 0.
-simplePepScoreOf :: SimplePepModel -> Residue -> Position -> Int
-simplePepScoreOf (SimplePepModel _ _ smallScore 0) _ _ = smallScore -- empty models
+simplePepScoreOf :: PepModel -> Residue -> Position -> Int
+simplePepScoreOf (PepModel _ _ smallScore 0) _ _ = smallScore -- empty models
 simplePepScoreOf mod res pos = M.findWithDefault (smallScore mod) res posMap
     where posMap = (matrix mod) V.! (pos - 1)
 
 -- TODO: try to rewrite this in applicative style
-simplePepScoreSeq :: SimplePepModel -> Sequence -> Int
-simplePepScoreSeq (SimplePepModel _ _ smallScore 0) seq = smallScore * T.length seq
+simplePepScoreSeq :: PepModel -> Sequence -> Int
+simplePepScoreSeq (PepModel _ _ smallScore 0) seq = smallScore * T.length seq
 simplePepScoreSeq mod seq = sum $ map (\(res,pos) -> simplePepScoreOf mod res pos) seqWithPos
     where seqWithPos = zip (T.unpack seq) [1..] -- eg [('A',1), ...], etc.
 
@@ -47,7 +47,7 @@ simplePepAbsentResScore = smallScore
 
 simplePepCladeName = clade
 
-instance Binary SimplePepModel where
+instance Binary PepModel where
     put mod = do
         put $ clade mod
         put $ matrix mod
@@ -59,16 +59,16 @@ instance Binary SimplePepModel where
         mat <- get :: Get (V.Vector (M.Map Residue Int))
         smallScore <- get :: Get Int
         modelLength <- get :: Get Int
-        return $ SimplePepModel cladeName mat smallScore modelLength
+        return $ PepModel cladeName mat smallScore modelLength
 
 -- Builds a PepMOdel from a (weighted) Alignment
 -- G, T are ignored, but gaps (-) are modelled.
 
-alnToSimplePepModel :: SmallProb -> ScaleFactor -> CladeName -> Alignment
-    -> SimplePepModel
-alnToSimplePepModel smallProb scale name [] = SimplePepModel name V.empty smallScore 0
+alnToPepModel :: SmallProb -> ScaleFactor -> CladeName -> Alignment
+    -> PepModel
+alnToPepModel smallProb scale name [] = PepModel name V.empty smallScore 0
     where   smallScore = round (scale * (logBase 10 smallProb))
-alnToSimplePepModel smallProb scale name aln = SimplePepModel name scoreMapVector smallScore length
+alnToPepModel smallProb scale name aln = PepModel name scoreMapVector smallScore length
     where   scoreMapVector = V.fromList scoreMapList
             scoreMapList = fmap (freqMapToScoreMap scale
                                 . countsMapToRelFreqMap wsize
