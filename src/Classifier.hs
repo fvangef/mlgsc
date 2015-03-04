@@ -1,7 +1,6 @@
 module Classifier (
     Classifier(..),
     buildClassifier,
-    classifySequenceWithExtendedTrail,
     classifySequence,
     leafOTU) where
 
@@ -20,7 +19,6 @@ import Alignment
 import NucModel
 import PepModel
 import SimplePepModel
-import Crumbs
 import CladeModel (CladeModel(..), scoreSeq, cladeName)
 
 data Classifier = Classifier OTUTree (Tree CladeModel)
@@ -72,9 +70,8 @@ buildSimplePepClassifier smallprob scale map otuTree =
 -- TODO: OutputData seems too complex, as the score is actually found in the
 -- trail.
 
-classifySequence :: Classifier -> Sequence -> OutputData
-classifySequence (Classifier _ modTree) seq = OutputData trail 1
-    where trail = scoreSequence seq modTree
+classifySequence :: Classifier -> Sequence -> Trail
+classifySequence (Classifier _ modTree) seq = scoreSequence seq modTree
 
 scoreSequence :: Sequence -> Tree CladeModel -> Trail
 scoreSequence seq (Node model []) = []
@@ -111,27 +108,6 @@ bestByExtended objs m = (bestObj, bestNdx, bestMetricValue, secondBestMetricValu
             bestNdx = head $ L.elemIndices bestMetricValue metricValues
             bestObj = objs !! bestNdx
 
--- Classifies a Sequence according to a Classifier, yielding an OutputData
-
-classifySequenceWithExtendedTrail :: Classifier -> Sequence -> OutputData
-classifySequenceWithExtendedTrail classifier@(Classifier otuTree _) query
-    = OutputData trail score
-    where   trail = followExtendedCrumbsWithTrail crumbs otuTree
-            (score, crumbs) = scoreSequenceWithExtendedCrumbs classifier query  
-
--- Same thing, but with ExtCrumbs
-
-scoreSequenceWithExtendedCrumbs (Classifier _ modTree) seq =
-    dropExtendedCrumbs (scoreCrumbs seq) modTree
-
--- Passsed a Sequence, returns a function CladeModel -> Int that can itelf be
--- passed to dropCrumbs, thereby scoring said sequence according to a classifier
--- and obtaining a crumbs trail. IOW, this is _meant_ to be called with only one
--- argument.
-
-scoreCrumbs :: Sequence -> CladeModel -> Int
-scoreCrumbs seq mod = scoreSeq mod seq -- isn't this flip scoreSeq?
-
 -- produces a new tree of which each node's data is a concatenation of its
 -- children node's data. Meant to be called on a Tree Alignment  whose inner
 -- nodes are empty. To see it in action, do
@@ -150,6 +126,6 @@ mergeNamedAlns (Node (name,_) kids) = Node (name,mergedKidAlns) mergedKids
     where   mergedKids = L.map mergeNamedAlns kids
             mergedKidAlns = concatMap (snd . rootLabel) mergedKids
 
-leafOTU :: OutputData -> OTUName
-leafOTU od = otuName
-    where (otuName, _, _) = last $ trail od
+leafOTU :: Trail -> OTUName
+leafOTU trail = otuName
+    where (otuName, _, _) = last trail

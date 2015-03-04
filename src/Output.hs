@@ -16,7 +16,6 @@ import Data.Tree
 --
 import MlgscTypes
 import FastA
-import Crumbs (followExtendedCrumbsWithTrail)
 import NucModel
 import OutputFormatStringParser
 
@@ -31,9 +30,9 @@ import OutputFormatStringParser
 -- using a Reader monad.
 -- TODO: could add a high-level way of passing an ER threshold
 
-formatResult :: FmtString -> FastA -> Sequence -> OutputData -> ST.Text
-formatResult fmtString query alnQry prediction = 
-    ST.concat $ map (evalFmtComponent 0 query alnQry prediction) format
+formatResult :: FmtString -> FastA -> Sequence -> Trail -> ST.Text
+formatResult fmtString query alnQry trail = 
+    ST.concat $ map (evalFmtComponent 0 query alnQry trail) format
         where (Right format) = parseOutputFormatString fmtString
 
 {- This function should NOT take parameters as a record, or as a data type, or
@@ -45,18 +44,19 @@ formatResult fmtString query alnQry prediction =
 evalFmtComponent :: Int 
                     -> FastA
                     -> Sequence
-                    -> OutputData
+                    -> Trail
                     -> FmtComponent
                     -> ST.Text
-evalFmtComponent hlMinER query alnQry prediction component = case component of
+evalFmtComponent hlMinER query alnQry trail component = case component of
     Header          -> LT.toStrict $ FastA.header query
     QueryLength     -> ST.pack $ show $ LT.length $ FastA.sequence query
     ID              -> LT.toStrict $ fastAId query
     AlignedQuery    -> alnQry
     (Path min_er)   -> if min_er > 0 -- precedence to low-level
-                        then trailToPath min_er $ trail prediction
-                        else trailToPath hlMinER $ trail prediction
-    Score           -> ST.pack $ show $ score prediction
+                        then trailToPath min_er trail 
+                        else trailToPath hlMinER trail
+    Score           -> ST.pack $ show leafScore
+                        where (_,leafScore,_) = last trail
     (Literal c)     -> ST.pack [c]
 
 -- Takes an extended trail (i.e., a list of (OTU name, bes

@@ -29,7 +29,7 @@ import Alignment
 import Align
 import CladeModel
 import NucModel
-import Classifier (Classifier(..), buildClassifier, classifySequence, classifySequenceWithExtendedTrail, leafOTU)
+import Classifier (Classifier(..), buildClassifier, classifySequence, leafOTU)
 import NewickParser
 import NewickDumper
 import Weights

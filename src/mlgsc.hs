@@ -20,11 +20,10 @@ import Data.Binary (decodeFile)
 import Data.Tree
 import MlgscTypes
 import FastA
-import Crumbs (followExtendedCrumbsWithTrail)
 import CladeModel
 import NucModel
 import Align
-import Classifier (Classifier(..), classifySequenceWithExtendedTrail)
+import Classifier (Classifier(..), classifySequence)
 import Output
 import OutputFormatStringParser
 
@@ -77,7 +76,7 @@ main = do
     let processedQueries =
             map (processQuery . ST.toUpper .
                 LT.toStrict. FastA.sequence) queryRecs
-    let predictions = map (classifySequenceWithExtendedTrail classifier) processedQueries
+    let predictions = map (classifySequence classifier) processedQueries
     let outLines = getZipList $ (formatResultWrapper params)
                                 <$> ZipList queryRecs
                                 <*> ZipList processedQueries
@@ -88,16 +87,16 @@ main = do
  - arguments. However, I'm not sure how to make this play with the Reader monad,
  - except by using a wrapper like below. -}
 
-formatResultWrapper :: Params -> FastA -> Sequence -> OutputData -> ST.Text  
-formatResultWrapper params query alnQry prediction =
-    runReader (formatResultReader query alnQry prediction) params
+formatResultWrapper :: Params -> FastA -> Sequence -> Trail -> ST.Text  
+formatResultWrapper params query alnQry trail =
+    runReader (formatResultReader query alnQry trail) params
 
 {- This works, but it's not quite clear what should go in Output,
  - OutputFormatStringParser, or just plain here in Main. -}
 
-formatResultReader :: FastA -> Sequence -> OutputData -> Reader Params ST.Text 
-formatResultReader query alnQry prediction = do
+formatResultReader :: FastA -> Sequence -> Trail -> Reader Params ST.Text 
+formatResultReader query alnQry trail = do
    fmtString    <- asks optOutFmtString
    minER        <- asks optERCutoff 
    let (Right format) = parseOutputFormatString fmtString 
-   return $ ST.concat $ map (evalFmtComponent minER query alnQry prediction) format
+   return $ ST.concat $ map (evalFmtComponent minER query alnQry trail) format
