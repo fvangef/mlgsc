@@ -17,7 +17,6 @@ import MlgscTypes
 -- import CladeModel
 import Alignment
 import NucModel
-import PepModel
 import SimplePepModel
 import CladeModel (CladeModel(..), scoreSeq, cladeName)
 
@@ -46,13 +45,6 @@ buildNucClassifier  :: SmallProb -> ScaleFactor
                     -> AlnMap -> OTUTree -> Classifier
 buildNucClassifier smallprob scale map otuTree = Classifier otuTree modTree
     where   modTree         = fmap (NucCladeModel . alnToNucModel smallprob scale) treeOfAlns
-            treeOfAlns      = mergeAlns treeOfLeafAlns
-            treeOfLeafAlns  = fmap (\k -> M.findWithDefault [] k map) otuTree
-
-buildPepClassifier  :: SmallProb -> ScaleFactor
-                    -> AlnMap -> OTUTree -> Classifier
-buildPepClassifier smallprob scale map otuTree = Classifier otuTree modTree
-    where   modTree         = fmap (PepCladeModel . alnToPepModel smallprob scale) treeOfAlns
             treeOfAlns      = mergeAlns treeOfLeafAlns
             treeOfLeafAlns  = fmap (\k -> M.findWithDefault [] k map) otuTree
 
