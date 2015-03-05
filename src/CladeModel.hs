@@ -1,14 +1,13 @@
 -- A type class for clade models, i.e., a conserved sequence regions that should
 -- be able to recognize a clade (be it a OTU, or a species, or whatever "rank").
 
-module CladeModel (CladeModel(..), scoreOf, scoreSeq, modLength, cladeName,
-    absentResScore) where
+-- TODO: streamline exports and imports
+module CladeModel where
 
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import Data.Binary (Binary, put, get, Get, Word8)
 
--- TODO: streamline imports
 import MlgscTypes
 import NucModel 
 import PepModel
@@ -62,3 +61,14 @@ class CModel a where
 
 instance CModel NucModel where
     cscoreOf = nucScoreOf
+    cscoreSeq = nucScoreSeq
+    cmodLength = nucModLength
+    cabsentResScore = nucAbsentResScore
+    ccladeName = nucCladeName
+
+instance CModel PepModel where
+    cscoreOf = pepScoreOf
+    cscoreSeq = pepScoreSeq
+    cmodLength = pepModLength
+    cabsentResScore = pepAbsentResScore
+    ccladeName = pepCladeName
