@@ -18,24 +18,24 @@ data CladeModel = NucCladeModel NucModel
                 deriving (Show, Eq)
 
 scoreOf :: CladeModel -> Residue -> Position -> Int
-scoreOf (NucCladeModel nm) res pos = simpleNucScoreOf nm res pos
-scoreOf (PepCladeModel spm) res pos = simplePepScoreOf spm res pos
+scoreOf (NucCladeModel nm) res pos = nucScoreOf nm res pos
+scoreOf (PepCladeModel spm) res pos = pepScoreOf spm res pos
 
 scoreSeq :: CladeModel -> Sequence -> Int
-scoreSeq (NucCladeModel nm) seq = simpleNucScoreSeq nm seq
-scoreSeq (PepCladeModel spm) seq = simplePepScoreSeq spm seq
+scoreSeq (NucCladeModel nm) seq = nucScoreSeq nm seq
+scoreSeq (PepCladeModel spm) seq = pepScoreSeq spm seq
 
 modLength :: CladeModel -> Int
-modLength (NucCladeModel nm) = simpleNucModLength nm
-modLength (PepCladeModel spm) = simplePepModLength spm
+modLength (NucCladeModel nm) = nucModLength nm
+modLength (PepCladeModel spm) = pepModLength spm
 
 absentResScore :: CladeModel -> Int
-absentResScore (NucCladeModel nm) = simpleNucAbsentResScore nm
-absentResScore (PepCladeModel spm) = simplePepAbsentResScore spm
+absentResScore (NucCladeModel nm) = nucAbsentResScore nm
+absentResScore (PepCladeModel spm) = pepAbsentResScore spm
 
 cladeName :: CladeModel -> CladeName
-cladeName (PepCladeModel spm) = simplePepCladeName spm
-cladeName (NucCladeModel nm) = simpleNucCladeName nm
+cladeName (PepCladeModel spm) = pepCladeName spm
+cladeName (NucCladeModel nm) = nucCladeName nm
 
 instance Binary CladeModel where
     put (NucCladeModel nm) = do
@@ -53,4 +53,12 @@ instance Binary CladeModel where
                 pm <- get :: Get PepModel
                 return $ PepCladeModel pm
 
--- TODO: factor out these two
+class CModel a where
+    cscoreOf :: a -> Residue -> Position -> Int
+    cscoreSeq :: a -> Sequence -> Int
+    cmodLength :: a -> Int
+    cabsentResScore :: a -> Int
+    ccladeName :: a -> CladeName
+
+instance CModel NucModel where
+    cscoreOf = nucScoreOf

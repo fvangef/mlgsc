@@ -19,7 +19,7 @@
  -}
 
 -- TODO: once it works, restrict exports to the minimal needed set.
-module NucModel (NucModel, simpleNucScoreOf, simpleNucScoreSeq, simpleNucModLength, simpleNucAbsentResScore, simpleNucCladeName, matrix, alnToNucModel) where
+module NucModel (NucModel, nucScoreOf, nucScoreSeq, nucModLength, nucAbsentResScore, nucCladeName, matrix, alnToNucModel) where
 
 -- module  NucModel where -- 
 
@@ -44,7 +44,7 @@ data NucModel = NucModel {
 
 --Remember: sequence positions start -- at 1, but vector indexes (sensibly)
 -- start at 0.
-simpleNucScoreOf nm res pos
+nucScoreOf nm res pos
     | res == 'A'    = (mat V.! 0) U.! (pos - 1)
     | res == 'C'    = (mat V.! 1) U.! (pos - 1)
     | res == 'G'    = (mat V.! 2) U.! (pos - 1)
@@ -53,20 +53,20 @@ simpleNucScoreOf nm res pos
     | otherwise     = smallScore nm
     where mat = matrix nm
 
-simpleNucScoreSeq nm seq
+nucScoreSeq nm seq
     | (U.null $ V.head $ matrix nm)   = minBound :: Int
-    | otherwise = sum $ map (\(c,i) -> simpleNucScoreOf nm c i) seqWithPos
+    | otherwise = sum $ map (\(c,i) -> nucScoreOf nm c i) seqWithPos
     where seqWithPos = zip (T.unpack seq) [1..] -- eg [('A',1), ...], etc.
 
 -- just return the length of the 'A' vector (they're all the same length
 -- anyway)
-simpleNucModLength nm = U.length vA
+nucModLength nm = U.length vA
     where   vA = mat V.! 0
             mat = matrix nm
 
-simpleNucAbsentResScore = smallScore
+nucAbsentResScore = smallScore
 
-simpleNucCladeName = clade
+nucCladeName = clade
 
 instance Binary NucModel where
     put nm = do
