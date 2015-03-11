@@ -13,6 +13,7 @@ data FmtComponent = Literal Char
                     | Header
                     | Path Int
                     | QueryLength
+                    | Query
                     | AlignedQuery
                     | Score
                     deriving (Show)
@@ -29,7 +30,7 @@ escape :: Parser FmtComponent
 escape = do
     char '%'
     any_digits <- optionMaybe $ many1 digit
-    f <- oneOf "%ahilps"
+    f <- oneOf "%ahilpqs"
     return $ case f of
                 '%' -> Literal '%'
                 'a' -> AlignedQuery
@@ -39,6 +40,7 @@ escape = do
                 'p' -> case any_digits of
                         Nothing     -> Path 0
                         (Just n)    -> Path $ (read n :: Int)
+                'q' -> Query
                 's' -> Score
 
 fmtComponent :: Parser FmtComponent

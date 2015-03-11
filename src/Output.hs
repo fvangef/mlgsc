@@ -50,6 +50,7 @@ evalFmtComponent hlMinER query alnQry trail component = case component of
     Header          -> LT.toStrict $ FastA.header query
     QueryLength     -> ST.pack $ show $ LT.length $ FastA.sequence query
     ID              -> LT.toStrict $ fastAId query
+    Query           -> LT.toStrict $ FastA.sequence query
     AlignedQuery    -> alnQry
     (Path min_er)   -> if min_er > 0 -- precedence to low-level
                         then trailToPath min_er trail 
