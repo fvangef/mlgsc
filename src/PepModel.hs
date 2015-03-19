@@ -30,22 +30,22 @@ data PepModel = PepModel {
 
 --Remember: sequence positions start -- at 1, but vector indexes (sensibly)
 -- start at 0.
-simplePepScoreOf :: PepModel -> Residue -> Position -> Int
-simplePepScoreOf (PepModel _ _ smallScore 0) _ _ = smallScore -- empty models
-simplePepScoreOf mod res pos = M.findWithDefault (smallScore mod) res posMap
+pepScoreOf :: PepModel -> Residue -> Position -> Int
+pepScoreOf (PepModel _ _ smallScore 0) _ _ = smallScore -- empty models
+pepScoreOf mod res pos = M.findWithDefault (smallScore mod) res posMap
     where posMap = (matrix mod) V.! (pos - 1)
 
 -- TODO: try to rewrite this in applicative style
-simplePepScoreSeq :: PepModel -> Sequence -> Int
-simplePepScoreSeq (PepModel _ _ smallScore 0) seq = smallScore * T.length seq
-simplePepScoreSeq mod seq = sum $ map (\(res,pos) -> simplePepScoreOf mod res pos) seqWithPos
+pepScoreSeq :: PepModel -> Sequence -> Int
+pepScoreSeq (PepModel _ _ smallScore 0) seq = smallScore * T.length seq
+pepScoreSeq mod seq = sum $ map (\(res,pos) -> pepScoreOf mod res pos) seqWithPos
     where seqWithPos = zip (T.unpack seq) [1..] -- eg [('A',1), ...], etc.
 
-simplePepModLength = modelLength
+pepModLength = modelLength
 
-simplePepAbsentResScore = smallScore
+pepAbsentResScore = smallScore
 
-simplePepCladeName = clade
+pepCladeName = clade
 
 instance Binary PepModel where
     put mod = do
