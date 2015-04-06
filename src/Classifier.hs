@@ -14,7 +14,6 @@ import qualified Data.Text as ST
 import Data.Ord
 
 import MlgscTypes
--- import CladeModel
 import Alignment
 import NucModel
 import PepModel
@@ -38,14 +37,6 @@ buildClassifier mol smallProb scale alnMap otuTree
         DNA -> buildNucClassifier smallProb scale alnMap otuTree
         Prot -> buildPepClassifier smallProb scale alnMap otuTree
 
-{-
-buildNucClassifier  :: SmallProb -> ScaleFactor
-                    -> AlnMap -> OTUTree -> Classifier
-buildNucClassifier smallprob scale map otuTree = Classifier otuTree modTree
-    where   modTree         = fmap (NucCladeModel . alnToNucModel smallprob scale) treeOfAlns
-            treeOfAlns      = mergeAlns treeOfLeafAlns
-            treeOfLeafAlns  = fmap (\k -> M.findWithDefault [] k map) otuTree
--}
 
 -- TODO: these two are almost identical: refactor and pass the alnt-to-model
 -- function as a parameter in the case clause of buildClassifier above.
@@ -74,8 +65,6 @@ buildPepClassifier smallprob scale map otuTree =
             treeOfLeafNamedAlns =
                 fmap (\k -> (k, M.findWithDefault [] k map)) otuTree
 
--- TODO: OutputData seems too complex, as the score is actually found in the
--- trail.
 
 classifySequence :: Classifier -> Sequence -> Trail
 classifySequence (Classifier modTree) seq = scoreSequence seq modTree
@@ -89,16 +78,6 @@ scoreSequence seq (Node model kids) =
             (sndBestKid, (Down sndBestKidScore)) = orderedKids !! 1
             orderedKids = L.sortBy (comparing snd) $ zip kids (map Down scores)
             scores = map (flip scoreSeq seq . rootLabel) kids
-
-{-
-scoreSequenceM :: (CladeModel -> Int) -> Tree CladeModel -> Writer ExtCrumbs Int
-scoreSequenceM scoreFunction (Node rl []) = return $ scoreFunction rl
-scoreSequenceM scoreFunction (Node rl kids) = do
-    let (bestKid, bestNdx, bestScore, secondBestScore) = bestByExtended kids scoreFunction'
-    tell [(bestNdx, bestScore, secondBestScore)] 
-    dropExtendedCrumbsM scoreFunction $ bestKid
-    where scoreFunction' (Node rl _) = scoreFunction rl
--}
 
 -- finds the (first) object in a list that maximizes some metric m (think score
 -- of a sequence according to a model), returns that object and its index in
@@ -121,13 +100,6 @@ bestByExtended objs m = (bestObj, bestNdx, bestMetricValue, secondBestMetricValu
 --   putStrLn $ drawTree $ fmap show $ mergeAlns treeOfLeafAlns
 -- in GHCi.
 
-{-
-mergeAlns :: Tree Alignment -> Tree Alignment
-mergeAlns leaf@(Node _ []) = leaf
-mergeAlns (Node _ kids) = Node mergedKidAlns mergedKids
-    where   mergedKids = L.map mergeAlns kids
-            mergedKidAlns = concatMap rootLabel mergedKids
--}
 
 mergeNamedAlns :: Tree (CladeName, Alignment) -> Tree (CladeName, Alignment)
 mergeNamedAlns leaf@(Node _ []) = leaf
