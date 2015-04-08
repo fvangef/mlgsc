@@ -20,6 +20,14 @@ import NucModel
 import PepModel
 import CladeModel (CladeModel(..), scoreSeq, cladeName)
 
+-- TODO: rename CladeModel to PWMModel, and the Classifier c'tor to
+-- PWMClassifier. This  should have the scale factor as a second argument. In
+-- this way we can add other kinds of models, e.g. if we add a k-mer model, it
+-- could look like:
+-- data Classifier = PWMClassifier (Tree PWMModel) ScaleFactor
+--                 | KmerClassifier (Tree KmerModel)
+--                 
+
 data Classifier = Classifier (Tree CladeModel)
                 deriving (Show, Eq)
 
