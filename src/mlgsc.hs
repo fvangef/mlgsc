@@ -75,7 +75,7 @@ main = do
     let processedQueries =
             map (processQuery . ST.toUpper .
                 LT.toStrict. FastA.sequence) queryRecs
-    let predictions = map (classifySequence classifier) processedQueries
+    let predictions = map (classifySequence classifier 10000) processedQueries
     let outLines = getZipList $ (formatResultWrapper params)
                                 <$> ZipList queryRecs
                                 <*> ZipList processedQueries

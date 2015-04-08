@@ -131,9 +131,9 @@ trailToUPath min_er trail =
                                         then ST.pack "unnamed"
                                         else lbl
 
--- Computes the base-10 log of the evidence ratio, i.e. exp(delta-AIC / 2),
--- except that I use delta-AIC' (in which the factor 2 is dropped, so I avoid
--- having to multiply by 2 only to divide by 2 again just after).
+-- Computes the base-10 log of the evidence ratio, i.e. log_10 (exp(delta-AIC /
+-- 2)), except that I use delta-AIC' (in which the factor 2 is dropped, so I
+-- avoid having to multiply by 2 only to divide by 2 again just after).
 
 log10evidenceRatio :: Int -> Int -> Int -> Double
 log10evidenceRatio scaleFactor bestScore secondBestScore = logBase 10 er
@@ -161,7 +161,7 @@ scoreTologLikelihood scaleFactor score = log10Likelihood / logBase 10 e
 
 -- TODO: deltaAIC' -> deltaAIC
 deltaAIC' :: Double -> Double -> Double
-deltaAIC' l1 l2 = - (l1 - l2)
+deltaAIC' l1 l2 = - (l1 - l2) -- or simply l2 - l1...
 
 -- Takes a threshold and a ZipList of evidence ratios and drops any and all
 -- after the first below the threshold. The idea is to keep those nodes in the

@@ -38,14 +38,6 @@ buildClassifier mol smallProb scale alnMap otuTree
         DNA -> buildNucClassifier smallProb scale alnMap otuTree
         Prot -> buildPepClassifier smallProb scale alnMap otuTree
 
-{-
-buildNucClassifier  :: SmallProb -> ScaleFactor
-                    -> AlnMap -> OTUTree -> Classifier
-buildNucClassifier smallprob scale map otuTree = Classifier otuTree modTree
-    where   modTree         = fmap (NucCladeModel . alnToNucModel smallprob scale) treeOfAlns
-            treeOfAlns      = mergeAlns treeOfLeafAlns
-            treeOfLeafAlns  = fmap (\k -> M.findWithDefault [] k map) otuTree
--}
 
 -- TODO: these two are almost identical: refactor and pass the alnt-to-model
 -- function as a parameter in the case clause of buildClassifier above.
@@ -77,8 +69,9 @@ buildPepClassifier smallprob scale map otuTree =
 -- TODO: OutputData seems too complex, as the score is actually found in the
 -- trail.
 
-classifySequence :: Classifier -> Sequence -> Trail
-classifySequence (Classifier modTree) seq = scoreSequence seq modTree
+classifySequence :: Classifier -> Int -> Sequence -> Trail
+classifySequence (Classifier modTree) cutoff seq =
+    scoreSequence' modTree cutoff seq
 
 scoreSequence :: Sequence -> Tree CladeModel -> Trail
 scoreSequence seq (Node model []) = []
@@ -90,15 +83,17 @@ scoreSequence seq (Node model kids) =
             orderedKids = L.sortBy (comparing snd) $ zip kids (map Down scores)
             scores = map (flip scoreSeq seq . rootLabel) kids
 
-{-
-scoreSequenceM :: (CladeModel -> Int) -> Tree CladeModel -> Writer ExtCrumbs Int
-scoreSequenceM scoreFunction (Node rl []) = return $ scoreFunction rl
-scoreSequenceM scoreFunction (Node rl kids) = do
-    let (bestKid, bestNdx, bestScore, secondBestScore) = bestByExtended kids scoreFunction'
-    tell [(bestNdx, bestScore, secondBestScore)] 
-    dropExtendedCrumbsM scoreFunction $ bestKid
-    where scoreFunction' (Node rl _) = scoreFunction rl
--}
+scoreSequence' :: Tree CladeModel -> Int -> Sequence -> Trail
+scoreSequence' (Node model []) cutoff seq = []
+scoreSequence' (Node model kids) cutoff seq
+    | diff < cutoff   = []
+    | otherwise     = (bestKidName, bestKidScore, sndBestKidScore) : (scoreSequence seq bestKid)
+    where   diff = bestKidScore - sndBestKidScore
+            bestKidName = cladeName $ rootLabel bestKid
+            (bestKid, (Down bestKidScore)) = orderedKids !! 0
+            (sndBestKid, (Down sndBestKidScore)) = orderedKids !! 1
+            orderedKids = L.sortBy (comparing snd) $ zip kids (map Down scores)
+            scores = map (flip scoreSeq seq . rootLabel) kids
 
 -- finds the (first) object in a list that maximizes some metric m (think score
 -- of a sequence according to a model), returns that object and its index in

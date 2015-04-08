@@ -317,7 +317,7 @@ looReader otuTree fastaRecs testRecNdx = do
     let scoringScheme =
             ScoringScheme (-2) (scoringSchemeMap (absentResScore rootMod))
     let alignedTestSeq = msalign scoringScheme rootMod testSeq
-    let prediction = classifySequence classifier alignedTestSeq
+    let prediction = classifySequence classifier a alignedTestSeq
     onlyFalse <- asks optOnlyFalse
     if  (onlyFalse && 
          (leafOTU prediction) == (LT.toStrict $ fastAOTU testRec))
