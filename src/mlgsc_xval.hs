@@ -311,13 +311,13 @@ looReader otuTree fastaRecs testRecNdx = do
     mol <- asks molType
     smallProb <- asks optSmallProb
     scaleFactor <- asks optScaleFactor
-    let classifier@(PWMClassifier modTree) =
+    let classifier@(PWMClassifier modTree scale) =
             buildClassifier mol smallProb scaleFactor otuAlnMap otuTree
     let rootMod = rootLabel modTree 
     let scoringScheme =
             ScoringScheme (-2) (scoringSchemeMap (absentResScore rootMod))
     let alignedTestSeq = msalign scoringScheme rootMod testSeq
-    let prediction = classifySequence classifier a alignedTestSeq
+    let prediction = classifySequence classifier 0 alignedTestSeq
     onlyFalse <- asks optOnlyFalse
     if  (onlyFalse && 
          (leafOTU prediction) == (LT.toStrict $ fastAOTU testRec))
