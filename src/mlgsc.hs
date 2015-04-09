@@ -65,7 +65,7 @@ main = do
     params <- execParser parseOptionsInfo
     queryFastA <- LTIO.readFile $ queryFname params
     let queryRecs = fastATextToRecords queryFastA
-    classifier@(PWMClassifier modTree) <- (decodeFile $ clsfrFname params) :: IO Classifier
+    classifier@(PWMClassifier modTree scale) <- (decodeFile $ clsfrFname params) :: IO Classifier
     let rootMod = rootLabel modTree
     let scoringScheme = ScoringScheme (-2) (scoringSchemeMap (absentResScore rootMod))
     let processQuery = if (optNoAlign params)
@@ -75,7 +75,8 @@ main = do
     let processedQueries =
             map (processQuery . ST.toUpper .
                 LT.toStrict. FastA.sequence) queryRecs
-    let predictions = map (classifySequence classifier 10000) processedQueries
+    let log10ER = (optERCutoff params)
+    let predictions = map (classifySequence classifier log10ER) processedQueries
     let outLines = getZipList $ (formatResultWrapper params)
                                 <$> ZipList queryRecs
                                 <*> ZipList processedQueries

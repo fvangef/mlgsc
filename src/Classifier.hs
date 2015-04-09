@@ -27,16 +27,18 @@ import PWMModel (PWMModel(..), scoreSeq, cladeName)
 --                 | KmerClassifier (Tree KmerModel)
 --                 
 
-data Classifier = PWMClassifier (Tree PWMModel)
+data Classifier = PWMClassifier (Tree PWMModel) ScaleFactor
                 deriving (Show, Eq)
 
 instance Binary Classifier where
-    put (PWMClassifier modTree) = do
+    put (PWMClassifier modTree scaleFactor) = do
         put modTree
+        put scaleFactor
 
     get = do
         modTree <- get :: Get (Tree PWMModel)
-        return $ PWMClassifier modTree
+        scaleFactor <- get :: Get ScaleFactor
+        return $ PWMClassifier modTree scaleFactor
 
 buildClassifier :: Molecule -> SmallProb -> ScaleFactor ->
     AlnMap -> OTUTree -> Classifier
@@ -52,7 +54,7 @@ buildClassifier mol smallProb scale alnMap otuTree
 buildNucClassifier  :: SmallProb -> ScaleFactor -> AlnMap -> OTUTree
     -> Classifier
 buildNucClassifier smallprob scale map otuTree =
-    PWMClassifier cladeModTree
+    PWMClassifier cladeModTree scale
     where   cladeModTree = fmap NucPWMModel modTree
             modTree = fmap (\(name, aln) -> 
                             alnToNucModel smallprob scale name aln)
@@ -64,7 +66,7 @@ buildNucClassifier smallprob scale map otuTree =
 buildPepClassifier  :: SmallProb -> ScaleFactor -> AlnMap -> OTUTree
     -> Classifier
 buildPepClassifier smallprob scale map otuTree =
-    PWMClassifier cladeModTree
+    PWMClassifier cladeModTree scale
     where   cladeModTree = fmap PepPWMModel modTree
             modTree = fmap (\(name, aln) -> 
                             alnToPepModel smallprob scale name aln)
@@ -73,12 +75,12 @@ buildPepClassifier smallprob scale map otuTree =
             treeOfLeafNamedAlns =
                 fmap (\k -> (k, M.findWithDefault [] k map)) otuTree
 
--- TODO: OutputData seems too complex, as the score is actually found in the
--- trail.
+-- The Int parameter is the log_10(ER) cutoff (the support value of nodes in the
+-- path in the default output). 
 
 classifySequence :: Classifier -> Int -> Sequence -> Trail
-classifySequence (PWMClassifier modTree) cutoff seq =
-    scoreSequence' modTree cutoff seq
+classifySequence (PWMClassifier modTree scale) log10ERcutoff seq =
+    scoreSequence' modTree (round scale * log10ERcutoff) seq
 
 scoreSequence :: Sequence -> Tree PWMModel -> Trail
 scoreSequence seq (Node model []) = []
