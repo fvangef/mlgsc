@@ -14,7 +14,7 @@ import qualified Data.Vector.Unboxed as U
 import Text.Printf
 
 import MlgscTypes
-import CladeModel (CladeModel, scoreOf, modLength)
+import PWMModel (PWMModel, scoreOf, modLength)
 
 
 data Direction 	= None | Diag | Down | Righ	-- 'Right' is defined by Either
@@ -46,7 +46,7 @@ type GapPenalty = Int
 -- A ScoringScheme has two components: a gap opening penality (gap penalties are
 -- linear, so there is no distinct gap extension penalty); and a -(model score,
 -- -> alignment score) map. A residue's positional score according to a
--- CladeModel is translated into an alignment score using Map.lookupGE. In the
+-- PWMModel is translated into an alignment score using Map.lookupGE. In the
 -- 'defScheme' below, for instance, a model score of -4000 yields a score of -1,
 -- between -3999 (included) and -800, the score is 1, etc, until the score is 3
 -- from -199 to 0. Note: these particular values have been tested (see
@@ -78,7 +78,7 @@ scoringSchemeMap smallScore = M.fromList $ zip thresholds [-1, 1, 2, 3]
 -- TODO: the gap opening penalty and scoring map for scoreModVseq should be
 -- parameters, not hard-coded.
 
-msdpmatIA :: ScoringScheme -> CladeModel -> VSequence -> DPMatrix
+msdpmatIA :: ScoringScheme -> PWMModel -> VSequence -> DPMatrix
 msdpmatIA scsc hmod vseq  = dpmat
 	where	dpmat = array ((0,0), (seq_len, mat_len)) 
 			[((i,j), cell i j) | i <- [0..seq_len], j <- [0..mat_len]]
@@ -126,7 +126,7 @@ int2bt 3    = Both
 twoDto1D :: Int -> (Int, Int) -> Int
 twoDto1D width (i,j) = i * width + j
 
-msdpmat :: ScoringScheme -> CladeModel -> VSequence -> MADPMat
+msdpmat :: ScoringScheme -> PWMModel -> VSequence -> MADPMat
 msdpmat scsc hmod vseq = runSTUArray $ do
                 let seq_len = U.length vseq
                 let mat_len = modLength hmod
@@ -185,7 +185,7 @@ msdpmat scsc hmod vseq = runSTUArray $ do
 -- sequence has O(1) indexing (and so should the model).
 
 {-
-seqISLMatScore :: (CladeModel mod) => mod -> VSequence -> Position -> Position -> Int
+seqISLMatScore :: (PWMModel mod) => mod -> VSequence -> Position -> Position -> Int
 seqISLMatScore hmod vseq i j
     | prob == -4000 = -1	-- not found at that position
     | prob == 0 	= 3
@@ -197,10 +197,10 @@ seqISLMatScore hmod vseq i j
 -}
 
 -- A new version of the above, which simply uses a Map. TODO: the map values
--- should at least depend on the CladeModel, e.g. the model's smallScore should
+-- should at least depend on the PWMModel, e.g. the model's smallScore should
 -- be the lowest in the map (with zero the highest).
 
-scoreModVseq :: (M.Map Int Int) -> CladeModel -> VSequence -> Position -> Position -> Int
+scoreModVseq :: (M.Map Int Int) -> PWMModel -> VSequence -> Position -> Position -> Int
 scoreModVseq scThr hmod vseq i j =
     case M.lookupGE modScore scThr of
         Nothing -> 0    -- shouldn't happen
@@ -217,13 +217,13 @@ topCell mat = fst $ maximumBy cellCmp (assocs mat)
 		| otherwise	= LT
 -}
 
-msalignIA :: ScoringScheme -> CladeModel -> Sequence -> Sequence
+msalignIA :: ScoringScheme -> PWMModel -> Sequence -> Sequence
 msalignIA scsc mat seq = T.pack $ nwMatBacktrackIA (msdpmatIA scsc mat vseq) vseq
 	where vseq = U.fromList $ T.unpack seq 
 
 -- mutable-array - based version
 
-msalign :: ScoringScheme -> CladeModel -> Sequence -> Sequence
+msalign :: ScoringScheme -> PWMModel -> Sequence -> Sequence
 msalign scsc mat seq = T.pack $ nwMatBacktrack (msdpmat scsc mat vseq) vseq
 	where vseq = U.fromList $ T.unpack seq 
 {-

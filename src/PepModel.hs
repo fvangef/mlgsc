@@ -19,7 +19,7 @@ import Data.Text.Binary
 
 import MlgscTypes
 import Alignment
-import CladeModelAux
+import PWMModelAux
 
 data PepModel = PepModel {
                     clade           :: CladeName

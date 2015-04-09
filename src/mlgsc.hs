@@ -20,7 +20,7 @@ import Data.Binary (decodeFile)
 import Data.Tree
 import MlgscTypes
 import FastA
-import CladeModel
+import PWMModel
 import Align
 import Classifier (Classifier(..), classifySequence)
 import Output
@@ -65,7 +65,7 @@ main = do
     params <- execParser parseOptionsInfo
     queryFastA <- LTIO.readFile $ queryFname params
     let queryRecs = fastATextToRecords queryFastA
-    classifier@(Classifier modTree) <- (decodeFile $ clsfrFname params) :: IO Classifier
+    classifier@(PWMClassifier modTree) <- (decodeFile $ clsfrFname params) :: IO Classifier
     let rootMod = rootLabel modTree
     let scoringScheme = ScoringScheme (-2) (scoringSchemeMap (absentResScore rootMod))
     let processQuery = if (optNoAlign params)

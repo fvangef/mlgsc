@@ -14,11 +14,10 @@ import qualified Data.Text as ST
 import Data.Ord
 
 import MlgscTypes
--- import CladeModel
 import Alignment
 import NucModel
 import PepModel
-import CladeModel (CladeModel(..), scoreSeq, cladeName)
+import PWMModel (PWMModel(..), scoreSeq, cladeName)
 
 -- TODO: rename CladeModel to PWMModel, and the Classifier c'tor to
 -- PWMClassifier. This  should have the scale factor as a second argument. In
@@ -28,16 +27,16 @@ import CladeModel (CladeModel(..), scoreSeq, cladeName)
 --                 | KmerClassifier (Tree KmerModel)
 --                 
 
-data Classifier = Classifier (Tree CladeModel)
+data Classifier = PWMClassifier (Tree PWMModel)
                 deriving (Show, Eq)
 
 instance Binary Classifier where
-    put (Classifier modTree) = do
+    put (PWMClassifier modTree) = do
         put modTree
 
     get = do
-        modTree <- get :: Get (Tree CladeModel)
-        return $ Classifier modTree
+        modTree <- get :: Get (Tree PWMModel)
+        return $ PWMClassifier modTree
 
 buildClassifier :: Molecule -> SmallProb -> ScaleFactor ->
     AlnMap -> OTUTree -> Classifier
@@ -53,8 +52,8 @@ buildClassifier mol smallProb scale alnMap otuTree
 buildNucClassifier  :: SmallProb -> ScaleFactor -> AlnMap -> OTUTree
     -> Classifier
 buildNucClassifier smallprob scale map otuTree =
-    Classifier cladeModTree
-    where   cladeModTree = fmap NucCladeModel modTree
+    PWMClassifier cladeModTree
+    where   cladeModTree = fmap NucPWMModel modTree
             modTree = fmap (\(name, aln) -> 
                             alnToNucModel smallprob scale name aln)
                             treeOfNamedAlns
@@ -65,8 +64,8 @@ buildNucClassifier smallprob scale map otuTree =
 buildPepClassifier  :: SmallProb -> ScaleFactor -> AlnMap -> OTUTree
     -> Classifier
 buildPepClassifier smallprob scale map otuTree =
-    Classifier cladeModTree
-    where   cladeModTree = fmap PepCladeModel modTree
+    PWMClassifier cladeModTree
+    where   cladeModTree = fmap PepPWMModel modTree
             modTree = fmap (\(name, aln) -> 
                             alnToPepModel smallprob scale name aln)
                             treeOfNamedAlns
@@ -78,10 +77,10 @@ buildPepClassifier smallprob scale map otuTree =
 -- trail.
 
 classifySequence :: Classifier -> Int -> Sequence -> Trail
-classifySequence (Classifier modTree) cutoff seq =
+classifySequence (PWMClassifier modTree) cutoff seq =
     scoreSequence' modTree cutoff seq
 
-scoreSequence :: Sequence -> Tree CladeModel -> Trail
+scoreSequence :: Sequence -> Tree PWMModel -> Trail
 scoreSequence seq (Node model []) = []
 scoreSequence seq (Node model kids) = 
     (bestKidName, bestKidScore, sndBestKidScore)  : (scoreSequence seq bestKid)
@@ -91,7 +90,7 @@ scoreSequence seq (Node model kids) =
             orderedKids = L.sortBy (comparing snd) $ zip kids (map Down scores)
             scores = map (flip scoreSeq seq . rootLabel) kids
 
-scoreSequence' :: Tree CladeModel -> Int -> Sequence -> Trail
+scoreSequence' :: Tree PWMModel -> Int -> Sequence -> Trail
 scoreSequence' (Node model []) cutoff seq = []
 scoreSequence' (Node model kids) cutoff seq
     | diff < cutoff   = []

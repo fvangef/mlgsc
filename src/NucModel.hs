@@ -34,7 +34,7 @@ import Data.Text.Binary
 
 import MlgscTypes
 import Alignment
-import CladeModelAux
+import PWMModelAux
 
 data NucModel = NucModel {
                     clade           :: CladeName

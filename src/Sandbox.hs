@@ -7,7 +7,7 @@ import Control.Applicative
 
 import MlgscTypes
 import NewickParser
-import CladeModel
+import PWMModel
 import NucModel
 import Classifier
 import FastA

@@ -27,7 +27,7 @@ import MlgscTypes
 import FastA
 import Alignment
 import Align
-import CladeModel
+import PWMModel
 import Classifier (Classifier(..), buildClassifier, classifySequence, leafOTU)
 import NewickParser
 import NewickDumper
@@ -311,7 +311,7 @@ looReader otuTree fastaRecs testRecNdx = do
     mol <- asks molType
     smallProb <- asks optSmallProb
     scaleFactor <- asks optScaleFactor
-    let classifier@(Classifier modTree) =
+    let classifier@(PWMClassifier modTree) =
             buildClassifier mol smallProb scaleFactor otuAlnMap otuTree
     let rootMod = rootLabel modTree 
     let scoringScheme =
