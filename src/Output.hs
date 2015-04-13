@@ -29,9 +29,10 @@ import OutputFormatStringParser
 -- using a Reader monad.
 -- TODO: could add a high-level way of passing an ER threshold
 
-formatResult :: FmtString -> FastA -> Sequence -> Trail -> ST.Text
+formatResult :: FmtString -> FastA -> Sequence -> Trail
+    -> ST.Text
 formatResult fmtString query alnQry trail = 
-    ST.concat $ map (evalFmtComponent 0 query alnQry trail) format
+    ST.concat $ map (evalFmtComponent query alnQry trail) format
         where (Right format) = parseOutputFormatString fmtString
 
 {- This function should NOT take parameters as a record, or as a data type, or
@@ -40,82 +41,39 @@ formatResult fmtString query alnQry trail =
  - parameters to this function are explicit. It is possible, however, to call it
  - from Reader functions (e.g. in mlgsc). -}
 
-evalFmtComponent :: Int 
+evalFmtComponent :: ScaleFactor
                     -> FastA
                     -> Sequence
                     -> Trail
                     -> FmtComponent
                     -> ST.Text
-evalFmtComponent hlMinER query alnQry trail component = case component of
+evalFmtComponent scale query alnQry trail component = case component of
     Header          -> LT.toStrict $ FastA.header query
     QueryLength     -> ST.pack $ show $ LT.length $ FastA.sequence query
     ID              -> LT.toStrict $ fastAId query
     Query           -> LT.toStrict $ FastA.sequence query
     AlignedQuery    -> alnQry
-    (Path min_er)   -> if min_er > 0 -- precedence to low-level
-                        then trailToPath min_er trail 
-                        else trailToPath hlMinER trail
-    (UPath min_er)   -> if min_er > 0 -- precedence to low-level
-                        then trailToUPath min_er trail 
-                        else trailToUPath hlMinER trail
+    Path            -> trailToPath trail 
+    UPath           -> trailToUPath trail 
     Score           -> ST.pack $ show leafScore
                         where (_,leafScore,_) = last trail
     (Literal c)     -> ST.pack [c]
 
--- Takes an extended trail (i.e., a list of (OTU name, bes
--- score) tuples) and formats it as a taxonomy line, with empty labels remplaced
--- by 'unnamed' and labels followed by the log10 of the evidence ratio between
--- the best and second-best likelihoods.
 
-trailToExtendedTaxo :: Int -> Trail -> ST.Text
-trailToExtendedTaxo min_er trail = ST.intercalate (ST.pack "; ") $ getZipList erLbls
-    where   labels = ZipList $ tail $ map (\(lbl,_,_) -> lbl) trail
-            bests = ZipList $ init $ map (\(_,best,_) -> best) trail
-            seconds = ZipList $ init $ map (\(_,_,second) -> second) trail
-            log10ers = log10evidenceRatio <$> (ZipList $ repeat 1000) <*> seconds <*> bests
-            good_log10ers = cutAtFirstPoorER min_er log10ers
-            erLbls = toERlbl <$> labels <*> good_log10ers
-            toERlbl lbl er = ST.concat [lblOrUndef,
-                                 ST.pack " (", 
-                                 ST.pack erStr,
-                                 ST.pack ")"]
-                where erStr = case printf "%.0g" er :: String of
-                            "Infinity" -> "*"
-                            otherwise -> printf "%.0g" er :: String
-                      lblOrUndef = if ST.empty == lbl
-                                        then ST.pack "unnamed"
-                                        else lbl
+trailToPath :: Trail -> ST.Text
+trailToPath trail = map stepToText trail
+    where stepToText -- map a Step directly to a ST.Tex
 
-trailToPath :: Int -> Trail -> ST.Text
-trailToPath min_er trail = ST.intercalate (ST.pack "; ") $ getZipList erLbls
-    where   labels  = ZipList $ map (\(lbl,_,_)   -> lbl) trail
-            bests   = ZipList $ map (\(_,best,_) -> best) trail
-            seconds = ZipList $ map (\(_,_,snd)   -> snd) trail
-            log10ers = log10evidenceRatio <$>
-                       (ZipList $ repeat 1000) <*> seconds <*> bests
-            good_log10ers = cutAtFirstPoorER min_er log10ers
-            erLbls = toERlbl <$> labels <*> good_log10ers
-            toERlbl lbl er = ST.concat [lblOrUndef,
-                                 ST.pack " (", 
-                                 ST.pack erStr,
-                                 ST.pack ")"]
-                where erStr = case printf "%.0g" er :: String of
-                            "Infinity" -> "*"
-                            otherwise -> printf "%.0g" er :: String
-                      lblOrUndef = if ST.empty == lbl
-                                        then ST.pack "unnamed"
-                                        else lbl
-
-trailToUPath :: Int -> Trail -> ST.Text
-trailToUPath min_er trail =
+trailToPath' :: Trail -> ST.Text
+trailToPath' trail =
     if ((length $ getZipList good_log10ers) ==
         (length $ getZipList log10ers))
         then path
         else path `ST.append` (ST.pack "; unclassified")
     where   path = ST.intercalate (ST.pack "; ") $ getZipList erLbls
-            labels  = ZipList $ map (\(lbl,_,_)   -> lbl) trail
-            bests   = ZipList $ map (\(_,best,_) -> best) trail
-            seconds = ZipList $ map (\(_,_,snd)   -> snd) trail
+            labels  = ZipList $ map otuName trail
+            bests   = ZipList $ map bestScore trail
+            seconds = ZipList $ map secondBestScore trail
             log10ers = log10evidenceRatio <$>
                        (ZipList $ repeat 1000) <*> seconds <*> bests
             good_log10ers = cutAtFirstPoorER min_er log10ers
@@ -130,6 +88,9 @@ trailToUPath min_er trail =
                       lblOrUndef = if ST.empty == lbl
                                         then ST.pack "unnamed"
                                         else lbl
+
+trailToUPath :: Trail -> ST.Text
+trailToUPath x = undefined
 
 -- Computes the base-10 log of the evidence ratio, i.e. log_10 (exp(delta-AIC /
 -- 2)), except that I use delta-AIC' (in which the factor 2 is dropped, so I

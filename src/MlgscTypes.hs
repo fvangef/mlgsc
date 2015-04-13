@@ -16,4 +16,20 @@ type CladeName      = Text
 type OTUTree        = Tree OTUName
 type ScaleFactor    = Double
 type SmallProb      = Double
-type Trail          = [(OTUName, Int, Int)]
+type Score          = Int
+
+-- A classification step at one node in the model tree, in which the OTU name of
+-- best model, score of best model, score of next-best, and log10 Evidence Ratio
+-- are stored.
+
+data Step = PWMStep {
+                otuName             :: OTUName
+                , bestScore         :: Score
+                , secondBestScore   :: Score
+                , log10ER           :: Int
+                }
+
+-- A trail of classification steps. Starts at the root of the tree and ends at a
+-- leaf.
+
+type Trail          = [Step]
