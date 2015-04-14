@@ -34,7 +34,6 @@ import NewickDumper
 import Weights
 import Shuffle
 import Output
-import OutputFormatStringParser
 
 data Params = Params {
                 optSmallProb        :: Double
@@ -322,7 +321,7 @@ looReader otuTree fastaRecs testRecNdx = do
     if  (onlyFalse && 
          (leafOTU prediction) == (LT.toStrict $ fastAOTU testRec))
         then return Nothing
-        else return $ Just $ formatResult fmtString origRec alignedTestSeq prediction
+        else return $ Just $ formatResult fmtString "%t (%s)" origRec alignedTestSeq prediction
     where   header = LT.toStrict $ FastA.header testRec
             testSeq = LT.toStrict $ FastA.sequence origRec
             otuAln = fastARecordsToAln trainSet

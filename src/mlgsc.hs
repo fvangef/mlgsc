@@ -24,7 +24,6 @@ import PWMModel
 import Align
 import Classifier (Classifier(..), classifySequence)
 import Output
-import OutputFormatStringParser
 
 data Params = Params {
                 optNoAlign          :: Bool
@@ -96,7 +95,8 @@ formatResultWrapper params query alnQry trail =
 
 formatResultReader :: FastA -> Sequence -> Trail -> Reader Params ST.Text 
 formatResultReader query alnQry trail = do
-   fmtString    <- asks optOutFmtString
-   minER        <- asks optERCutoff 
-   let (Right format) = parseOutputFormatString fmtString 
-   return $ ST.concat $ map (evalFmtComponent query alnQry trail) format
+    fmtString    <- asks optOutFmtString
+    let (Right format) = parseOutputFormatString fmtString 
+    let (Right stepfmt) = parseStepFormatString "%t <%b> (%s)"
+    return $ ST.concat $ map (evalFmtComponent query alnQry trail stepfmt) format
+

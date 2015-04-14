@@ -11,10 +11,10 @@ type Sequence       = Text
 type Column         = Text
 type Residue        = Char
 type Position       = Int
-type OTUName        = Text
+type OTUName        = Text  -- TODO: s/OTU/Taxon/g...
 type CladeName      = Text
 type OTUTree        = Tree OTUName
-type ScaleFactor    = Double
+type ScaleFactor    = Double -- TODO shouldn't this be an Int?
 type SmallProb      = Double
 type Score          = Int
 
