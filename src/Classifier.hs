@@ -82,6 +82,7 @@ classifySequence :: Classifier -> Int -> Sequence -> Trail
 classifySequence (PWMClassifier modTree scale) log10ERcutoff seq =
     scoreSequence' modTree (round scale * log10ERcutoff) seq
 
+{-
 scoreSequence :: Sequence -> Tree PWMModel -> Trail
 scoreSequence seq (Node model []) = []
 scoreSequence seq (Node model kids) = 
@@ -91,12 +92,13 @@ scoreSequence seq (Node model kids) =
             (sndBestKid, (Down sndBestKidScore)) = orderedKids !! 1
             orderedKids = L.sortBy (comparing snd) $ zip kids (map Down scores)
             scores = map (flip scoreSeq seq . rootLabel) kids
+-}
 
 scoreSequence' :: Tree PWMModel -> Int -> Sequence -> Trail
 scoreSequence' (Node model []) cutoff seq = []
 scoreSequence' (Node model kids) cutoff seq
     | diff < cutoff   = []
-    | otherwise     = (bestKidName, bestKidScore, sndBestKidScore) : (scoreSequence seq bestKid)
+    | otherwise     = (PWMStep bestKidName bestKidScore sndBestKidScore (-1)) : (scoreSequence' bestKid cutoff seq)
     where   diff = bestKidScore - sndBestKidScore
             bestKidName = cladeName $ rootLabel bestKid
             (bestKid, (Down bestKidScore)) = orderedKids !! 0
@@ -140,5 +142,4 @@ mergeNamedAlns (Node (name,_) kids) = Node (name,mergedKidAlns) mergedKids
             mergedKidAlns = concatMap (snd . rootLabel) mergedKids
 
 leafOTU :: Trail -> OTUName
-leafOTU trail = otuName
-    where (otuName, _, _) = last trail
+leafOTU trail = otuName $ last trail

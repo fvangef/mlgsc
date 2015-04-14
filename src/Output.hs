@@ -41,13 +41,12 @@ formatResult fmtString query alnQry trail =
  - parameters to this function are explicit. It is possible, however, to call it
  - from Reader functions (e.g. in mlgsc). -}
 
-evalFmtComponent :: ScaleFactor
-                    -> FastA
-                    -> Sequence
-                    -> Trail
-                    -> FmtComponent
-                    -> ST.Text
-evalFmtComponent scale query alnQry trail component = case component of
+evalFmtComponent :: FastA
+                 -> Sequence
+                 -> Trail
+                 -> FmtComponent
+                 -> ST.Text
+evalFmtComponent query alnQry trail component = case component of
     Header          -> LT.toStrict $ FastA.header query
     QueryLength     -> ST.pack $ show $ LT.length $ FastA.sequence query
     ID              -> LT.toStrict $ fastAId query
@@ -55,15 +54,15 @@ evalFmtComponent scale query alnQry trail component = case component of
     AlignedQuery    -> alnQry
     Path            -> trailToPath trail 
     UPath           -> trailToUPath trail 
-    Score           -> ST.pack $ show leafScore
-                        where (_,leafScore,_) = last trail
+    Score           -> ST.pack $ show $ bestScore $ last trail
     (Literal c)     -> ST.pack [c]
 
 
 trailToPath :: Trail -> ST.Text
-trailToPath trail = map stepToText trail
-    where stepToText -- map a Step directly to a ST.Tex
-
+trailToPath trail = ST.intercalate (ST.pack "; ") $ map stepToText trail
+    where stepToText step = otuName step
+                                
+{-
 trailToPath' :: Trail -> ST.Text
 trailToPath' trail =
     if ((length $ getZipList good_log10ers) ==
@@ -88,6 +87,7 @@ trailToPath' trail =
                       lblOrUndef = if ST.empty == lbl
                                         then ST.pack "unnamed"
                                         else lbl
+-}
 
 trailToUPath :: Trail -> ST.Text
 trailToUPath x = undefined

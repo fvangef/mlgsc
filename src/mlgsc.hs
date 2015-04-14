@@ -99,4 +99,4 @@ formatResultReader query alnQry trail = do
    fmtString    <- asks optOutFmtString
    minER        <- asks optERCutoff 
    let (Right format) = parseOutputFormatString fmtString 
-   return $ ST.concat $ map (evalFmtComponent minER query alnQry trail) format
+   return $ ST.concat $ map (evalFmtComponent query alnQry trail) format
