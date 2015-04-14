@@ -80,31 +80,23 @@ buildPepClassifier smallprob scale map otuTree =
 
 classifySequence :: Classifier -> Int -> Sequence -> Trail
 classifySequence (PWMClassifier modTree scale) log10ERcutoff seq =
-    scoreSequence' modTree (round scale * log10ERcutoff) seq
+    chooseSubtree modTree scale log10ERcutoff seq
 
-{-
-scoreSequence :: Sequence -> Tree PWMModel -> Trail
-scoreSequence seq (Node model []) = []
-scoreSequence seq (Node model kids) = 
-    (bestKidName, bestKidScore, sndBestKidScore)  : (scoreSequence seq bestKid)
-    where   bestKidName = cladeName $ rootLabel bestKid
-            (bestKid, (Down bestKidScore)) = orderedKids !! 0
-            (sndBestKid, (Down sndBestKidScore)) = orderedKids !! 1
-            orderedKids = L.sortBy (comparing snd) $ zip kids (map Down scores)
-            scores = map (flip scoreSeq seq . rootLabel) kids
--}
-
-scoreSequence' :: Tree PWMModel -> Int -> Sequence -> Trail
-scoreSequence' (Node model []) cutoff seq = []
-scoreSequence' (Node model kids) cutoff seq
-    | diff < cutoff   = []
-    | otherwise     = (PWMStep bestKidName bestKidScore sndBestKidScore (-1)) : (scoreSequence' bestKid cutoff seq)
+chooseSubtree :: Tree PWMModel -> ScaleFactor -> Int -> Sequence -> Trail
+chooseSubtree (Node model []) _ _ _ = []
+chooseSubtree (Node model kids) scale cutoff seq
+    | diff < (round scale * cutoff)   = []
+    | otherwise     = (PWMStep bestKidName bestKidScore
+                        sndBestKidScore rndlog10ER)
+                        : (chooseSubtree bestKid scale cutoff seq)
     where   diff = bestKidScore - sndBestKidScore
             bestKidName = cladeName $ rootLabel bestKid
             (bestKid, (Down bestKidScore)) = orderedKids !! 0
             (sndBestKid, (Down sndBestKidScore)) = orderedKids !! 1
             orderedKids = L.sortBy (comparing snd) $ zip kids (map Down scores)
             scores = map (flip scoreSeq seq . rootLabel) kids
+            rndlog10ER = round $
+                log10evidenceRatio (round scale) bestKidScore sndBestKidScore
 
 -- finds the (first) object in a list that maximizes some metric m (think score
 -- of a sequence according to a model), returns that object and its index in
