@@ -155,5 +155,7 @@ evalStepFmtComponent :: Step -> StepFmtComponent -> ST.Text
 evalStepFmtComponent step component = case component of
     (SLiteral char) -> ST.pack [char]
     TaxonName       -> otuName step
-    SupportVal      -> ST.pack $ show $ log10ER step
+    SupportVal      -> ST.pack $ if abs(log10ER step) < 1000
+                            then show $ round $ log10ER step
+                            else "*"
     BestScore       -> ST.pack $ show $ bestScore step

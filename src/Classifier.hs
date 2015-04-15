@@ -87,7 +87,7 @@ chooseSubtree (Node model []) _ _ _ = []
 chooseSubtree (Node model kids) scale cutoff seq
     | diff < (round scale * cutoff)   = []
     | otherwise     = (PWMStep bestKidName bestKidScore
-                        sndBestKidScore rndlog10ER)
+                        sndBestKidScore log10ER)
                         : (chooseSubtree bestKid scale cutoff seq)
     where   diff = bestKidScore - sndBestKidScore
             bestKidName = cladeName $ rootLabel bestKid
@@ -95,8 +95,7 @@ chooseSubtree (Node model kids) scale cutoff seq
             (sndBestKid, (Down sndBestKidScore)) = orderedKids !! 1
             orderedKids = L.sortBy (comparing snd) $ zip kids (map Down scores)
             scores = map (flip scoreSeq seq . rootLabel) kids
-            rndlog10ER = round $
-                log10evidenceRatio (round scale) bestKidScore sndBestKidScore
+            log10ER = log10evidenceRatio (round scale) bestKidScore sndBestKidScore
 
 -- finds the (first) object in a list that maximizes some metric m (think score
 -- of a sequence according to a model), returns that object and its index in
@@ -165,4 +164,4 @@ scoreTologLikelihood scaleFactor score = log10Likelihood / logBase 10 e
 -- away in evidenceRatio anyway.
 
 deltaAIC' :: Double -> Double -> Double
-deltaAIC' l1 l2 = - (l1 - l2) -- or simply l2 - l1...
+deltaAIC' l1 l2 = (l1 - l2) -- or simply l2 - l1...

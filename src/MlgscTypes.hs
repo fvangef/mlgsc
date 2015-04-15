@@ -26,7 +26,7 @@ data Step = PWMStep {
                 otuName             :: OTUName
                 , bestScore         :: Score
                 , secondBestScore   :: Score
-                , log10ER           :: Int
+                , log10ER           :: Double
                 }
 
 -- A trail of classification steps. Starts at the root of the tree and ends at a

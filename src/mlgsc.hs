@@ -28,6 +28,7 @@ import Output
 data Params = Params {
                 optNoAlign          :: Bool
                 , optOutFmtString   :: String
+                , optStepFmtString  :: String
                 , optERCutoff       :: Int
                 , queryFname        :: String
                 , clsfrFname        :: String
@@ -42,8 +43,13 @@ parseOptions = Params
                 <*> option str
                     (long "output-format"
                     <> short 'f'
-                    <> help "printf-like format string for output. OVERRIDES -e"
+                    <> help "printf-like format string for output."
                     <> value "%h -> %p")
+                <*> option str
+                    (long "step-format"
+                    <> short 's'
+                    <> help "printf-like format string for step (path element)"
+                    <> value "%t (%s)")
                 <*> option auto
                     (long "ER-cutoff"
                     <> short 'e'
@@ -96,7 +102,8 @@ formatResultWrapper params query alnQry trail =
 formatResultReader :: FastA -> Sequence -> Trail -> Reader Params ST.Text 
 formatResultReader query alnQry trail = do
     fmtString    <- asks optOutFmtString
+    stepFmtString <- asks optStepFmtString
     let (Right format) = parseOutputFormatString fmtString 
-    let (Right stepfmt) = parseStepFormatString "%t <%b> (%s)"
+    let (Right stepfmt) = parseStepFormatString stepFmtString
     return $ ST.concat $ map (evalFmtComponent query alnQry trail stepfmt) format
 
