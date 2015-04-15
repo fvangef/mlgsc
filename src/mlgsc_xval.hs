@@ -44,6 +44,7 @@ data Params = Params {
                 , optVerbosity      :: Int
                 , optNoHenikoffWt   :: Bool
                 , optOutFmtString   :: String
+                , optStepFmtString  :: String
                 , optOnlyFalse      :: Bool
                 , optIndices        :: String
                 , molType           :: Molecule
@@ -116,6 +117,12 @@ parseOptions = Params
                     <> metavar "OUTPUT FORMAT STRING"
                     <> value "%h (%l) -> %p"
                     <> help "printf-like format string for output")
+                <*> option str
+                    (long "step-format"
+                    <> short 's'
+                    <> metavar "STEP FORMAT STRING"
+                    <> value "%t (%s)"
+                    <> help "printf-like format string for step (path element)")
                 <*> switch (
                         short 'x' <> long "only-wrong"
                         <> help "only show wrong classifications")
@@ -302,6 +309,7 @@ oneRoundLOO params otuTree fastARecs testRecNdx =
 looReader :: OTUTree -> Seq FastA -> Int -> Reader Params (Maybe ST.Text)
 looReader otuTree fastaRecs testRecNdx = do
     fmtString <- asks optOutFmtString
+    stepFmtString <- asks optStepFmtString
     noHwt <- asks optNoHenikoffWt
     let wtOtuAln = if noHwt
             then otuAln
@@ -321,7 +329,8 @@ looReader otuTree fastaRecs testRecNdx = do
     if  (onlyFalse && 
          (leafOTU prediction) == (LT.toStrict $ fastAOTU testRec))
         then return Nothing
-        else return $ Just $ formatResult fmtString "%t (%s)" origRec alignedTestSeq prediction
+        else return $ Just $ formatResult fmtString
+                stepFmtString origRec alignedTestSeq prediction
     where   header = LT.toStrict $ FastA.header testRec
             testSeq = LT.toStrict $ FastA.sequence origRec
             otuAln = fastARecordsToAln trainSet
