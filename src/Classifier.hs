@@ -83,13 +83,13 @@ chooseSubtree :: Tree PWMModel -> ScaleFactor -> Int -> Sequence -> Trail
 chooseSubtree (Node model []) _ _ _ = []
 chooseSubtree (Node model kids) scale cutoff seq
     | diff < (round scale * cutoff)   = []
-    | otherwise     = (PWMStep bestKidName bestKidScore
-                        sndBestKidScore log10ER)
-                        : (chooseSubtree bestKid scale cutoff seq)
+    | otherwise     = PWMStep bestKidName bestKidScore
+                        sndBestKidScore log10ER
+                        : chooseSubtree bestKid scale cutoff seq
     where   diff = bestKidScore - sndBestKidScore
             bestKidName = cladeName $ rootLabel bestKid
-            (bestKid, (Down bestKidScore)) = orderedKids !! 0
-            (sndBestKid, (Down sndBestKidScore)) = orderedKids !! 1
+            (bestKid, Down bestKidScore) = orderedKids !! 0
+            (sndBestKid, Down sndBestKidScore) = orderedKids !! 1
             orderedKids = L.sortBy (comparing snd) $ zip kids (map Down scores)
             scores = map (flip scoreSeq seq . rootLabel) kids
             log10ER = log10evidenceRatio (round scale) bestKidScore sndBestKidScore
@@ -102,7 +102,7 @@ chooseSubtree (Node model kids) scale cutoff seq
 -- TODO: if we no longer need the indices, this is way to complicated.
 bestByExtended :: Ord b => [a] -> (a -> b) -> (a, Int, b, b)
 bestByExtended objs m = (bestObj, bestNdx, bestMetricValue, secondBestMetricValue)
-    where   sorted = reverse $ L.sort $ metricValues
+    where   sorted = L.sortBy (flip compare) metricValues
             metricValues = map m objs
             bestMetricValue = sorted !! 0
             secondBestMetricValue = sorted !! 1
@@ -150,7 +150,7 @@ log10evidenceRatio scaleFactor bestScore secondBestScore = logBase 10 er
 scoreTologLikelihood :: Int -> Int -> Double
 scoreTologLikelihood scaleFactor score = log10Likelihood / logBase 10 e
     where   log10Likelihood = fromIntegral score / fromIntegral scaleFactor
-            e = exp(1.0)
+            e = exp 1.0
             
 -- Computes the difference in AIC of two log-likelihoods, taking into account
 -- that the number of parameters k is in our case the same in any two models,
@@ -161,4 +161,4 @@ scoreTologLikelihood scaleFactor score = log10Likelihood / logBase 10 e
 -- away in evidenceRatio anyway.
 
 deltaAIC' :: Double -> Double -> Double
-deltaAIC' l1 l2 = (l1 - l2) -- or simply l2 - l1...
+deltaAIC' l1 l2 = l1 - l2 
