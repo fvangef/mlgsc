@@ -28,7 +28,7 @@ instance Ord DPCell where
 	 (DPCell int1 _) <= (DPCell int2 _) = int1 <= int2
 
 dirSym :: DPCell -> Char
-dirSym c = case (dir c) of
+dirSym c = case dir c of
 	None -> '.'
 	Diag -> '\\'	-- how the f*ck does one get a literal '\'?
 	Down -> '|'
@@ -63,7 +63,7 @@ defScScheme = ScoringScheme (-2) (M.fromList [(-4000,-1),(-800,1),(-400,2),(0,3)
 
 scoringSchemeMap :: Int -> M.Map Int Int
 scoringSchemeMap smallScore = M.fromList $ zip thresholds [-1, 1, 2, 3]
-    where   thresholds = (map (round . (sscFrac /)) [1.0, 5.0, 10.0]) ++ [0]
+    where   thresholds = map (round . (sscFrac /)) [1.0, 5.0, 10.0] ++ [0]
             sscFrac = fromIntegral smallScore
 
 -- First step of sequence-to-prob-matrix alignment.  Fills a dynamic programming
@@ -142,13 +142,13 @@ msdpmat scsc hmod vseq = runSTUArray $ do
                     B.unsafeWrite dpmat (twoDto1D array_width (i, 0)) 0
                     B.unsafeWrite dpmat (twoDto1D array_width (i, mat_len + 1)) up
                 -- initialize top row of left array
-                forM_ [0..mat_len] $ \j -> do
+                forM_ [0..mat_len] $ \j ->
                     B.unsafeWrite dpmat (twoDto1D array_width (0, j)) (j * penalty)
                 -- and of right array
-                forM_ [mat_len+1 .. ((2*mat_len)+1)] $ \j -> do
+                forM_ [mat_len+1 .. ((2*mat_len)+1)] $ \j ->
                     B.unsafeWrite dpmat (twoDto1D array_width (0, j)) left
                 -- now fill rest of matrices
-                forM_ [1..seq_len] $ \i -> do
+                forM_ [1..seq_len] $ \i ->
                     forM_ [1..mat_len] $ \j -> do
                         let match_score = scoreModVseq (scThresholds scsc) hmod vseq i j               
                         match_cell_val <- B.unsafeRead dpmat (twoDto1D array_width (i-1,j-1))
@@ -160,12 +160,12 @@ msdpmat scsc hmod vseq = runSTUArray $ do
                         let best     =  maximum [match_sc, hGap_sc, vGap_sc]
                         B.unsafeWrite dpmat (twoDto1D array_width (i,j)) best
                         if best == hGap_sc
-                            then do
+                            then
                                 B.unsafeWrite dpmat (twoDto1D array_width (i,j+mat_len+1)) up
                             else if best == vGap_sc
-                                then do
+                                then
                                     B.unsafeWrite dpmat (twoDto1D array_width (i,j+mat_len+1)) left
-                                else do -- match_sc
+                                else 
                                     B.unsafeWrite dpmat (twoDto1D array_width (i,j+mat_len+1)) both
                 return dpmat 
 
@@ -199,7 +199,7 @@ seqISLMatScore hmod vseq i j
 -- should at least depend on the PWMModel, e.g. the model's smallScore should
 -- be the lowest in the map (with zero the highest).
 
-scoreModVseq :: (M.Map Int Int) -> PWMModel -> VSequence -> Position -> Position -> Int
+scoreModVseq :: M.Map Int Int -> PWMModel -> VSequence -> Position -> Position -> Int
 scoreModVseq scThr hmod vseq i j =
     case M.lookupGE modScore scThr of
         Nothing -> 0    -- shouldn't happen
@@ -242,7 +242,7 @@ topCellInLastCol mat = fst $ maximumBy cellCmp $
 	map (\ix -> (ix, mat ! ix)) lastCol 
 	where 	(lv,lh) = snd $ bounds mat
 		lastCol = [(i,lh) | i <- [0..lv]] 
-		cellCmp (ix1, (DPCell val1 _)) (ix2, (DPCell val2 _))
+		cellCmp (ix1, DPCell val1 _) (ix2, DPCell val2 _)
 			| val1 > val2	= GT
 			| otherwise	= LT
 
@@ -282,13 +282,13 @@ nwMatBacktrack mat vseq = reverse trace
 nwMatBacktrack' :: MADPMat -> (Int,Int) -> VSequence -> String
 nwMatBacktrack' mat (i,j) vseq
     | (i == 0) && (j == k)  = "" -- isn't this a special case of #3?
-    | (i == 0)              = '-':(nwMatBacktrack' mat (0,j-1) vseq)
+    | (i == 0)              = '-':nwMatBacktrack' mat (0,j-1) vseq
     |             (j == k)  = ""    
     | otherwise             = if (mat UBA.! (i,j)) == left
-                                then '-':(nwMatBacktrack' mat (i,j-1) vseq)
+                                then '-':nwMatBacktrack' mat (i,j-1) vseq
                                 else if (mat UBA.! (i,j)) == up
                                     then nwMatBacktrack' mat (i-1,j) vseq
-                                    else (vseq U.! (i-1)):(nwMatBacktrack' mat (i-1,j-1) vseq)
+                                    else (vseq U.! (i-1)):nwMatBacktrack' mat (i-1,j-1) vseq
                                 
                                 
     -- TODO: k is constant - should it not be computed before the recursion, or
