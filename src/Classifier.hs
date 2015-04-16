@@ -8,9 +8,6 @@ import Data.Tree
 import qualified Data.Map.Strict as M
 import qualified Data.List as L
 import Data.Binary (Binary, put, get, Get)
-import Data.Text.Binary
-import qualified Data.Text.Lazy as LT
-import qualified Data.Text as ST
 import Data.Ord
 
 import MlgscTypes

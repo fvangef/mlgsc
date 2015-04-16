@@ -4,11 +4,8 @@
 module PWMModel (PWMModel(..), scoreOf, scoreSeq, modLength, cladeName,
     absentResScore) where
 
-import qualified Data.Map.Strict as M
-import qualified Data.Text as T
 import Data.Binary (Binary, put, get, Get, Word8)
 
--- TODO: streamline imports
 import MlgscTypes
 import NucModel 
 import PepModel

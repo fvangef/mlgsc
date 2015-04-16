@@ -1,12 +1,7 @@
 module FastA (FastA(..), fastATextToRecords, fastAId, fastAOTU,
     degap) where
 
-import qualified Data.Map.Strict as M -- most likely going to use all values
 import qualified Data.Text.Lazy as LT
-import qualified Data.Text as ST
-import qualified Data.List as L
-
-import MlgscTypes
 
 data FastA = FastA { header :: LT.Text, sequence :: LT.Text } deriving (Show)
 

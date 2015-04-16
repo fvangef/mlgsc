@@ -2,14 +2,9 @@ module Output where
 
 -- TODO: check imports
 
-import Data.Binary (decodeFile)
-import Data.Tree
 import qualified Data.Text as ST
-import qualified Data.Text.IO as STIO
 import qualified Data.Text.Lazy as LT
-import qualified Data.Text.Lazy.IO as LTIO
 import Text.ParserCombinators.Parsec
-import Text.Printf
 
 import MlgscTypes
 import FastA
