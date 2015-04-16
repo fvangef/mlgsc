@@ -10,7 +10,7 @@ declare -r FUNC_FILE=test_${PROGNAME}_func.sh
 
 function fn_defined
 {
-    type "$1" | grep -q 'is a function'
+    type "$1" 2>/dev/null | grep -q 'is a function'
 }
 
 function run_case

@@ -3,9 +3,13 @@
 test_sources = $(wildcard *.hs)
 test_bins = $(basename $(test_sources))
 test_scripts = $(filter-out test_prog.sh, $(wildcard test*.sh))
+test_scripts := $(filter-out $(wildcard *func.sh), $(test_scripts))
 
 % :: %.hs
 	ghc -i../src --make $<
+
+debug:
+	echo $(test_scripts)
 
 check: check_bins check_scripts
 
