@@ -3,7 +3,8 @@
 shopt -o -s nounset
 
 declare -r PROGNAME=$(basename $0 | sed -e 's/^test_\(.*\)\.sh/\1/')
-declare -r BINNAME=../src/$PROGNAME
+declare -r BINDIR=../src
+declare -r BINNAME=$BINDIR/$PROGNAME
 declare -r ARGS_FILE=test_${PROGNAME}_args
 declare -r FUNC_FILE=test_${PROGNAME}_func.sh
 
@@ -38,7 +39,6 @@ function run_case
 # read setup functions file, if it exists and is not empty.
 
 [ -s $FUNC_FILE ] && . $FUNC_FILE
-type test_init
 if fn_defined 'test_init' ; then
     test_init
 fi
