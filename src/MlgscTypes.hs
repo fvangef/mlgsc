@@ -22,7 +22,7 @@ type Score          = Int
 -- are stored.
 
 data Step = PWMStep {
-                otuName             :: OTUName
+                otuName             :: OTUName -- TODO: rename to taxonName
                 , bestScore         :: Score
                 , secondBestScore   :: Score
                 , log10ER           :: Double

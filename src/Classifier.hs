@@ -94,6 +94,9 @@ chooseSubtree (Node model kids) scale cutoff seq
             scores = map (flip scoreSeq seq . rootLabel) kids
             log10ER = log10evidenceRatio (round scale) bestKidScore sndBestKidScore
 
+chooseSubtrees :: Classifier -> Int -> Sequence -> [Trail]
+chooseSubtrees = undefined
+
 -- finds the (first) object in a list that maximizes some metric m (think score
 -- of a sequence according to a model), returns that object and its index in
 -- the list, as well as the best score and second-best score themselves. Not
