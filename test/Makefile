@@ -20,4 +20,4 @@ debug:
 	echo $(test_scripts)
 
 clean:
-	$(RM) $(test_bins) *.o *.hi
+	$(RM) $(test_bins) *.o *.hi clssfr1.bcls
