@@ -2,6 +2,7 @@ module Classifier (
     Classifier(..),
     buildClassifier,
     classifySequence,
+    classifySequenceMulti,
     leafOTU) where
 
 import Data.Tree
@@ -94,8 +95,19 @@ chooseSubtree (Node model kids) scale cutoff seq
             scores = map (flip scoreSeq seq . rootLabel) kids
             log10ER = log10evidenceRatio (round scale) bestKidScore sndBestKidScore
 
-chooseSubtrees :: Classifier -> Int -> Sequence -> [Trail]
-chooseSubtrees = undefined
+classifySequenceMulti :: Classifier -> Int -> Sequence -> [Trail]
+classifySequenceMulti (PWMClassifier modTree scale) log10ERcutoff seq =
+    chooseSubtrees modTree scale log10ERcutoff seq
+
+chooseSubtrees :: Tree PWMModel -> ScaleFactor -> Int -> Sequence -> [Trail]
+chooseSubtrees (Node model []) _ _ _ = [[PWMStep (cladeName model) 0 (-1) 0]] 
+chooseSubtrees (Node model kids) scale cutoff seq = 
+    map (thisstep:) $ concat $ map (\kid -> chooseSubtrees kid scale cutoff seq) kids
+    where   thisstep = PWMStep bestKidName bestKidScore (-1) 0 
+            bestKidName = cladeName $ rootLabel bestKid
+            (bestKid, Down bestKidScore) = orderedKids !! 0
+            orderedKids = L.sortBy (comparing snd) $ zip kids (map Down scores)
+            scores = map (flip scoreSeq seq . rootLabel) kids
 
 -- finds the (first) object in a list that maximizes some metric m (think score
 -- of a sequence according to a model), returns that object and its index in
