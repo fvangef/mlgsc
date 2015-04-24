@@ -24,7 +24,7 @@ type AlnMap = M.Map Label Alignment
 -- the FastA header).
 
 rowId :: AlnRow -> ST.Text
-rowId = (head . ST.words . rowLabel)
+rowId = head . ST.words . rowLabel
 
 -- and the OTU (if any) is the second word, else ""
 --

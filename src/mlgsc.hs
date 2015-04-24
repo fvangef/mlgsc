@@ -20,15 +20,15 @@ import Data.Binary (decodeFile)
 import Data.Tree
 import MlgscTypes
 import FastA
-import CladeModel
+import PWMModel
 import Align
 import Classifier (Classifier(..), classifySequence)
 import Output
-import OutputFormatStringParser
 
 data Params = Params {
                 optNoAlign          :: Bool
                 , optOutFmtString   :: String
+                , optStepFmtString  :: String
                 , optERCutoff       :: Int
                 , queryFname        :: String
                 , clsfrFname        :: String
@@ -43,8 +43,13 @@ parseOptions = Params
                 <*> option str
                     (long "output-format"
                     <> short 'f'
-                    <> help "printf-like format string for output. OVERRIDES -e"
+                    <> help "printf-like format string for output."
                     <> value "%h -> %p")
+                <*> option str
+                    (long "step-format"
+                    <> short 's'
+                    <> help "printf-like format string for step (path element)"
+                    <> value "%t (%s)")
                 <*> option auto
                     (long "ER-cutoff"
                     <> short 'e'
@@ -65,7 +70,7 @@ main = do
     params <- execParser parseOptionsInfo
     queryFastA <- LTIO.readFile $ queryFname params
     let queryRecs = fastATextToRecords queryFastA
-    classifier@(Classifier modTree) <- (decodeFile $ clsfrFname params) :: IO Classifier
+    classifier@(PWMClassifier modTree scale) <- (decodeFile $ clsfrFname params) :: IO Classifier
     let rootMod = rootLabel modTree
     let scoringScheme = ScoringScheme (-2) (scoringSchemeMap (absentResScore rootMod))
     let processQuery = if (optNoAlign params)
@@ -75,7 +80,8 @@ main = do
     let processedQueries =
             map (processQuery . ST.toUpper .
                 LT.toStrict. FastA.sequence) queryRecs
-    let predictions = map (classifySequence classifier) processedQueries
+    let log10ER = (optERCutoff params)
+    let predictions = map (classifySequence classifier log10ER) processedQueries
     let outLines = getZipList $ (formatResultWrapper params)
                                 <$> ZipList queryRecs
                                 <*> ZipList processedQueries
@@ -95,7 +101,9 @@ formatResultWrapper params query alnQry trail =
 
 formatResultReader :: FastA -> Sequence -> Trail -> Reader Params ST.Text 
 formatResultReader query alnQry trail = do
-   fmtString    <- asks optOutFmtString
-   minER        <- asks optERCutoff 
-   let (Right format) = parseOutputFormatString fmtString 
-   return $ ST.concat $ map (evalFmtComponent minER query alnQry trail) format
+    fmtString    <- asks optOutFmtString
+    stepFmtString <- asks optStepFmtString
+    let (Right format) = parseOutputFormatString fmtString 
+    let (Right stepfmt) = parseStepFormatString stepFmtString
+    return $ ST.concat $ map (evalFmtComponent query alnQry trail stepfmt) format
+
