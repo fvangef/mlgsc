@@ -22,7 +22,7 @@ import MlgscTypes
 import FastA
 import PWMModel
 import Align
-import Classifier (Classifier(..), classifySequence)
+import Classifier (Classifier(..), classifySequence, classifySequenceMulti)
 import Output
 
 data Params = Params {
@@ -81,7 +81,7 @@ main = do
             map (processQuery . ST.toUpper .
                 LT.toStrict. FastA.sequence) queryRecs
     let log10ER = (optERCutoff params)
-    let predictions = map (classifySequence classifier log10ER) processedQueries
+    let predictions = concatMap (classifySequenceMulti classifier log10ER) processedQueries
     let outLines = getZipList $ (formatResultWrapper params)
                                 <$> ZipList queryRecs
                                 <*> ZipList processedQueries

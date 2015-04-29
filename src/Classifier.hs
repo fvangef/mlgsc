@@ -81,7 +81,7 @@ classifySequence (PWMClassifier modTree scale) log10ERcutoff seq =
     chooseSubtree modTree scale log10ERcutoff seq
 
 chooseSubtree :: Tree PWMModel -> ScaleFactor -> Int -> Sequence -> Trail
-chooseSubtree (Node model []) _ _ _ = []
+chooseSubtree (Node _ []) _ _ _ = []
 chooseSubtree (Node model kids) scale cutoff seq
     | diff < (round scale * cutoff)   = []
     | otherwise     = PWMStep bestKidName bestKidScore
@@ -100,7 +100,7 @@ classifySequenceMulti (PWMClassifier modTree scale) log10ERcutoff seq =
     chooseSubtrees modTree scale log10ERcutoff seq
 
 chooseSubtrees :: Tree PWMModel -> ScaleFactor -> Int -> Sequence -> [Trail]
-chooseSubtrees (Node model []) _ _ _ = [[PWMStep (cladeName model) 0 (-1) 0]] 
+chooseSubtrees (Node model []) _ _ _ = [[cladeName model]]
 chooseSubtrees (Node model kids) scale cutoff seq = 
     map (thisstep:) $ concat $ map (\kid -> chooseSubtrees kid scale cutoff seq) kids
     where   thisstep = PWMStep bestKidName bestKidScore (-1) 0 
