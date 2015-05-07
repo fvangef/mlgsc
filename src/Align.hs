@@ -16,23 +16,23 @@ import MlgscTypes
 import PWMModel (PWMModel, scoreOf, modLength)
 
 
-data Direction 	= None | Diag | Down | Righ	-- 'Right' is defined by Either
-	deriving (Show, Eq)
-	
+data Direction  = None | Diag | Down | Righ     -- 'Right' is defined by Either
+        deriving (Show, Eq)
+        
 data DPCell = DPCell {
-		val ::Int,
-		dir :: Direction
-	} deriving (Show, Eq)
+                val ::Int,
+                dir :: Direction
+        } deriving (Show, Eq)
 
 instance Ord DPCell where
-	 (DPCell int1 _) <= (DPCell int2 _) = int1 <= int2
+         (DPCell int1 _) <= (DPCell int2 _) = int1 <= int2
 
 dirSym :: DPCell -> Char
 dirSym c = case dir c of
-	None -> '.'
-	Diag -> '\\'	-- how the f*ck does one get a literal '\'?
-	Down -> '|'
-	Righ -> '-'
+        None -> '.'
+        Diag -> '\\'    -- how the f*ck does one get a literal '\'?
+        Down -> '|'
+        Righ -> '-'
 
 type VSequence = U.Vector Char
 
@@ -79,24 +79,24 @@ scoringSchemeMap smallScore = M.fromList $ zip thresholds [-1, 1, 2, 3]
 
 msdpmatIA :: ScoringScheme -> PWMModel -> VSequence -> DPMatrix
 msdpmatIA scsc hmod vseq  = dpmat
-	where	dpmat = array ((0,0), (seq_len, mat_len)) 
-			[((i,j), cell i j) | i <- [0..seq_len], j <- [0..mat_len]]
-		seq_len = U.length vseq
-		mat_len = modLength hmod
-		cell i j
-			| i == 0 && j == 0	= DPCell 0 None
-			| i == 0		= DPCell (j * penalty) Righ
-			| j == 0		= DPCell 0 Down
-			| otherwise = maximum [
-					DPCell match Diag,
-					DPCell hGap Down,
-					DPCell vGap Righ ]
-			where
-				match = val (dpmat!(i-1,j-1)) + match_score
-				hGap  = val (dpmat!(i-1,  j)) + penalty
-				vGap  = val (dpmat!(i  ,j-1)) + penalty
-				penalty = gapOP scsc
-				match_score = scoreModVseq (scThresholds scsc) hmod vseq i j 
+        where   dpmat = array ((0,0), (seq_len, mat_len)) 
+                        [((i,j), cell i j) | i <- [0..seq_len], j <- [0..mat_len]]
+                seq_len = U.length vseq
+                mat_len = modLength hmod
+                cell i j
+                        | i == 0 && j == 0      = DPCell 0 None
+                        | i == 0                = DPCell (j * penalty) Righ
+                        | j == 0                = DPCell 0 Down
+                        | otherwise = maximum [
+                                        DPCell match Diag,
+                                        DPCell hGap Down,
+                                        DPCell vGap Righ ]
+                        where
+                                match = val (dpmat!(i-1,j-1)) + match_score
+                                hGap  = val (dpmat!(i-1,  j)) + penalty
+                                vGap  = val (dpmat!(i  ,j-1)) + penalty
+                                penalty = gapOP scsc
+                                match_score = scoreModVseq (scThresholds scsc) hmod vseq i j 
 
 -- A version with a mutable array.
 
@@ -186,11 +186,11 @@ msdpmat scsc hmod vseq = runSTUArray $ do
 {-
 seqISLMatScore :: (PWMModel mod) => mod -> VSequence -> Position -> Position -> Int
 seqISLMatScore hmod vseq i j
-    | prob == -4000 = -1	-- not found at that position
-    | prob == 0 	= 3
-    | prob > -300 	= 2	-- ~ 1000 * log10(0.5)
-    | prob > -600 	= 1	-- ~ 1000 * log10(0.25)
-    | otherwise	= 0
+    | prob == -4000 = -1        -- not found at that position
+    | prob == 0         = 3
+    | prob > -300       = 2     -- ~ 1000 * log10(0.5)
+    | prob > -600       = 1     -- ~ 1000 * log10(0.25)
+    | otherwise = 0
     where   prob    = scoreOf hmod res j
             res     = vseq ! (i-1)
 -}
@@ -211,25 +211,25 @@ scoreModVseq scThr hmod vseq i j =
 {-
 topCell :: Array (Int,Int) DPCell -> (Int,Int)
 topCell mat = fst $ maximumBy cellCmp (assocs mat)
-	where cellCmp (ix1, (DPCell val1 _)) (ix2, (DPCell val2 _))
-		| val1 > val2	= GT
-		| otherwise	= LT
+        where cellCmp (ix1, (DPCell val1 _)) (ix2, (DPCell val2 _))
+                | val1 > val2   = GT
+                | otherwise     = LT
 -}
 
 msalignIA :: ScoringScheme -> PWMModel -> Sequence -> Sequence
 msalignIA scsc mat seq = T.pack $ nwMatBacktrackIA (msdpmatIA scsc mat vseq) vseq
-	where vseq = U.fromList $ T.unpack seq 
+        where vseq = U.fromList $ T.unpack seq 
 
 -- mutable-array - based version
 
 msalign :: ScoringScheme -> PWMModel -> Sequence -> Sequence
 msalign scsc mat seq = T.pack $ nwMatBacktrack (msdpmat scsc mat vseq) vseq
-	where vseq = U.fromList $ T.unpack seq 
+        where vseq = U.fromList $ T.unpack seq 
 {-
 nwMatPath :: RawProbMatrix -> String -> String
 nwMatPath hm vs = toPathMatrix (fmap dirSym (nw seqMatScore (-1) hra vra))
-	where 	hra = Mat hm (length hm)
-		vra = Seq vs (length vs)
+        where   hra = Mat hm (length hm)
+                vra = Seq vs (length vs)
 -}
 
 -- TODO: according to DP matrix graph, this function may actually be
@@ -239,12 +239,12 @@ nwMatPath hm vs = toPathMatrix (fmap dirSym (nw seqMatScore (-1) hra vra))
 
 topCellInLastCol :: Array (Int,Int) DPCell -> (Int,Int)
 topCellInLastCol mat = fst $ maximumBy cellCmp $
-	map (\ix -> (ix, mat ! ix)) lastCol 
-	where 	(lv,lh) = snd $ bounds mat
-		lastCol = [(i,lh) | i <- [0..lv]] 
-		cellCmp (ix1, DPCell val1 _) (ix2, DPCell val2 _)
-			| val1 > val2	= GT
-			| otherwise	= LT
+        map (\ix -> (ix, mat ! ix)) lastCol 
+        where   (lv,lh) = snd $ bounds mat
+                lastCol = [(i,lh) | i <- [0..lv]] 
+                cellCmp (ix1, DPCell val1 _) (ix2, DPCell val2 _)
+                        | val1 > val2   = GT
+                        | otherwise     = LT
 
 -- Traces the path back from corner to corner (NW matrix), but the horizontal
 -- "sequence" is a matrix (the vertical sequence is still a sequence, though);
@@ -252,24 +252,24 @@ topCellInLastCol mat = fst $ maximumBy cellCmp $
 
 nwMatBacktrackIA :: DPMatrix -> VSequence -> String
 nwMatBacktrackIA mat v = reverse va
-	where  	va = nwMatBacktrackIA' mat topLastCol v
-		topLastCol = topCellInLastCol mat
+        where   va = nwMatBacktrackIA' mat topLastCol v
+                topLastCol = topCellInLastCol mat
 
 nwMatBacktrackIA' :: DPMatrix -> (Int,Int) -> VSequence -> String
 nwMatBacktrackIA' _ (0,0) _ = ""
 -- These two cases may actually be covered by the general case
 nwMatBacktrackIA' mat (0,j) vseq = '-':vRest
-	where vRest = nwMatBacktrackIA' mat (0,j-1) vseq
+        where vRest = nwMatBacktrackIA' mat (0,j-1) vseq
 nwMatBacktrackIA' mat (i,0) vseq = ""
-	where vRest = nwMatBacktrackIA' mat (i-1,0) vseq
+        where vRest = nwMatBacktrackIA' mat (i-1,0) vseq
 nwMatBacktrackIA' mat (i,j) vseq = 
-	case dir (mat!(i,j)) of
-		Diag -> (vseq U.! (i-1)):vRest
-			where vRest = nwMatBacktrackIA' mat (i-1,j-1) vseq
-		Righ -> '-':vRest
-			where vRest = nwMatBacktrackIA' mat (i, j-1) vseq
-		Down -> vRest
-			where vRest = nwMatBacktrackIA' mat (i-1, j) vseq
+        case dir (mat!(i,j)) of
+                Diag -> (vseq U.! (i-1)):vRest
+                        where vRest = nwMatBacktrackIA' mat (i-1,j-1) vseq
+                Righ -> '-':vRest
+                        where vRest = nwMatBacktrackIA' mat (i, j-1) vseq
+                Down -> vRest
+                        where vRest = nwMatBacktrackIA' mat (i-1, j) vseq
 
 -- Same, but for the mutable array version (though the array here is immutable,
 -- it is derived from a mutable array, see msdpmatMA).
