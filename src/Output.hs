@@ -136,11 +136,11 @@ parseStepFormatString sfmt = (parse stepFormat "stepformat" sfmt)
 
 run :: Show a => Parser a -> String -> IO ()
 run p input 
-	= case (parse p "" input) of
-		Left err -> do 	{ putStr "parse error at "
-				; print err
-				}
-		Right x	-> print x
+        = case (parse p "" input) of
+                Left err -> do  { putStr "parse error at "
+                                ; print err
+                                }
+                Right x -> print x
 
 formatStep :: StepFormat -> Step -> ST.Text
 formatStep stepFormat step =
