@@ -56,8 +56,6 @@ fastaRecs1 = fastATextToRecords $ LT.pack fastaInput1
 aln1 = fastARecordsToAln fastaRecs1
 map1 = alnToAlnMap aln1
 
-clfr1@(PWMClassifier modtree1 _) = buildClassifier Prot smallprob scale map1 tree1 
-
 q1 = ST.pack "ACGTACGT"
 
 
@@ -104,15 +102,20 @@ test21 = TestCase (do
     (otuName $ last trail3) @?= "Clostridium"
     ) 
 
+-- TODO: test multiple-branch (=recovering) classifying function, first steps go
+-- like this (GHCi):
+-- let pred = classifySequenceMulti clssfr1 2 "ACGTACGT"
+-- map (ST.intercalate "; " . tail) pred
+
 tests = TestList [
-		TestLabel "nuc score" test01
-		, TestLabel "nuc score" test02
-		, TestLabel "nuc score" test03
-		, TestLabel "nuc score" test11
-		, TestLabel "nuc score" test12
-		, TestLabel "nuc score" test13
-		, TestLabel "nuc score" test21
-		]
+                TestLabel "nuc score" test01
+                , TestLabel "nuc score" test02
+                , TestLabel "nuc score" test03
+                , TestLabel "nuc score" test11
+                , TestLabel "nuc score" test12
+                , TestLabel "nuc score" test13
+                , TestLabel "nuc score" test21
+                ]
 
 main = do
-	runTestTT tests
+        runTestTT tests
