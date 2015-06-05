@@ -1,1 +1,5 @@
 *.out
+*.err
+mlgsc
+mlgsc_xval
+mlgsc_train

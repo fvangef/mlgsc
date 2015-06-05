@@ -27,14 +27,13 @@ import MlgscTypes
 import FastA
 import Alignment
 import Align
-import CladeModel
+import PWMModel
 import Classifier (Classifier(..), buildClassifier, classifySequence, leafOTU)
 import NewickParser
 import NewickDumper
 import Weights
 import Shuffle
 import Output
-import OutputFormatStringParser
 
 data Params = Params {
                 optSmallProb        :: Double
@@ -45,6 +44,7 @@ data Params = Params {
                 , optVerbosity      :: Int
                 , optNoHenikoffWt   :: Bool
                 , optOutFmtString   :: String
+                , optStepFmtString  :: String
                 , optOnlyFalse      :: Bool
                 , optIndices        :: String
                 , molType           :: Molecule
@@ -117,6 +117,12 @@ parseOptions = Params
                     <> metavar "OUTPUT FORMAT STRING"
                     <> value "%h (%l) -> %p"
                     <> help "printf-like format string for output")
+                <*> option str
+                    (long "step-format"
+                    <> short 's'
+                    <> metavar "STEP FORMAT STRING"
+                    <> value "%t (%s)"
+                    <> help "printf-like format string for step (path element)")
                 <*> switch (
                         short 'x' <> long "only-wrong"
                         <> help "only show wrong classifications")
@@ -303,6 +309,7 @@ oneRoundLOO params otuTree fastARecs testRecNdx =
 looReader :: OTUTree -> Seq FastA -> Int -> Reader Params (Maybe ST.Text)
 looReader otuTree fastaRecs testRecNdx = do
     fmtString <- asks optOutFmtString
+    stepFmtString <- asks optStepFmtString
     noHwt <- asks optNoHenikoffWt
     let wtOtuAln = if noHwt
             then otuAln
@@ -311,18 +318,19 @@ looReader otuTree fastaRecs testRecNdx = do
     mol <- asks molType
     smallProb <- asks optSmallProb
     scaleFactor <- asks optScaleFactor
-    let classifier@(Classifier modTree) =
+    let classifier@(PWMClassifier modTree scale) =
             buildClassifier mol smallProb scaleFactor otuAlnMap otuTree
     let rootMod = rootLabel modTree 
     let scoringScheme =
             ScoringScheme (-2) (scoringSchemeMap (absentResScore rootMod))
     let alignedTestSeq = msalign scoringScheme rootMod testSeq
-    let prediction = classifySequence classifier alignedTestSeq
+    let prediction = classifySequence classifier 0 alignedTestSeq
     onlyFalse <- asks optOnlyFalse
     if  (onlyFalse && 
          (leafOTU prediction) == (LT.toStrict $ fastAOTU testRec))
         then return Nothing
-        else return $ Just $ formatResult fmtString origRec alignedTestSeq prediction
+        else return $ Just $ formatResult fmtString
+                stepFmtString origRec alignedTestSeq prediction
     where   header = LT.toStrict $ FastA.header testRec
             testSeq = LT.toStrict $ FastA.sequence origRec
             otuAln = fastARecordsToAln trainSet

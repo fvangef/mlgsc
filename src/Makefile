@@ -10,17 +10,15 @@ INSTALLDIR = /usr/local/bin
 
 all: $(targets)
 
-mlgsc: MlgscTypes.hs FastA.hs PepModel.hs NucModel.hs Classifier.hs Align.hs \
-	CladeModel.hs CladeModelAux.hs Output.hs \
-	OutputFormatStringParser.hs
+mlgsc: mlgsc.hs MlgscTypes.hs FastA.hs PepModel.hs NucModel.hs \
+	Classifier.hs Align.hs PWMModel.hs PWMModelAux.hs Output.hs
 
-mlgsc_train: MlgscTypes.hs NewickParser.hs FastA.hs Classifier.hs \
-	Weights.hs Alignment.hs CladeModel.hs CladeModelAux.hs
+mlgsc_train: mlgsc_train.hs MlgscTypes.hs NewickParser.hs FastA.hs \
+	Classifier.hs Weights.hs Alignment.hs PWMModel.hs PWMModelAux.hs
 
-mlgsc_xval: Align.hs Alignment.hs CladeModelAux.hs CladeModel.hs \
+mlgsc_xval: mlgsc_xval.hs Align.hs Alignment.hs PWMModelAux.hs PWMModel.hs \
 	Classifier.hs FastA.hs MlgscTypes.hs MlgscTypes.hs \
-	NewickParser.hs PepModel.hs NucModel.hs Weights.hs Output.hs \
-	OutputFormatStringParser.hs
+	NewickParser.hs PepModel.hs NucModel.hs Weights.hs Output.hs 
 
 install: all
 	install $(targets) $(INSTALLDIR)

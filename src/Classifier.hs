@@ -8,27 +8,34 @@ import Data.Tree
 import qualified Data.Map.Strict as M
 import qualified Data.List as L
 import Data.Binary (Binary, put, get, Get)
-import Data.Text.Binary
-import qualified Data.Text.Lazy as LT
-import qualified Data.Text as ST
 import Data.Ord
 
 import MlgscTypes
 import Alignment
 import NucModel
 import PepModel
-import CladeModel (CladeModel(..), scoreSeq, cladeName)
+import PWMModel (PWMModel(..), scoreSeq, cladeName)
 
-data Classifier = Classifier (Tree CladeModel)
+-- TODO: rename CladeModel to PWMModel, and the Classifier c'tor to
+-- PWMClassifier. This  should have the scale factor as a second argument. In
+-- this way we can add other kinds of models, e.g. if we add a k-mer model, it
+-- could look like:
+-- data Classifier = PWMClassifier (Tree PWMModel) ScaleFactor
+--                 | KmerClassifier (Tree KmerModel)
+--                 
+
+data Classifier = PWMClassifier (Tree PWMModel) ScaleFactor
                 deriving (Show, Eq)
 
 instance Binary Classifier where
-    put (Classifier modTree) = do
+    put (PWMClassifier modTree scaleFactor) = do
         put modTree
+        put scaleFactor
 
     get = do
-        modTree <- get :: Get (Tree CladeModel)
-        return $ Classifier modTree
+        modTree <- get :: Get (Tree PWMModel)
+        scaleFactor <- get :: Get ScaleFactor
+        return $ PWMClassifier modTree scaleFactor
 
 buildClassifier :: Molecule -> SmallProb -> ScaleFactor ->
     AlnMap -> OTUTree -> Classifier
@@ -44,8 +51,8 @@ buildClassifier mol smallProb scale alnMap otuTree
 buildNucClassifier  :: SmallProb -> ScaleFactor -> AlnMap -> OTUTree
     -> Classifier
 buildNucClassifier smallprob scale map otuTree =
-    Classifier cladeModTree
-    where   cladeModTree = fmap NucCladeModel modTree
+    PWMClassifier cladeModTree scale
+    where   cladeModTree = fmap NucPWMModel modTree
             modTree = fmap (\(name, aln) -> 
                             alnToNucModel smallprob scale name aln)
                             treeOfNamedAlns
@@ -56,8 +63,8 @@ buildNucClassifier smallprob scale map otuTree =
 buildPepClassifier  :: SmallProb -> ScaleFactor -> AlnMap -> OTUTree
     -> Classifier
 buildPepClassifier smallprob scale map otuTree =
-    Classifier cladeModTree
-    where   cladeModTree = fmap PepCladeModel modTree
+    PWMClassifier cladeModTree scale
+    where   cladeModTree = fmap PepPWMModel modTree
             modTree = fmap (\(name, aln) -> 
                             alnToPepModel smallprob scale name aln)
                             treeOfNamedAlns
@@ -65,19 +72,27 @@ buildPepClassifier smallprob scale map otuTree =
             treeOfLeafNamedAlns =
                 fmap (\k -> (k, M.findWithDefault [] k map)) otuTree
 
+-- The Int parameter is the log_10(ER) cutoff (the support value of nodes in the
+-- path in the default output). 
 
-classifySequence :: Classifier -> Sequence -> Trail
-classifySequence (Classifier modTree) seq = scoreSequence seq modTree
+classifySequence :: Classifier -> Int -> Sequence -> Trail
+classifySequence (PWMClassifier modTree scale) log10ERcutoff seq =
+    chooseSubtree modTree scale log10ERcutoff seq
 
-scoreSequence :: Sequence -> Tree CladeModel -> Trail
-scoreSequence seq (Node model []) = []
-scoreSequence seq (Node model kids) = 
-    (bestKidName, bestKidScore, sndBestKidScore)  : (scoreSequence seq bestKid)
-    where   bestKidName = cladeName $ rootLabel bestKid
-            (bestKid, (Down bestKidScore)) = orderedKids !! 0
-            (sndBestKid, (Down sndBestKidScore)) = orderedKids !! 1
+chooseSubtree :: Tree PWMModel -> ScaleFactor -> Int -> Sequence -> Trail
+chooseSubtree (Node model []) _ _ _ = []
+chooseSubtree (Node model kids) scale cutoff seq
+    | diff < (round scale * cutoff)   = []
+    | otherwise     = PWMStep bestKidName bestKidScore
+                        sndBestKidScore log10ER
+                        : chooseSubtree bestKid scale cutoff seq
+    where   diff = bestKidScore - sndBestKidScore
+            bestKidName = cladeName $ rootLabel bestKid
+            (bestKid, Down bestKidScore) = orderedKids !! 0
+            (sndBestKid, Down sndBestKidScore) = orderedKids !! 1
             orderedKids = L.sortBy (comparing snd) $ zip kids (map Down scores)
             scores = map (flip scoreSeq seq . rootLabel) kids
+            log10ER = log10evidenceRatio (round scale) bestKidScore sndBestKidScore
 
 -- finds the (first) object in a list that maximizes some metric m (think score
 -- of a sequence according to a model), returns that object and its index in
@@ -87,7 +102,7 @@ scoreSequence seq (Node model kids) =
 -- TODO: if we no longer need the indices, this is way to complicated.
 bestByExtended :: Ord b => [a] -> (a -> b) -> (a, Int, b, b)
 bestByExtended objs m = (bestObj, bestNdx, bestMetricValue, secondBestMetricValue)
-    where   sorted = reverse $ L.sort $ metricValues
+    where   sorted = L.sortBy (flip compare) metricValues
             metricValues = map m objs
             bestMetricValue = sorted !! 0
             secondBestMetricValue = sorted !! 1
@@ -108,5 +123,35 @@ mergeNamedAlns (Node (name,_) kids) = Node (name,mergedKidAlns) mergedKids
             mergedKidAlns = concatMap (snd . rootLabel) mergedKids
 
 leafOTU :: Trail -> OTUName
-leafOTU trail = otuName
-    where (otuName, _, _) = last trail
+leafOTU trail = otuName $ last trail
+
+-- Computes the base-10 log of the evidence ratio, i.e. log_10 (exp(delta-AIC /
+-- 2)), except that I use delta-AIC' (in which the factor 2 is dropped, so I
+-- avoid having to multiply by 2 only to divide by 2 again just after).
+
+log10evidenceRatio :: Int -> Int -> Int -> Double
+log10evidenceRatio scaleFactor bestScore secondBestScore = logBase 10 er
+    where   l_min = scoreTologLikelihood scaleFactor bestScore
+            l_sec = scoreTologLikelihood scaleFactor secondBestScore
+            er = exp(deltaAIC' l_min l_sec) 
+
+-- Converts a model score (which is a scaled, rounded log-likelihood (log base
+-- 10)) to a log-likelihood (log base e, i.e. ln). To do this, we _divide_ by
+-- the scale factor to get an unscaled log10-likelihood, and then divide by
+-- log10(e) to get a ln-based likelihood.
+
+scoreTologLikelihood :: Int -> Int -> Double
+scoreTologLikelihood scaleFactor score = log10Likelihood / logBase 10 e
+    where   log10Likelihood = fromIntegral score / fromIntegral scaleFactor
+            e = exp 1.0
+            
+-- Computes the difference in AIC of two log-likelihoods, taking into account
+-- that the number of parameters k is in our case the same in any two models,
+-- and this cancels out, i.e. delta AIC = AIC1 - AIC2 = 2k -2 ln (L_1) - (2k -
+-- 2 ln(L_2)) = -2 (ln (L_1) - ln (L_2)). Since the arguments are already _log_
+-- likelihoods, the expression simplifies to -2 (l_1 - l_2), where l_1 =
+-- ln(L_1), etc. I also drop the constant 2, since we'd be dividing by 2 right
+-- away in evidenceRatio anyway.
+
+deltaAIC' :: Double -> Double -> Double
+deltaAIC' l1 l2 = l1 - l2 
