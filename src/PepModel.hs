@@ -12,6 +12,8 @@ import qualified Data.Vector as V
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import Data.Binary
+import Data.Vector.Binary
+import Data.Text.Binary
 
 
 import MlgscTypes
