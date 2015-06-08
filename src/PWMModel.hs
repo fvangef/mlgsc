@@ -15,24 +15,24 @@ data PWMModel = NucPWMModel NucModel
                 deriving (Show, Eq)
 
 scoreOf :: PWMModel -> Residue -> Position -> Int
-scoreOf (NucPWMModel nm) res pos = simpleNucScoreOf nm res pos
-scoreOf (PepPWMModel spm) res pos = simplePepScoreOf spm res pos
+scoreOf (NucPWMModel nm) res pos = nucScoreOf nm res pos
+scoreOf (PepPWMModel spm) res pos = pepScoreOf spm res pos
 
 scoreSeq :: PWMModel -> Sequence -> Int
-scoreSeq (NucPWMModel nm) seq = simpleNucScoreSeq nm seq
-scoreSeq (PepPWMModel spm) seq = simplePepScoreSeq spm seq
+scoreSeq (NucPWMModel nm) seq = nucScoreSeq nm seq
+scoreSeq (PepPWMModel spm) seq = pepScoreSeq spm seq
 
 modLength :: PWMModel -> Int
-modLength (NucPWMModel nm) = simpleNucModLength nm
-modLength (PepPWMModel spm) = simplePepModLength spm
+modLength (NucPWMModel nm) = nucModLength nm
+modLength (PepPWMModel spm) = pepModLength spm
 
 absentResScore :: PWMModel -> Int
-absentResScore (NucPWMModel nm) = simpleNucAbsentResScore nm
-absentResScore (PepPWMModel spm) = simplePepAbsentResScore spm
+absentResScore (NucPWMModel nm) = nucAbsentResScore nm
+absentResScore (PepPWMModel spm) = pepAbsentResScore spm
 
 cladeName :: PWMModel -> CladeName
-cladeName (PepPWMModel spm) = simplePepCladeName spm
-cladeName (NucPWMModel nm) = simpleNucCladeName nm
+cladeName (PepPWMModel spm) = pepCladeName spm
+cladeName (NucPWMModel nm) = nucCladeName nm
 
 instance Binary PWMModel where
     put (NucPWMModel nm) = do
