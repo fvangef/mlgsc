@@ -105,11 +105,13 @@ chooseSubtrees (Node model []) _ _ seq = [[PWMStep name score (-1) 0]]
             score = scoreSeq model seq
 chooseSubtrees (Node model kids) scale cutoff seq = 
     map (thisstep:) $ concat $ map (\kid -> chooseSubtrees kid scale cutoff seq) kids
-    where   thisstep = PWMStep bestKidName bestKidScore (-1) 0 
+    where   thisstep = PWMStep bestKidName bestKidScore (-1) log10ER 
             bestKidName = cladeName $ rootLabel bestKid
             (bestKid, Down bestKidScore) = orderedKids !! 0
+            (sndBestKid, Down sndBestKidScore) = orderedKids !! 1
             orderedKids = L.sortBy (comparing snd) $ zip kids (map Down scores)
             scores = map (flip scoreSeq seq . rootLabel) kids
+            log10ER = log10evidenceRatio (round scale) bestKidScore sndBestKidScore
 
 -- finds the (first) object in a list that maximizes some metric m (think score
 -- of a sequence according to a model), returns that object and its index in
