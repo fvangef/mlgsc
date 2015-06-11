@@ -82,10 +82,14 @@ main = do
                 LT.toStrict. FastA.sequence) queryRecs
     let log10ER = (optERCutoff params)
     let predictions = concatMap (classifySequenceMulti classifier log10ER) processedQueries
+    {-
     let outLines = getZipList $ (formatResultWrapper params)
                                 <$> ZipList queryRecs
                                 <*> ZipList processedQueries
                                 <*> ZipList predictions
+                                -}
+    let outLines = map (\trail -> formatResultWrapper params (head queryRecs) (head processedQueries) trail) predictions
+
     mapM_ STIO.putStrLn outLines
 
 {- I like to apply the output formatter in aplicative style to the lists of
