@@ -81,12 +81,18 @@ main = do
             map (processQuery . ST.toUpper .
                 LT.toStrict. FastA.sequence) queryRecs
     let log10ER = (optERCutoff params)
-    let predictions = concatMap (classifySequenceMulti classifier log10ER) processedQueries
+    let predictions = map (classifySequenceMulti classifier log10ER) processedQueries
+    let predh = head predictions
+    let qrh = head queryRecs
+    let pqh = head processedQueries
+    let out = map (formatResultWrapper params qrh pqh) predh
+    {-
     let outLines = getZipList $ (formatResultWrapper params)
                                 <$> ZipList queryRecs
                                 <*> ZipList processedQueries
                                 <*> ZipList predictions
-    mapM_ STIO.putStrLn outLines
+                                -}
+    mapM_ STIO.putStrLn out
 
 {- I like to apply the output formatter in aplicative style to the lists of
  - arguments. However, I'm not sure how to make this play with the Reader monad,
