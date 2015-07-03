@@ -97,13 +97,20 @@ chooseSubtree (Node model kids) scale cutoff seq
 
 classifySequenceMulti :: Classifier -> Int -> Sequence -> [Trail]
 classifySequenceMulti (PWMClassifier modTree scale) log10ERcutoff seq =
-    chooseSubtrees modTree scale log10ERcutoff seq
+    chooseSubtrees modTree scale log10ERcutoff seq bestScore
+        where bestScore = maximum $ map (flip scoreSeq seq . rootLabel) (subForest modTree)
 
-chooseSubtrees :: Tree PWMModel -> ScaleFactor -> Int -> Sequence -> [Trail]
-chooseSubtrees (Node model []) _ _ _ = [[PWMStep (cladeName model) 0 0 1.0]]
-chooseSubtrees (Node model kids) scale er seq =
-    map ((PWMStep (cladeName model) 0 0 1.0):) $ foldl1 (++)  $ map (\kid -> chooseSubtrees kid scale er seq) kids
-
+chooseSubtrees :: Tree PWMModel -> ScaleFactor -> Int -> Sequence -> Score -> [Trail]
+chooseSubtrees (Node model []) scale _ seq bestScore = [[PWMStep name score (-1) log10ER]]
+    where   name = cladeName model
+            score = scoreSeq model seq
+            log10ER = log10evidenceRatio (round scale) bestScore score
+chooseSubtrees (Node model kids) scale cutoff seq bestScore = 
+    map (thisstep:) $ concat $ map (\kid -> chooseSubtrees kid scale cutoff seq bestKidScore) kids
+    where   thisstep = PWMStep (cladeName model) score (-1) log10ER
+            score = scoreSeq model seq
+            log10ER = log10evidenceRatio (round scale) bestScore score
+            bestKidScore = maximum $ map (flip scoreSeq seq . rootLabel) kids
 
 paths :: OTUTree -> [[OTUName]]
 paths (Node name []) = [[name]]
