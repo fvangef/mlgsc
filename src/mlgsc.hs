@@ -115,7 +115,7 @@ main = do
 
 fullTraversal :: Params -> Classifier -> [FastA] -> [Sequence] -> [ST.Text]
 fullTraversal params classifier queryRecs processedQueries =
-    map (formatResultWrapper params qrh pqh) predh
+    map (formatResultWrapper params qrh pqh) $ map tail predh
     where
         predh = head predictions
         qrh = head queryRecs
