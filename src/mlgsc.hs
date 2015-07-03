@@ -115,14 +115,17 @@ main = do
 
 fullTraversal :: Params -> Classifier -> [FastA] -> [Sequence] -> [ST.Text]
 fullTraversal params classifier queryRecs processedQueries =
-    map (formatResultWrapper params qrh pqh) $ map tail predh
+    concat $ getZipList $ (fullTraversalFmt1Query params)
+        <$> ZipList queryRecs
+        <*> ZipList processedQueries
+        <*> ZipList predictions
     where
-        predh = head predictions
-        qrh = head queryRecs
-        pqh = head processedQueries
         log10ER = (optERCutoff params)
         predictions = map (classifySequenceMulti classifier log10ER) processedQueries
     
+fullTraversalFmt1Query :: Params -> FastA -> Sequence -> [Trail] -> [ST.Text]
+fullTraversalFmt1Query params queryRec processQuery trails =
+    map (formatResultWrapper params queryRec processQuery) trails
 
 {- I like to apply the output formatter in aplicative style to the lists of
  - arguments. However, I'm not sure how to make this play with the Reader monad,
