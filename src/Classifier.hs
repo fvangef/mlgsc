@@ -95,9 +95,16 @@ chooseSubtree (Node model kids) scale cutoff seq
             scores = map (flip scoreSeq seq . rootLabel) kids
             log10ER = log10evidenceRatio (round scale) bestKidScore sndBestKidScore
 
+-- TODO: this one should be named "all" instead of multi, as it explores _all_
+-- branches of the tree. Intended mainly for debugging, as it enables to see a
+-- query's score at every node of the tree, and therefore allows identifying
+-- where the classifier chooses the wrong branch. The recursion starts at the
+-- root (rather than at its children), so we get rid of the Trail's head (hence
+-- the call to map tail).
+
 classifySequenceMulti :: Classifier -> Int -> Sequence -> [Trail]
 classifySequenceMulti (PWMClassifier modTree scale) log10ERcutoff seq =
-    chooseSubtrees modTree scale log10ERcutoff seq bestScore
+    map tail $ chooseSubtrees modTree scale log10ERcutoff seq bestScore
         where bestScore = maximum $ map (flip scoreSeq seq . rootLabel) (subForest modTree)
 
 chooseSubtrees :: Tree PWMModel -> ScaleFactor -> Int -> Sequence -> Score -> [Trail]
