@@ -104,7 +104,7 @@ main = do
             case optTreeTraversalMode params of
                 BestTraversal -> []
                 (RecoverTraversal threshold) -> []
-                AllTraversal -> fullTraversal params classifier queryRecs processedQueries
+                AllTraversal -> multiTraversal params classifier queryRecs processedQueries
     {-
     let outLines = getZipList $ (formatResultWrapper params)
                                 <$> ZipList queryRecs
@@ -113,9 +113,9 @@ main = do
                                 -}
     mapM_ STIO.putStrLn outlines
 
-fullTraversal :: Params -> Classifier -> [FastA] -> [Sequence] -> [ST.Text]
-fullTraversal params classifier queryRecs processedQueries =
-    concat $ getZipList $ (fullTraversalFmt1Query params)
+multiTraversal :: Params -> Classifier -> [FastA] -> [Sequence] -> [ST.Text]
+multiTraversal params classifier queryRecs processedQueries =
+    concat $ getZipList $ (multiTraversalFmt1Query params)
         <$> ZipList queryRecs
         <*> ZipList processedQueries
         <*> ZipList predictions
@@ -123,8 +123,8 @@ fullTraversal params classifier queryRecs processedQueries =
         log10ER = (optERCutoff params)
         predictions = map (classifySequenceMulti classifier log10ER) processedQueries
     
-fullTraversalFmt1Query :: Params -> FastA -> Sequence -> [Trail] -> [ST.Text]
-fullTraversalFmt1Query params queryRec processQuery trails =
+multiTraversalFmt1Query :: Params -> FastA -> Sequence -> [Trail] -> [ST.Text]
+multiTraversalFmt1Query params queryRec processQuery trails =
     map (formatResultWrapper params queryRec processQuery) trails
 
 {- I like to apply the output formatter in aplicative style to the lists of
