@@ -113,11 +113,14 @@ chooseSubtrees (Node model []) scale _ seq bestScore = [[PWMStep name score (-1)
             score = scoreSeq model seq
             log10ER = log10evidenceRatio (round scale) bestScore score
 chooseSubtrees (Node model kids) scale cutoff seq bestScore = 
-    map (thisstep:) $ concat $ map (\kid -> chooseSubtrees kid scale cutoff seq bestKidScore) kids
+    map (thisstep:) $ concat $ map (\kid -> chooseSubtrees kid scale cutoff seq bestKidScore) tiedKids
     where   thisstep = PWMStep (cladeName model) score (-1) log10ER
             score = scoreSeq model seq
             log10ER = log10evidenceRatio (round scale) bestScore score
-            bestKidScore = maximum $ map (flip scoreSeq seq . rootLabel) kids
+            bestKidScore = maximum kidsScores
+            kidsScores = map (flip scoreSeq seq . rootLabel) kids
+            tiedKids = [kid | (kid,ksc) <- zip kids kidsScores, 
+                            bestKidScore - ksc < 100000]
 
 paths :: OTUTree -> [[OTUName]]
 paths (Node name []) = [[name]]
