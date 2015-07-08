@@ -1,8 +1,9 @@
 MLGSC - Maximum-likelihood  general sequence classifier
 =====
 
-MLGSC is a set of programs for classifying sequences according to OTU. It
-consists of the following:
+MLGSC is a set of programs for classifying sequences into taxa (in other words, recognizing taxa from sequences). The classifier is trained using reference sequences from a user-specified conserved region (e.g., a gene) as well as a phylogeny of the taxa of interest.
+
+The package consists of the following:
 
 * `mlgsc_train`: trains a classifier using an alignment and a phylogenetic tree
 * `mlgsc`: classifies unknown sequences according to a classifier produced by
@@ -11,7 +12,7 @@ consists of the following:
   tree
 
 The distribution contains source code, binaries and example data, including data
-used in the article (submitted). 
+used in the [article](http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0129384).
 
 Example
 -------
