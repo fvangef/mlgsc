@@ -20,6 +20,8 @@ import Options.Applicative
 import Data.Binary (decodeFile)
 import Data.Tree
 import Data.Char
+import Data.List
+import Data.Ord
 import MlgscTypes
 import FastA
 import PWMModel
@@ -102,30 +104,38 @@ main = do
                 LT.toStrict. FastA.sequence) queryRecs
     let outlines =
             case optTreeTraversalMode params of
-                BestTraversal -> []
+                BestTraversal -> bestTraversal params classifier queryRecs processedQueries
                 (RecoverTraversal _) -> recoverTraversal params classifier queryRecs processedQueries
                 FullTraversal -> fullTraversal params classifier queryRecs processedQueries
-    {-
-    let outLines = getZipList $ (formatResultWrapper params)
-                                <$> ZipList queryRecs
-                                <*> ZipList processedQueries
-                                <*> ZipList predictions
-                                -}
+
     mapM_ STIO.putStrLn outlines
+
+bestTraversal :: Params -> Classifier -> [FastA] -> [Sequence] -> [ST.Text]
+bestTraversal params classifier queryRecs processedQueries =
+    getZipList $ (formatResultWrapper params)
+        <$> ZipList queryRecs
+        <*> ZipList processedQueries
+        <*> ZipList predictions 
+    where
+        log10ER = optERCutoff params
+        predictions = map (classifySequence classifier log10ER) processedQueries
 
 recoverTraversal :: Params -> Classifier -> [FastA] -> [Sequence] -> [ST.Text]
 recoverTraversal params classifier queryRecs processedQueries =
-    concat $ getZipList $ (recoverTraversalFmt1Query params)
+    getZipList $ (formatResultWrapper params)
         <$> ZipList queryRecs
         <*> ZipList processedQueries
-        <*> ZipList predictions
+        <*> ZipList bestPredictions
     where
         (RecoverTraversal tieThreshold)  = optTreeTraversalMode params
+        bestPredictions = map getBestPrediction predictions
         predictions = map (classifySequenceMulti classifier tieThreshold) processedQueries
     
-recoverTraversalFmt1Query :: Params -> FastA -> Sequence -> [Trail] -> [ST.Text]
-recoverTraversalFmt1Query params queryRec processQuery trails =
-    map (formatResultWrapper params queryRec processQuery) trails
+getBestPrediction :: [Trail] -> Trail
+getBestPrediction trails = maximumBy (comparing lastScore) trails
+
+lastScore :: Trail -> Score
+lastScore trail = bestScore $ last trail 
 
 fullTraversal :: Params -> Classifier -> [FastA] -> [Sequence] -> [ST.Text]
 fullTraversal params classifier queryRecs processedQueries =
