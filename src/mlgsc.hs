@@ -27,14 +27,14 @@ import Align
 import Classifier (Classifier(..), classifySequence, classifySequenceMulti)
 import Output
 
-data TreeTraversalMode = BestTraversal | AllTraversal | RecoverTraversal Int
+data TreeTraversalMode = BestTraversal | FullTraversal | RecoverTraversal Int
     
 data Params = Params {
                 optTreeTraversalMode   :: TreeTraversalMode
                 , optNoAlign           :: Bool
                 , optOutFmtString      :: String
                 , optStepFmtString     :: String
-                , optERCutoff          :: Int
+                , optERCutoff          :: Int   -- for Best mode
                 , queryFname           :: String
                 , clsfrFname           :: String
                 }
@@ -42,7 +42,7 @@ data Params = Params {
 parseTreeTraversal :: Monad m => String -> m TreeTraversalMode
 parseTreeTraversal optString
     | 'b' == initC = return BestTraversal
-    | 'a' == initC = return AllTraversal
+    | 'a' == initC = return FullTraversal
     | otherwise    = do
                         let (Right num,_) = TP.runParser TP.parseDec optString
                         -- TODO: handle bad parse
@@ -103,8 +103,8 @@ main = do
     let outlines =
             case optTreeTraversalMode params of
                 BestTraversal -> []
-                (RecoverTraversal threshold) -> []
-                AllTraversal -> multiTraversal params classifier queryRecs processedQueries
+                (RecoverTraversal _) -> recoverTraversal params classifier queryRecs processedQueries
+                FullTraversal -> fullTraversal params classifier queryRecs processedQueries
     {-
     let outLines = getZipList $ (formatResultWrapper params)
                                 <$> ZipList queryRecs
@@ -113,15 +113,18 @@ main = do
                                 -}
     mapM_ STIO.putStrLn outlines
 
-multiTraversal :: Params -> Classifier -> [FastA] -> [Sequence] -> [ST.Text]
-multiTraversal params classifier queryRecs processedQueries =
+recoverTraversal :: Params -> Classifier -> [FastA] -> [Sequence] -> [ST.Text]
+recoverTraversal = undefined
+
+fullTraversal :: Params -> Classifier -> [FastA] -> [Sequence] -> [ST.Text]
+fullTraversal params classifier queryRecs processedQueries =
     concat $ getZipList $ (multiTraversalFmt1Query params)
         <$> ZipList queryRecs
         <*> ZipList processedQueries
         <*> ZipList predictions
     where
-        log10ER = (optERCutoff params)
-        predictions = map (classifySequenceMulti classifier log10ER) processedQueries
+        
+        predictions = map (classifySequenceMulti classifier (-1)) processedQueries
     
 multiTraversalFmt1Query :: Params -> FastA -> Sequence -> [Trail] -> [ST.Text]
 multiTraversalFmt1Query params queryRec processQuery trails =

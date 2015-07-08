@@ -120,8 +120,10 @@ chooseSubtrees (Node model kids) scale cutoff seq bestScore =
             bestKidScore = maximum kidsScores
             kidsScores = map (flip scoreSeq seq . rootLabel) kids
             kidlog10ERs = map (log10evidenceRatio (round scale) bestKidScore) kidsScores
-            tiedKids = [kid | (kid,klog10ER) <- zip kids kidlog10ERs, 
-                            klog10ER < 30]
+            tiedKids = if cutoff < 0
+                            then kids
+                            else [kid | (kid,klog10ER) <- zip kids kidlog10ERs, 
+                                    klog10ER < fromIntegral cutoff]
 
 paths :: OTUTree -> [[OTUName]]
 paths (Node name []) = [[name]]
