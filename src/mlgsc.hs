@@ -114,11 +114,22 @@ main = do
     mapM_ STIO.putStrLn outlines
 
 recoverTraversal :: Params -> Classifier -> [FastA] -> [Sequence] -> [ST.Text]
-recoverTraversal = undefined
+recoverTraversal params classifier queryRecs processedQueries =
+    concat $ getZipList $ (recoverTraversalFmt1Query params)
+        <$> ZipList queryRecs
+        <*> ZipList processedQueries
+        <*> ZipList predictions
+    where
+        (RecoverTraversal tieThreshold)  = optTreeTraversalMode params
+        predictions = map (classifySequenceMulti classifier tieThreshold) processedQueries
+    
+recoverTraversalFmt1Query :: Params -> FastA -> Sequence -> [Trail] -> [ST.Text]
+recoverTraversalFmt1Query params queryRec processQuery trails =
+    map (formatResultWrapper params queryRec processQuery) trails
 
 fullTraversal :: Params -> Classifier -> [FastA] -> [Sequence] -> [ST.Text]
 fullTraversal params classifier queryRecs processedQueries =
-    concat $ getZipList $ (multiTraversalFmt1Query params)
+    concat $ getZipList $ (fullTraversalFmt1Query params)
         <$> ZipList queryRecs
         <*> ZipList processedQueries
         <*> ZipList predictions
@@ -126,8 +137,8 @@ fullTraversal params classifier queryRecs processedQueries =
         
         predictions = map (classifySequenceMulti classifier (-1)) processedQueries
     
-multiTraversalFmt1Query :: Params -> FastA -> Sequence -> [Trail] -> [ST.Text]
-multiTraversalFmt1Query params queryRec processQuery trails =
+fullTraversalFmt1Query :: Params -> FastA -> Sequence -> [Trail] -> [ST.Text]
+fullTraversalFmt1Query params queryRec processQuery trails =
     map (formatResultWrapper params queryRec processQuery) trails
 
 {- I like to apply the output formatter in aplicative style to the lists of
