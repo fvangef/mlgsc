@@ -358,7 +358,7 @@ the alignment.
 
 ```
 $ mlgsc_train -o firmicutes_Spo0A.mod Prot firmicute_Spo0A_prot_train.msa firmicute_genera_fully-labeled.nw 
-The following tree OTUs are NOT found in the alignment:
+The following tree taxa are NOT found in the alignment:
 Listeria
 ```
 
