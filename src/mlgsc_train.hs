@@ -127,12 +127,12 @@ possibleWarnings params tree otuAlnMap =
         then do
             if not $ null $ treeOTUsNotInALn tree otuAlnMap
                 then do
-                    putStrLn "The following tree OTUs are NOT found in the alignment:"
+                    putStrLn "The following tree taxa  are NOT found in the alignment:"
                     mapM_ STIO.putStrLn $ treeOTUsNotInALn tree otuAlnMap
                 else return ()
             if not $ null $ alnOTUsNotInTree tree otuAlnMap
                 then do
-                    putStrLn "The following alignment OTUs are NOT found in the tree:"
+                    putStrLn "The following alignment taxa  are NOT found in the tree:"
                     mapM_ STIO.putStrLn $ alnOTUsNotInTree tree otuAlnMap
                 else return ()
         else return ()
