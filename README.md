@@ -1,7 +1,7 @@
 MLGSC - Maximum-likelihood  general sequence classifier
 =====
 
-MLGSC is a set of programs for classifying sequences into taxa (in other words, recognizing taxa from sequences). The classifier is trained using reference sequences from a user-specified conserved region (e.g., a gene) as well as a phylogeny of the taxa of interest. It can work on protein as well as nucleic acid sequences.
+MLGSC is a set of programs for classifying sequences into taxa (in other words, recognizing taxa from sequences). The classifier is trained using reference sequences from a user-specified conserved region (e.g., a gene) as well as a phylogeny of the taxa of interest. It can work on *protein as well as nucleic acid* sequences.
 
 The package consists of the following:
 
