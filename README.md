@@ -107,7 +107,7 @@ This will install the programs in `/usr/local/bin`.
 #### `mlgsc_train`
 
 This trains a classifier model (either DNA or protein) from a multiple alignment
-of reference sequences and a phylogenetic tree of the reference OTUs.
+of reference sequences and a phylogenetic tree of the reference taxa.
 
 This program takes three arguments: (i) one of the two keywords `DNA` or `Prot`,
 to indicate the type of molecule; (ii) the name of the multiple alignment file;
@@ -116,7 +116,7 @@ and (iii) the name of a phylogenetic tree.
 ##### Reference Multiple Alignment
 
 The alignment should be in aligned (gapped) FastA format. The header lines
-should contain an ID followed by an OTU name. The ID is ignored for training,
+should contain an ID followed by a taxon name. The ID is ignored for training,
 but can be used to identify problematic training sequences; since the first word
 of a FastA header is usually an ID this will allow existing FastA alignments to
 be used with minimal editing.
@@ -126,7 +126,7 @@ be used with minimal editing.
 Here are the first three entries in a multiple-FastA alignment of the stage 0
 sporulation protein A, Spo0A, in Firmicutes, grouped by genus.
 
-The first entry in the alignment has ID `ID_001` and OTU `Bacillus`. This
+The first entry in the alignment has ID `ID_001` and taxon `Bacillus`. This
 states that the sequence is a reference for the _Bacillus_ genus. The next two
 (`ID_001` and `ID_002`) are reference sequences for genus _Clostridium_.
 
@@ -146,9 +146,9 @@ states that the sequence is a reference for the _Bacillus_ genus. The next two
     NLEAEVTNIMHEIGVPAHIKGYQYLRDAIIMVVKDLDVINSITKQLYPTIAKEYNTTPSR
     VERAIRHAIEVAWSRGQIDTIDSLFGYTINVGKGKPTNSEFIAMVAD
 
-It is advisable to have more than one reference sequence per OTU, but in our
+It is advisable to have more than one sequence per reference taxon, but in our
 experience adding more than a dozen does little to enhance the classifier's
-accuracy. Ideally each OTU should be represented by roughly the same number of
+accuracy. Ideally each taxon should be represented by roughly the same number of
 sequences, but since the alignment is subjected to Henikoff weighting the
 program can tolerate large variations (this is often the case when downloading
 all representatives of a given gene from a database: some genera like
@@ -158,7 +158,7 @@ _Clostridium_ or _Pseudomonas_ have hundreds of known members, while several
 ##### Reference Phylogeny
 
 This should be a Newick tree in a single line. The leaves (tips) of the tree
-must correspond to the OTUs in the alignment. The tree may be a phylogram (i.e., with branch lengths), but the branch lengths are not used and will be ignored. Inner node labels are allowed and indeed encouraged, as they will feature in the path through the tree that `mlgsc` outputs.
+must correspond to the taxa in the alignment. The tree may be a phylogram (i.e., with branch lengths), but the branch lengths are not used and will be ignored. Inner node labels are allowed and indeed encouraged, as they will feature in the path through the tree that `mlgsc` outputs.
 
 ###### Example
 
@@ -218,7 +218,7 @@ Here is a sample tree of Firmicute genera:
                └─────────────────────────────────────────── Turicibacter 
 ```
 
-Note that the OTU names in the alignment (`Bacillus`, `Clostridium`, etc.)
+Note that the taxon names in the alignment (`Bacillus`, `Clostridium`, etc.)
 appear at the _leaves_ of the tree.
 
 This tree (actually, a slightly larger version - the one above was shortened a
@@ -285,11 +285,11 @@ This procedure is repeated one hundred times (the number can be changed with opt
 
 This form of cross-validation where the test set contains one datum and the
 training set contains all other data is called _Leave-one-out_. In the case of
-`mlgsc_xval`, we are constrained by the fact that an OTU in the tree must be
+`mlgsc_xval`, we are constrained by the fact that a taxon in the tree must be
 represented by _at least one_ sequence in the alignment, otherwise there is no
-way for that OTU to be predicted as a classification. Therefore, a sequence can
-become a test sequence only if at least one sequence of the same OTU is left in
-the training set. By default, it is required that an OTU contain at least three,
+way for that taxon to be predicted as a classification. Therefore, a sequence can
+become a test sequence only if at least one sequence of the same taxon is left in
+the training set. By default, it is required that an taxon contain at least three,
 but this number can be changed with option `-m`.
 
 ### Example
@@ -349,7 +349,7 @@ IEQTHJI02C74FC_1 [1 - 438]  -> unnamed (8); unnamed (124); Clostridium (152)
 ```
 
 This example uses a tree in which only the leaves are labeled. Leaves must be
-labeled with OTU names for classification to work at all, but MLgsc can also
+labeled with taxon names for classification to work at all, but MLgsc can also
 use trees with internal labels, as shown below.
 
 File `firmicute_genera_fully-labeled.nw` contains a tree in which all internal
@@ -362,8 +362,8 @@ The following tree OTUs are NOT found in the alignment:
 Listeria
 ```
 
-MLgsc outputs a warning about the OTU name found in the tree but not in the
-alignment. The OTU is simply ignored and this does not prevent MLgsc from
+MLgsc outputs a warning about the taxon name found in the tree but not in the
+alignment. The taxon is simply ignored and this does not prevent MLgsc from
 building a classifier, but discrepancies between alignment and tree may
 indicate that the wrong file(s) are being used, hence the warnings. At any
 rate, any actual _Listeria_ among the queries will be misclassified. To
