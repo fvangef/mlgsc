@@ -26,7 +26,8 @@ import MlgscTypes
 import FastA
 import PWMModel
 import Align
-import Classifier (Classifier(..), classifySequence, classifySequenceMulti)
+import Classifier (Classifier(..), classifySequence, classifySequenceMulti,
+                    classifySequenceAll)
 import Output
 
 data TreeTraversalMode = BestTraversal | FullTraversal | RecoverTraversal Int
@@ -144,8 +145,7 @@ fullTraversal params classifier queryRecs processedQueries =
         <*> ZipList processedQueries
         <*> ZipList predictions
     where
-        
-        predictions = map (classifySequenceMulti classifier (-1)) processedQueries
+        predictions = map (classifySequenceAll classifier) processedQueries
     
 fullTraversalFmt1Query :: Params -> FastA -> Sequence -> [Trail] -> [ST.Text]
 fullTraversalFmt1Query params queryRec processQuery trails =
