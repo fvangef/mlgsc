@@ -142,7 +142,9 @@ chooseSubtrees (Node model kids) scale cutoff seq bestNonTiedScore =
             tiedKids = L.map sel1 tiedKids_tpl
             (tiedKids_tpl, otherKids_tpl) = L.partition (\(_,_,er) -> er <= cutoff') $ zip3 kids kidsScores kidlog10ERs
             cutoff' = fromIntegral cutoff
-            bestNonTiedKidsScore = sel2 $ L.maximumBy (comparing sel2) otherKids_tpl
+            bestNonTiedKidsScore = case otherKids_tpl of
+                [] -> sel2 $ L.minimumBy (comparing sel2) tiedKids_tpl
+                otherwise -> sel2 $ L.maximumBy (comparing sel2) otherKids_tpl
 
 
 paths :: OTUTree -> [[OTUName]]
