@@ -54,7 +54,7 @@ parseOptions = Params
                     (long "ER-cutoff"
                     <> short 'e'
                     <> help "drop clades with ER lower than this"
-                    <> value 0)
+                    <> value 10)
                 <*> argument str (metavar "<query seq file>")
                 <*> argument str (metavar "<classifier file>")
 
