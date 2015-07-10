@@ -1,4 +1,6 @@
-.PHONY: binaries test clean
+.PHONY: binaries test clean install
+
+INSTALL_DIR=/usr/local/bin
 
 all: binaries test
 
@@ -7,6 +9,9 @@ binaries:
 
 test: binaries
 	cd test && $(MAKE)
+
+install: 
+	install -t $(INSTALL_DIR) src/mlgsc src/mlgsc_train src/mlgsc_xval
 
 clean:
 	cd src && $(MAKE) clean

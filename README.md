@@ -76,14 +76,14 @@ possible to tell to which subclade of the Clostridia it belongs.
 
 The [tutorial](#tutorial) section has more details about building and validating
 classifiers, as well as on the various options that can be used to change the
-program's behaviour.
+programs' logic and/or output.
 
 Installation
 ------------
 
-MLgsc is available as **binaries** (Linux x86-64) and as **source code**. The binaries
-are found in subdirectory `src` of the distribution. They can be installed by
-issuing
+MLgsc is available as **binaries** (Linux x86-64) and as **source code**. The
+binaries are found in subdirectory `src` of the distribution. They can be
+installed by issuing
 
 ```
 $ sudo make install
@@ -120,10 +120,19 @@ issue the following commands in the top-level directory of the source
 distribution:
 
 ```shell
-$ runhaskell Setup.hs configure
+$ runhaskell Setup.hs configure # may need --user
 $ cabal build
 $ sudo cabal install --global
 ```
+
+If you have GNU make, you can also just do
+
+```shell
+$ make
+$ sudo make install
+```
+
+the binaries will be found in `./src`.
 
 This will install the programs in `/usr/local/bin`.
 

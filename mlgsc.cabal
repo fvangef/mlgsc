@@ -104,6 +104,6 @@ executable mlgsc_xval
   hs-source-dirs: src
 
 executable mlgsc
-  build-depends: base
+  build-depends: base, optparse-applicative, parsec, random, text, text-binary, vector, vector-binary
   main-is:        mlgsc.hs
   hs-source-dirs: src
