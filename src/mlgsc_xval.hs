@@ -86,11 +86,11 @@ parseSeed = option auto
 
 parseMinSeqInOTU :: Parser Int
 parseMinSeqInOTU = option auto
-                    (long "min-seq-ino-OTU"
+                    (long "min-seq-in-taxon"
                     <> short 'm'
-                    <> metavar "MIN_SEQ_IN_OTU"
+                    <> metavar "MIN_SEQ_IN_TAXON"
                     <> value (3)
-                    <> help "minimum #member seqs in an OTU")
+                    <> help "minimum #member seqs in a taxon")
 
 parseVerbosity :: Parser Int
 parseVerbosity = option auto
@@ -243,7 +243,7 @@ runInfo params seqIndices gen
         ("phylogeny:\t" ++ treeFname params),
         ("seed:\t" ++ (head $ words $ show gen)),
         ("indices:\t" ++ (show seqIndices)),
-        ("min #nb seq / OTU:\t" ++ (show $ optMinSeqInOTU params)),
+        ("min #nb seq / taxon:\t" ++ (show $ optMinSeqInOTU params)),
         ("Henikoff weighting:\t" ++ (show $ not $ optNoHenikoffWt params))
 
         ]
