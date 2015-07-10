@@ -23,7 +23,7 @@ Example
 
 Here is a short example of MLGSC used for classifying protein sequences of Spo0A
 to genus level in the Firmicutes clade (for more details, see the [real-world
-example](#Real-World Example) below). We need a multiple alignment of Spo0A protein sequences (`Spo0A.msa`) and a phylogenetic tree of the Firmicute genera (`firmicute_genera.nw`).
+example](#real-world-example) below). We need a multiple alignment of Spo0A protein sequences (`Spo0A.msa`) and a phylogenetic tree of the Firmicute genera (`firmicute_genera.nw`).
 
 Then we train the classifier with the following command:
 
