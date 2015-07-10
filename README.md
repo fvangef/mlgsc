@@ -51,15 +51,32 @@ This produces output like the following:
     query_003 -> Clostridia (106); Clostridiales (138); Clostridium (83)
     ...
 
-Each line lists a query ID (`query_01`, etc.), then a `->`, then MLgsc's
-classification of this query.  This consists of a list of tree nodes, from the
-most general (leftmost) to the most specific (rightmost) - in this case, genus.
-Each node is shown with a confidence measure (number in parentheses). High
-values indicate high confidence. In the example above, query 01 is confidently
-classified as _Moraxella_, and query 02 as _Wolbachia_; however, query 03 is
-much more tentatively classified as _Staphylococcus_ (confidence measure at
-genus level only 8), although its position within Staphylococcaceae seems well
-supported.
+Each line lists a query ID (`query_001`, etc.), then an arrow (`->`), then
+MLgsc's classification of this query.  This consists of a list of tree nodes,
+from the most general (leftmost) to the most specific (rightmost) - in this
+case, genus.  Each node is shown with a support value (number in parentheses).
+High values indicate high confidence, in the sense that well-supported node is
+much more likely to be correct than the second best. In the example above, query
+001 is confidently classified as _Bacillus_, while queries 002 and 003 are (also
+confidently) classified as _Clostridium_.
+
+In some cases, the confidence is so high that the support value is shown as an
+asterisk, as in
+
+    query_214 -> Clostridia (301); Clostridiales (*); Pseudoflavonifractor (*)
+
+Of course, confidence values can also be low. This reflects `mlgsc`'s unability
+to confidently classify a query. If the value drops below 10, `mlgsc` does not
+try to be more specific, as in
+
+    query_200 -> Clostridia (105)
+
+which shows that while query 200 probably belongs to the Clostridia, it is not
+possible to tell to which subclade of the Clostridia it belongs. 
+
+The [tutorial](#tutorial) section has more details about building and validating
+classifiers, as well as on the various options that can be used to change the
+program's behaviour.
 
 Installation
 ------------
@@ -110,7 +127,7 @@ $ sudo cabal install --global
 
 This will install the programs in `/usr/local/bin`.
 
-### Program Manuals
+### Tutorial
 
 #### `mlgsc_train`
 
