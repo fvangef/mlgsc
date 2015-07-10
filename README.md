@@ -21,10 +21,9 @@ used in the [article](http://journals.plos.org/plosone/article?id=10.1371/journa
 Example
 -------
 
-Here is an example of MLGSC used for classifying protein sequences of Spo0A to
-genus level in the Firmicutes clade. We need a multiple alignment of Spo0A
-protein sequences (`Spo0A.msa`) and a phylogenetic tree of the Firmicute genera
-(`firmicute_genera.nw`).
+Here is a short example of MLGSC used for classifying protein sequences of Spo0A
+to genus level in the Firmicutes clade (for more details, see the [real-world
+example](#Real-World Example) below). We need a multiple alignment of Spo0A protein sequences (`Spo0A.msa`) and a phylogenetic tree of the Firmicute genera (`firmicute_genera.nw`).
 
 Then we train the classifier with the following command:
 
@@ -296,7 +295,7 @@ become a test sequence only if at least one sequence of the same taxon is left i
 the training set. By default, it is required that an taxon contain at least three,
 but this number can be changed with option `-m`.
 
-### Example
+### Real-world Example
 
 The following is an example using real data referred to in the
 [article](http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0129384).
