@@ -197,18 +197,18 @@ getSeqIndices gen params fastARecs = do
         let outputWarnings = (optVerbosity params > 0)
         let validNdx = validIndices fastARecs
         if null $ optIndices params 
-        then do if nbRounds > length validNdx
-                then do
-                    if outputWarnings
-                        then warn $ "More LOO rounds (" ++ show nbRounds ++ ") than valid indices (" ++ show (length validNdx) ++ ")."
-                        else return ()
-                    return validNdx
-                else return $ take nbRounds $ shuffleList gen $ validNdx
-        else do
-            if outputWarnings
-                then warn "User-specified indices are not checked."
-                else return ()
-            return $ map read $ words $ optIndices params
+            then do if nbRounds > length validNdx
+                        then do
+                            if outputWarnings
+                                then warn $ "More LOO rounds (" ++ show nbRounds ++ ") than valid indices (" ++ show (length validNdx) ++ ")."
+                                else return ()
+                            return validNdx
+                        else return $ take nbRounds $ shuffleList gen $ validNdx
+            else do
+                if outputWarnings
+                    then warn "User-specified indices are not checked."
+                    else return ()
+                return $ map read $ words $ optIndices params
 
 -- gets a random number generator. If the seed is negative, gets the global
 -- generator, else use the seed.
