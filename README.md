@@ -22,7 +22,7 @@ Example
 -------
 
 Here is a short example of MLgsc used for classifying protein sequences of Spo0A
-to genus level in the Firmicutes clade (for more details, see the [real-world
+to genus level in the Firmicutes (for more details, see the [real-world
 example](#real-world-example) below).
 
 We start with a multiple alignment of Spo0A protein sequences (stored in a Fasta
@@ -132,37 +132,32 @@ $ make
 $ sudo make install
 ```
 
-the binaries will be found in `./src`.
-
 This will install the programs in `/usr/local/bin`.
 
 ### Tutorial
 
-#### `mlgsc_train`
+#### Choosing the Clade and Classifying region
 
-This trains a classifier model (either DNA or protein) from a multiple alignment
-of reference sequences and a phylogenetic tree of the reference taxa.
+The first decisions to make are (i) what organisms we wish to be able to
+recognize, which we refer to as the _target taxa_, and (ii) with which
+conserved region. Obviously, the conserved region must be found in all the
+organisms under consideration. In this tutorial, we have chosen to classify the
+spore-forming [Firmicutes](https://en.wikipedia.org/wiki/Firmicutes)  using the
+[Spo0A](http://www.uniprot.org/uniprot/P06534) gene (at the protein level). Spo0A is found in every spore-forming
+Firmicute species.
 
-This program takes three arguments: (i) one of the two keywords `DNA` or `Prot`,
-to indicate the type of molecule; (ii) the name of the multiple alignment file;
-and (iii) the name of a phylogenetic tree.
+#### Obtaining a reference Alignment and Phylogeny
 
-##### Reference Multiple Alignment
+#### Reference Alignment
 
-The alignment should be in aligned (gapped) FastA format. The header lines
-should contain an ID followed by a taxon name. The ID is ignored for training,
-but can be used to identify problematic training sequences; since the first word
-of a FastA header is usually an ID this will allow existing FastA alignments to
-be used with minimal editing.
-
-###### Example
-
-Here are the first three entries in a multiple-FastA alignment of the stage 0
-sporulation protein A, Spo0A, in Firmicutes, grouped by genus.
-
-The first entry in the alignment has ID `ID_001` and taxon `Bacillus`. This
-states that the sequence is a reference for the _Bacillus_ genus. The next two
-(`ID_001` and `ID_002`) are reference sequences for genus _Clostridium_.
+We need reference sequences for all the target taxa, in the form of a multiple
+sequence alignment (in gapped Fasta format).  The header lines should contain
+an ID followed by a taxon name. The ID is ignored for training, but can be used
+to identify problematic training sequences; since the first word of a FastA
+header is usually an ID this will allow existing FastA alignments to be used
+with minimal editing.
+ 
+We will use file `Spo0A.msa`, found in the `data` subdirectory. It looks like this:
 
     >ID_001 Bacillus
     IMPHLDGLAVLERLRE-SQLKK-QPN-VIMLTAFGQEDVTKKAVDLGASYFILKPFDMEN
@@ -179,6 +174,11 @@ states that the sequence is a reference for the _Bacillus_ genus. The next two
     LISRIRQLKNVNQPN--VIRQ----------------DGLSGEVKSSYHPP------QPK
     NLEAEVTNIMHEIGVPAHIKGYQYLRDAIIMVVKDLDVINSITKQLYPTIAKEYNTTPSR
     VERAIRHAIEVAWSRGQIDTIDSLFGYTINVGKGKPTNSEFIAMVAD
+    ...
+
+The first entry in the alignment has ID `ID_001` and taxon `Bacillus`. This
+states that the sequence is a reference for the _Bacillus_ genus. The next two
+(`ID_001` and `ID_002`) are reference sequences for genus _Clostridium_.
 
 It is advisable to have more than one sequence per reference taxon, but in our
 experience adding more than a dozen does little to enhance the classifier's
@@ -189,33 +189,45 @@ all representatives of a given gene from a database: some genera like
 _Clostridium_ or _Pseudomonas_ have hundreds of known members, while several
 "rare" genera have only one. 
 
+
 ##### Reference Phylogeny
 
-This should be a Newick tree in a single line. The leaves (tips) of the tree
-must correspond to the taxa in the alignment. The tree may be a phylogram (i.e., with branch lengths), but the branch lengths are not used and will be ignored. Inner node labels are allowed and indeed encouraged, as they will feature in the path through the tree that `mlgsc` outputs.
+This should be a Newick-formatted tree in a single line. The leaves (tips) of
+the tree must correspond to the taxa in the alignment. The tree may be a
+phylogram (i.e., with branch lengths), but the branch lengths are not used and
+will be ignored.  Inner node labels are allowed and indeed encouraged, as they
+will feature in the path through the tree that `mlgsc` outputs.
 
-###### Example
-
-Here is a sample tree of Firmicute genera:
+We will use file `firmicute_genera.nw`. It represents the following tree:
 
 ```
                ┌─────────────────────────────────────────── Sporomusa           
                │                                                                
                │                            ┌────────────── Anaerofustis        
-               │              ┌─────────────┤                                   
+               │              ┌─────────────┤ Eubacteriaceae                    
                │              │             └────────────── Eubacterium         
                │              │                                                 
                │              │             ┌────────────── Anaerostipes        
                │              │             │                                   
-               │              ├─────────────┼────────────── Dorea               
+               │              ├─────────────┼─Lachnospirac. Dorea
                │              │             │                                   
                │              │             └────────────── Marvinbryantia      
                │              │                                                 
                │              ├──────────────────────────── Clostridium         
                │              │                                                 
                │              │             ┌────────────── Dehalobacter        
-               │              ├─────────────┤                                   
- ┌─────────────┼─Clostridia───┤             └────────────── Desulfotomaculum    
+               │              ├─────────────┤ Peptococcaceae                    
+ ┌─────────────┼─Clostridia───┤ Clostridiales────────────── Desulfotomaculum    
+ │             │              │                                                 
+ │             │              ├──────────────────────────── Heliobacterium      
+ │             │              │                                                 
+ │             │              ├──────────────────────────── Oscillibacter       
+ │             │              │                                                 
+ │             │              ├──────────────────────────── Ruminococcus        
+ │             │              │                                                 
+ │             │              ├──────────────────────────── Pseudoflavonifractor
+ │             │              │                                                 
+ │             │              ├──────────────────────────── Sulfobacillus       
  │             │              │                                                 
  │             │              └──────────────────────────── Symbiobacterium     
  │             │                                                                
@@ -226,22 +238,34 @@ Here is a sample tree of Firmicute genera:
  │                            ├──────────────────────────── Moorella            
  │                            │                                                 
  │                            └──────────────────────────── Thermacetogenium    
-─┤
+ │                                                                              
  │             ┌─────────────────────────────────────────── Alicyclobacillus    
  │             │                                                                
  │             │              ┌──────────────────────────── Amphibacillus       
  │             │              │                                                 
+ │             │              ├──────────────────────────── Anoxybacillus       
+─┤             │              │                                                 
  │             │              ├──────────────────────────── Bacillus            
  │             ├──────────────┤ Bacillaceae                                     
  │             │              ├──────────────────────────── Geobacillus         
+ │             │              │                                                 
+ │             │              ├──────────────────────────── Lysinibacillus      
  │             │              │                                                 
  │             │              └──────────────────────────── Oceanobacillus      
  │             │                                                                
  ├─────────────┼─Bacilli─────────────────────────────────── Bhargavaea          
  │             │                                                                
+ │             ├─────────────────────────────────────────── Listeria            
+ │             │                                                                
+ │             ├─────────────────────────────────────────── Exiguobacterium     
+ │             │                                                                
  │             │              ┌──────────────────────────── Brevibacillus       
  │             ├──────────────┤ Paenibacillaceae                                
  │             │              └──────────────────────────── Paenibacillus       
+ │             │                                                                
+ │             ├─────────────────────────────────────────── Pasteuria           
+ │             │                                                                
+ │             ├─────────────────────────────────────────── Sporosarcina        
  │             │                                                                
  │             └─────────────────────────────────────────── Desmospora          
  │                                                                              
@@ -249,19 +273,127 @@ Here is a sample tree of Firmicute genera:
  │             │                                                                
  └─────────────┼─Erysipelotrichia────────────────────────── E dolichum          
                │                                                                
-               └─────────────────────────────────────────── Turicibacter 
+               └─────────────────────────────────────────── Turicibacter        
+                                                                            
 ```
 
-Note that the taxon names in the alignment (`Bacillus`, `Clostridium`, etc.)
-appear at the _leaves_ of the tree.
+Note the following:
 
-This tree (actually, a slightly larger version - the one above was shortened a
-bit to better fit the page) is found in `firmicutes_by_genus.nw`. It is a
-Newick-formatted file:
+* the tree's leaf (tip) labels are the names of the target taxa in the reference alignment.
+* the tree need not be fully resolved (bifurcating), although a bifurcating tree will make the search faster.
+
+
+#### Evaluating the Clade and Classifying region
+
+Before buliding the final classifier, we must satisfy ourselves that the chosen
+region (Spo0A) is able to classify the chosen group (spore-forming Firmicutes).
+This is the function of `mlgsc_xval`. To do so, it takes the alignment and the tree, and does the following:
+
+1. Randomly draw one sequence from the alignment. This sequence becomes the
+   _test sequence_, while all the remaining sequences form the _training set_.
+   The test sequence is thus **not** part of the training set;
+2. Build a classifier using the training set and the tree;
+3. Classify the test sequence using the classifier.
+
+This procedure is repeated a certain number of times (by default, one hundred
+- the number can be changed with option `-r`).
+
+Let's try this:
+
+```bash
+$ ../src/mlgsc_xval Prot Spo0A.msa firmicutes_by_genus.nw
+
+ID_185 Clostridium (202) -> Clostridia (170); Clostridiales (208); Clostridium (168)
+ID_197 Clostridium (201) -> Clostridia (126); Clostridiales (170); Clostridium (134)
+ID_177 Clostridium (202) -> Clostridia (170); Clostridiales (208); Clostridium (168)
+ID_162 Clostridium (187) -> Clostridia (188); Clostridiales (229); Clostridium (183)
+...
+```
+
+**Notes**:
+
+* the sequences are drawn at random, so each run is different! To reproduce runs, you can set the pseudo-random number generator's [seed](#seed)
+* the first argument (`Prot` ) is a keyword that tells `mlgsc_xval` that the sequences are protein
+* each line represents a different trial, with a different test sequence and training set
+
+In all the above lines, the program correctly classifies the queries as _Clostridium_. But we're mostly interested in the _errors_ - specifically, in how many there are. Option `-x` instructs `mlgsc_xval` to print only misclassifications:
+
+```bash
+$ ../src/mlgsc_xval -x Prot Spo0A.msa firmicutes_by_genus.nw 
+
+ID_264 Paenibacillus (196) -> Clostridia (9); Clostridiales (134); Clostridium (59)
+```
+
+This run had one error in 100 trials, that is, a 1% error rate. I usually get between 0 and 4 errors per 100 trials with this data set.
+
+We can ask for details about the run by passing (`-v 2`). This sets the
+verbosity level to 2 (0 is for quiet, i.e. no warnings; 1 is for normal):
 
 ```
-((Sporomusa,((Anaerofustis,Eubacterium),(Anaerostipes,Dorea,Marvinbryantia),Clostridium,(Dehalobacter,Desulfotomaculum),Heliobacterium,Oscillibacter,Ruminococcus,Pseudoflavonifractor,Sulfobacillus,Symbiobacterium),(Carboxydibrachium,Carboxydothermus,Moorella,Thermacetogenium)Thermoanaerobacteraceae)Clostridia,(Alicyclobacillus,(Amphibacillus,Anoxybacillus,Bacillus,Geobacillus,Lysinibacillus,Oceanobacillus)Bacillaceae,Bhargavaea,Listeria,Exiguobacterium,(Brevibacillus,Paenibacillus)Paenibacillaceae,Pasteuria,Sporosarcina,Desmospora)Bacilli,(C_innocuum,E_dolichum,Turicibacter)Erysipelotrichia);
+$ ../src/mlgsc_xval -x -v 2 Prot Spo0A.msa firmicutes_by_genus.nw 
+Performing 100 rounds of LOO
+alignment:	Spo0A.msa
+phylogeny:	firmicutes_by_genus.nw
+seed:	607539836
+indices:	[129,205,121,120,208,60,185,56,147,160,193,119,29,291,184,116,82,72,328,330,136,323,189,247,336,327,168,43,146,73,223,137,176,149,301,108,12,276,228,91,141,218,351,253,46,118,297,324,23,109,221,83,84,296,130,5,24,274,172,249,125,175,209,158,200,100,170,173,3,206,106,266,203,359,352,251,154,0,45,15,37,350,292,114,79,133,307,28,64,27,4,263,287,142,187,139,345,61,321,339]
+min #nb seq / taxon:	3
+Henikoff weighting:	True
+
+ID_219 Clostridium (201) -> Clostridia (126); Clostridiales (215); Lachnospiraceae (25); Anaerostipes (1)
+ID_353 Anaerostipes (196) -> Clostridia (102); Clostridiales (182); Clostridium (12)
+ID_264 Paenibacillus (196) -> Clostridia (9); Clostridiales (134); Clostridium (59)
 ```
+
+This now shows, among others, which sequences were drawn as test sequences (by
+their indices, i.e. their order in the reference alignment). It also shows two
+other possibly important parameters: (i) the minimal number of sequences per
+taxon, and (ii) whether Henikoff weighting was applied.
+
+The purpose of weighting is to compensate for the over-representation of some
+taxa (e.g. if one taxon is represented by dozens of reference sequences, while
+another has a single representative). But does it have the intended effect?
+Let's re-run this test, but without the weighting. To redo the run on the
+_same_ sequences, we bypass the random draw and supply the _seed_ shown in the
+(verbose) output above.
+
+```bash
+$ ../src/mlgsc_xval -v 2 -R 607539836 -x -W Prot Spo0A.msa firmicutes_by_genus.nw
+Performing 100 rounds of LOO
+alignment:	Spo0A.msa
+phylogeny:	firmicutes_by_genus.nw
+seed:	607539836
+indices:	[129,205,121,120,208,60,185,56,147,160,193,119,29,291,184,116,82,72,328,330,136,323,189,247,336,327,168,43,146,73,223,137,176,149,301,108,12,276,228,91,141,218,351,253,46,118,297,324,23,109,221,83,84,296,130,5,24,274,172,249,125,175,209,158,200,100,170,173,3,206,106,266,203,359,352,251,154,0,45,15,37,350,292,114,79,133,307,28,64,27,4,263,287,142,187,139,345,61,321,339]
+min #nb seq / taxon:	3
+Henikoff weighting:	False
+
+ID_219 Clostridium (201) -> Clostridia (125); Clostridiales (204); Lachnospiraceae (46); Dorea (6)
+```
+
+In this case, the error rate is _lower_ without weighting!
+
+This form of cross-validation where the test set contains one datum and the
+training set contains all other data is called _Leave-one-out_. In the case of
+`mlgsc_xval`, we are constrained by the fact that a taxon in the tree must be
+represented by _at least one_ sequence in the alignment, otherwise there is no
+way for that taxon to be predicted as a classification. Therefore, a sequence
+can become a test sequence only if at least one sequence of the same taxon is
+left in the training set. By default, it is required that an taxon contain at
+least three, but this number can be changed with option `-m`.
+
+
+#### `mlgsc_train`
+
+This trains a classifier model (either DNA or protein) from a multiple alignment
+of reference sequences and a phylogenetic tree of the reference taxa.
+
+This program takes three arguments: (i) one of the two keywords `DNA` or `Prot`,
+to indicate the type of molecule; (ii) the name of the multiple alignment file;
+and (iii) the name of a phylogenetic tree.
+
+###### Example
+
+Here are the first three entries in a multiple-FastA alignment of the stage 0
+sporulation protein A, Spo0A, in Firmicutes, grouped by genus.
 
 #### Building the Classifier
 
@@ -302,29 +434,6 @@ accuracy. To do this, we need to evaluate it on queries that are _not_ part of
 the training set, and this is the function of the third program in the package,
 `mlgsc_xval`.
 
-
-#### `mlgsc_xval`
-
-The function of `mlgsc_xval` is to validate a classifier. To do so, it takes
-the same inputs as `mlgsc_train` (namely, an alignment and a tree), but instead
-of directly building a classifier, it does the following:
-
-1. Randomly draw one sequence from the alignment. This sequence becomes the
-   _test sequence_, while all the other sequences form the _training set_. The
-   test sequence is thus not part of the training set;
-2. Build a classifier using the training set and the tree;
-3. Classify the test sequence using the classifier.
-
-This procedure is repeated one hundred times (the number can be changed with option `-r`).
-
-This form of cross-validation where the test set contains one datum and the
-training set contains all other data is called _Leave-one-out_. In the case of
-`mlgsc_xval`, we are constrained by the fact that a taxon in the tree must be
-represented by _at least one_ sequence in the alignment, otherwise there is no
-way for that taxon to be predicted as a classification. Therefore, a sequence can
-become a test sequence only if at least one sequence of the same taxon is left in
-the training set. By default, it is required that an taxon contain at least three,
-but this number can be changed with option `-m`.
 
 ### Real-world Example
 
