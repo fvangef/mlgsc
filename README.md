@@ -23,9 +23,13 @@ Example
 
 Here is a short example of MLGSC used for classifying protein sequences of Spo0A
 to genus level in the Firmicutes clade (for more details, see the [real-world
-example](#real-world-example) below). We need a multiple alignment of Spo0A protein sequences (`Spo0A.msa`) and a phylogenetic tree of the Firmicute genera (`firmicute_genera.nw`).
+example](#real-world-example) below).
 
-Then we train the classifier with the following command:
+We start with a multiple alignment of Spo0A protein sequences (stored in a Fasta
+file called, in this example, `Spo0A.msa`) and a phylogenetic tree of the
+Firmicute genera (file `firmicute_genera.nw`).
+
+First, we train the classifier with the following command:
 
 ```shell
 $ mlgsc_train Prot Spo0A.msa firmicute_genera.nw
@@ -33,7 +37,8 @@ $ mlgsc_train Prot Spo0A.msa firmicute_genera.nw
 
 This produces a binary file named `Spo0A.bcls`, which contains the classifier.
 
-We can now use it to classify Spo0A sequences of unknown genus:
+We can now use it to classify Spo0A sequences of unknown genus, in this case
+they are stored in file `queries.pep` (a Fasta file):
 
 ```Bash
 $ mlgsc queries.pep Spo0A.bcls
@@ -41,9 +46,9 @@ $ mlgsc queries.pep Spo0A.bcls
 
 This produces output like the following:
 
-    query_01	->	Proteobacteria (79); Gammaproteobacteria (43); Pseudomonadales (26); Moraxellaceae (63); Moraxella (61)
-    query_02	->	Proteobacteria (45); Alphaproteobacteria (23); Rickettsiales (78); Anaplasmataceae (234); Wolbachia (218)
-    query_03	->	Firmicutes (99); Bacilli (61); Bacillales (51); Staphylococcaceae (48); Staphylococcus (8)
+    query_001 -> Bacilli (56); Bacillaceae (97); Bacillus (87)
+    query_002 -> Clostridia (106); Clostridiales (138); Clostridium (83)
+    query_003 -> Clostridia (106); Clostridiales (138); Clostridium (83)
     ...
 
 Each line lists a query ID (`query_01`, etc.), then a `->`, then MLgsc's
