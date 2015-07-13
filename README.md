@@ -495,77 +495,39 @@ File `Spo0A_env_ampl_prot.pep` contains translated amplicons of Spo0A
 from environmental samples (sediment from Lake Geneva). To classify
 these sequences, do:
 
-~~~~ {.sourceCode .bash}
-$ mlgsc Spo0A_env_ampl_prot.pep firmicutes_Spo0A.mod
-IEQTHJI02DW663_1 [1 - 588]  -> unnamed (50); unnamed (44); Brevibacillus (140)
-IEQTHJI02DW663_2 [492 - 1] (REVERSE SENSE)  -> unnamed (135); unnamed (182);
-Clostridium (98)
-IEQTHJI02DXXW9_1 [587 - 3] (REVERSE SENSE)  -> unnamed (3); unnamed (23);
-Paenibacillus (5)
-IEQTHJI02D2KPX_1 [404 - 3] (REVERSE SENSE)  -> unnamed (23); unnamed (86);
-Clostridium (80)
-IEQTHJI02D8PM8_1 [1 - 546]  -> unnamed (14); unnamed (147); Clostridium (162)
-IEQTHJI02D28VO_1 [183 - 593]  -> unnamed (90); unnamed (191); Clostridium (104)
-IEQTHJI02D28VO_2 [593 - 3] (REVERSE SENSE)  -> unnamed (25); unnamed (66);
-Paenibacillus (96)
-IEQTHJI02C9B6J_1 [1 - 534]  -> unnamed (60); unnamed (96); Clostridium (117)
-IEQTHJI02EN3F3_1 [1 - 480]  -> unnamed (5); unnamed (137); Clostridium (151)
-IEQTHJI02C74FC_1 [1 - 438]  -> unnamed (8); unnamed (124); Clostridium (152)
+~~~~ 
+$ ../../src/mlgsc Spo0A_env_ampl_prot.pep firmicutes_Spo0A.mod
+IEQTHJI02DW663_1 [1 - 588]  -> Bacilli (50); Paenibacillaceae (44); Brevibacillus (140)
+IEQTHJI02DW663_2 [492 - 1] (REVERSE SENSE)  -> Clostridia (135); Clostridiales (182); Clostridium (98)
+IEQTHJI02DXXW9_1 [587 - 3] (REVERSE SENSE)  -> 
+IEQTHJI02D2KPX_1 [404 - 3] (REVERSE SENSE)  -> Clostridia (23); Clostridiales (86); Clostridium (80)
+IEQTHJI02D8PM8_1 [1 - 546]  -> Clostridia (14); Clostridiales (147); Clostridium (162)
 ...
 ~~~~
 
-This example uses a tree in which only the leaves are labeled. Leaves
-must be labeled with taxon names for classification to work at all, but
-MLgsc can also use trees with internal labels, as shown below.
+We see that the third query sequence (`IEQTHJI02DXXW9_1`) cannot be classified
+at all. This is often the case with environmental samples. Possible causes
+include:
 
-File `firmicute_genera_fully-labeled.nw` contains a tree in which all
-internal nodes are labeled as well. It also contains an additional genus
-not found in the alignment.
+* short queries
+* insufficient training data
+* unknown organisms
+* and of course, weaknesses in the classification algorithm.
 
-    $ mlgsc_train -o firmicutes_Spo0A.mod Prot firmicute_Spo0A_prot_train.msa firmicute_genera_fully-labeled.nw 
-    The following tree taxa are NOT found in the alignment:
-    Listeria
+#### Tweaking the Output Format
 
-MLgsc outputs a warning about the taxon name found in the tree but not
-in the alignment. The taxon is simply ignored and this does not prevent
-MLgsc from training a model, but discrepancies between alignment and
-tree may indicate that the wrong file(s) are being used, hence the
-warnings. At any rate, any actual *Listeria* among the queries will be
-misclassified. To suppress all warnings, pass `-v 0` (verbosity level 0:
-quiet).
+By default, `mlgsc` outputs the whole header of the query sequence - often it
+contains just an ID. Sometimes, as is the case here, the header contains extra
+information that may not be essential. The format of `mlgsc`'s output can be
+controlled via a printf-like format string, as in the following example:
 
-The classification now shows internal tree labels:
-
-    $ mlgsc Spo0A_env_ampl_prot.pep firmicutes_Spo0A.mod | head
-    IEQTHJI02DW663_1 [1 - 588]  -> Bacilli (50); Paenibacillaceae (44); Brevibacillus (140)
-    IEQTHJI02DW663_2 [492 - 1] (REVERSE SENSE)  -> Clostridia (135); Clostridiales (182); Clostridium (98)
-    IEQTHJI02DXXW9_1 [587 - 3] (REVERSE SENSE)  -> Bacilli (3); Paenibacillaceae (23); Paenibacillus (5)
-    IEQTHJI02D2KPX_1 [404 - 3] (REVERSE SENSE)  -> Clostridia (23); Clostridiales (86); Clostridium (80)
-    IEQTHJI02D8PM8_1 [1 - 546]  -> Clostridia (14); Clostridiales (147); Clostridium (162)
-    IEQTHJI02D28VO_1 [183 - 593]  -> Clostridia (90); Clostridiales (191); Clostridium (104)
-    IEQTHJI02D28VO_2 [593 - 3] (REVERSE SENSE)  -> Bacilli (25); Paenibacillaceae (66); Paenibacillus (96)
-    IEQTHJI02C9B6J_1 [1 - 534]  -> Clostridia (60); Clostridiales (96); Clostridium (117)
-    IEQTHJI02EN3F3_1 [1 - 480]  -> Clostridia (5); Clostridiales (137); Clostridium (151)
-    IEQTHJI02C74FC_1 [1 - 438]  -> Clostridia (8); Clostridiales (124); Clostridium (152)
-
-By default, `mlgsc` output the whole header of the query sequence -
-often it contains just an ID. Sometimes, as is the case here, the header
-contains extra information that may not be essential. The format of
-`mlgsc`'s output can be controlled via a printf-like format string, as
-in the following example:
-
-~~~~ {.sourceCode .bash}
-$ mlgsc -f "%i -> %p" Spo0A_env_ampl_prot.pep firmicutes_Spo0A.mod | head
+~~~~
+$ mlgsc -f "%i -> %p" Spo0A_env_ampl_prot.pep firmicutes_Spo0A.mod | head -5
 IEQTHJI02DW663_1 -> Bacilli (50); Paenibacillaceae (44); Brevibacillus (140)
 IEQTHJI02DW663_2 -> Clostridia (135); Clostridiales (182); Clostridium (98)
-IEQTHJI02DXXW9_1 -> Bacilli (3); Paenibacillaceae (23); Paenibacillus (5)
+IEQTHJI02DXXW9_1 -> 
 IEQTHJI02D2KPX_1 -> Clostridia (23); Clostridiales (86); Clostridium (80)
 IEQTHJI02D8PM8_1 -> Clostridia (14); Clostridiales (147); Clostridium (162)
-IEQTHJI02D28VO_1 -> Clostridia (90); Clostridiales (191); Clostridium (104)
-IEQTHJI02D28VO_2 -> Bacilli (25); Paenibacillaceae (66); Paenibacillus (96)
-IEQTHJI02C9B6J_1 -> Clostridia (60); Clostridiales (96); Clostridium (117)
-IEQTHJI02EN3F3_1 -> Clostridia (5); Clostridiales (137); Clostridium (151)
-IEQTHJI02C74FC_1 -> Clostridia (8); Clostridiales (124); Clostridium (152)
 ~~~~
 
 Here, option `-f` specifies the format via its argument, `%i -> %p`. The
@@ -574,7 +536,7 @@ Here, option `-f` specifies the format via its argument, `%i -> %p`. The
 predicted classification. The following placeholders are recognized:
 
   placeholder   meaning
-  ------------- -------------------------------------------------------------------
+  ------------- -----------------------------------------------------------
   `%a`          aligned query sequence (useful for diagnosing alignment problems)
   `%h`          full FastA header
   `%i`          query ID (1st word of header)
@@ -582,10 +544,11 @@ predicted classification. The following placeholders are recognized:
   `%p`          predicted classification (path through the tree)
   `%%`          literal % sign
 
-For example, it may be useful to display the length of the query, since
-short sequence carry less information and may be harder to classify. The
-following format string shows the query length in parentheses, prefixed
-by "`l=`":
+For example, it may be useful to display the length of the query, since short
+sequence carry less information and may be harder to classify. Perhaps the
+unclassifiable third sequence (`IEQTHJI02DXXW9_1`) is a bit on the short side?
+The following format string shows the query length in parentheses, prefixed by
+"`l=`":
 
 ~~~~ {.sourceCode .bash}
 $ mlgsc -f "%i (l=%l) -> %p" Spo0A_env_ampl_prot.pep firmicutes_Spo0A.mod
@@ -593,6 +556,13 @@ IEQTHJI02DW663_1 (l=196) -> Bacilli (50); Paenibacillaceae (44); Brevibacillus
 (140)
 IEQTHJI02DW663_2 (l=164) -> Clostridia (135); Clostridiales (182); Clostridium
 (98)
-IEQTHJI02DXXW9_1 (l=195) -> Bacilli (3); Paenibacillaceae (23); Paenibacillus (5
+IEQTHJI02DXXW9_1 (l=195) -> 
+IEQTHJI02D2KPX_1 (l=134) -> Clostridia (23); Clostridiales (86); Clostridium
+(80)
+IEQTHJI02D8PM8_1 (l=182) -> Clostridia (14); Clostridiales (147); Clostridium
+(162)
 ...
 ~~~~
+
+No, the third sequence is not particularly short - in fact, it is the second
+longest of the first five.

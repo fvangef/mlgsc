@@ -3,3 +3,4 @@ dist
 *.o
 .*.sw?
 Session.vim
+README.html
