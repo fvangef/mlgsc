@@ -1,5 +1,34 @@
-MLgsc - Maximum-likelihood general sequence classifier
-======================================================
+-   [](#mlgsc---maximum-likelihood-general-sequence-classifier)[MLgsc -
+    Maximum-likelihood general sequence
+    classifier](#mlgsc---maximum-likelihood-general-sequence-classifier)
+    -   [](#example)[Example](#example)
+    -   [](#installation)[Installation](#installation)
+        -   [](#installing-haskell)[Installing
+            Haskell](#installing-haskell)
+        -   [](#building)[Building](#building)
+    -   [](#tutorial)[Tutorial](#tutorial)
+        -   [](#choosing-the-clade-and-classifying-region)[Choosing the
+            Clade and Classifying
+            region](#choosing-the-clade-and-classifying-region)
+        -   [](#obtaining-a-reference-alignment-and-phylogeny)[Obtaining
+            a reference Alignment and
+            Phylogeny](#obtaining-a-reference-alignment-and-phylogeny)
+        -   [](#evaluating-the-clade-and-classifying-region)[Evaluating
+            the Clade and Classifying
+            region](#evaluating-the-clade-and-classifying-region)
+        -   [](#mlgsc_train)[`mlgsc_train`](#mlgsc_train)
+        -   [](#building-the-classifier)[Building the
+            Classifier](#building-the-classifier)
+        -   [](#mlgsc)[`mlgsc`](#mlgsc)
+    -   [](#real-world-example)[Real-world Example](#real-world-example)
+        -   [](#building-the-classifier-1)[Building the
+            classifier](#building-the-classifier-1)
+        -   [](#classifying-environmental-amplicons)[Classifying
+            environmental
+            Amplicons](#classifying-environmental-amplicons)
+
+[](#mlgsc---maximum-likelihood-general-sequence-classifier)[MLgsc - Maximum-likelihood general sequence classifier](#mlgsc---maximum-likelihood-general-sequence-classifier)
+============================================================================================================================================================================
 
 MLgsc is a set of programs for classifying sequences into taxa (in other
 words, recognizing taxa from sequences). The classifier is trained using
@@ -20,8 +49,8 @@ The distribution contains source code, binaries and example data,
 including data used in the
 [article](http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0129384).
 
-Example
--------
+[](#example)[Example](#example)
+-------------------------------
 
 Here is a short example of MLgsc used for classifying protein sequences
 of Spo0A to genus level in the Firmicutes (for more details, see the
@@ -43,7 +72,7 @@ classifier.
 We can now use it to classify Spo0A sequences of unknown genus, in this
 case they are stored in file `queries.pep` (a Fasta file):
 
-~~~~ {.Bash}
+~~~~ {.sourceCode .Bash}
 $ mlgsc queries.pep Spo0A.bcls
 ~~~~
 
@@ -82,8 +111,8 @@ The [tutorial](#tutorial) section has more details about building and
 validating classifiers, as well as on the various options that can be
 used to change the programs' logic and/or output.
 
-Installation
-------------
+[](#installation)[Installation](#installation)
+----------------------------------------------
 
 MLgsc is available as **binaries** (Linux x86-64) and as **source
 code**. The binaries are found in subdirectory `src` of the
@@ -95,7 +124,7 @@ in that directory.
 
 To compile from source, see below.
 
-### Installing Haskell
+### [](#installing-haskell)[Installing Haskell](#installing-haskell)
 
 MLgsc is written in the [Haskell](https://www.haskell.org) language. You
 will need a Haskell compiler and libraries; the easiest way of obtaining
@@ -105,17 +134,17 @@ platform](https://www.haskell.org/platform) on your machine - it is
 precompiled package for several major Linux distribution including
 Ubuntu, Fedora, Mint, etc.
 
-#### Additional Libraries
+#### [](#additional-libraries)[Additional Libraries](#additional-libraries)
 
 Libraries not included in the Haskell platform may be installed with the
 `cabal` tool (which comes with the platform). The following command will
 install all additional packages (you may need to run this as root):
 
-~~~~ {.bash}
+~~~~ {.sourceCode .bash}
 # cabal install array binary containers filepath mtl optparse-applicative parsec random text text-binary vector vector-binary$
 ~~~~
 
-### Building
+### [](#building)[Building](#building)
 
 If not already done, obtain the source from GitHub (e.g. using the
 "Download ZIP" button, or with `git clone`, etc.). Uncompress the
@@ -137,10 +166,10 @@ $ sudo make install
 
 This will install the programs in `/usr/local/bin`.
 
-Tutorial
---------
+[](#tutorial)[Tutorial](#tutorial)
+----------------------------------
 
-### Choosing the Clade and Classifying region
+### [](#choosing-the-clade-and-classifying-region)[Choosing the Clade and Classifying region](#choosing-the-clade-and-classifying-region)
 
 The first decisions to make are (i) what organisms we wish to be able to
 recognize, which we refer to as the *target taxa*, and (ii) with which
@@ -151,9 +180,9 @@ classify the spore-forming
 [Spo0A](http://www.uniprot.org/uniprot/P06534) gene (at the protein
 level). Spo0A is found in every spore-forming Firmicute species.
 
-### Obtaining a reference Alignment and Phylogeny
+### [](#obtaining-a-reference-alignment-and-phylogeny)[Obtaining a reference Alignment and Phylogeny](#obtaining-a-reference-alignment-and-phylogeny)
 
-### Reference Alignment
+#### [](#reference-alignment)[Reference Alignment](#reference-alignment)
 
 We need reference sequences for all the target taxa, in the form of a
 multiple sequence alignment (in gapped Fasta format). The header lines
@@ -197,7 +226,7 @@ of a given gene from a database: some genera like *Clostridium* or
 *Pseudomonas* have hundreds of known members, while several "rare"
 genera have only one.
 
-##### Reference Phylogeny
+#### [](#reference-phylogeny)[Reference Phylogeny](#reference-phylogeny)
 
 This should be a Newick-formatted tree in a single line. The leaves
 (tips) of the tree must correspond to the taxa in the alignment. The
@@ -291,7 +320,7 @@ Note the following:
 -   the tree need not be fully resolved (bifurcating), although a
     bifurcating tree will make the search faster.
 
-### Evaluating the Clade and Classifying region
+### [](#evaluating-the-clade-and-classifying-region)[Evaluating the Clade and Classifying region](#evaluating-the-clade-and-classifying-region)
 
 Before buliding the final classifier, we must satisfy ourselves that the
 chosen region (Spo0A) is able to classify the chosen group
@@ -310,7 +339,7 @@ hundred - the number can be changed with option `-r`).
 
 Let's try this:
 
-~~~~ {.bash}
+~~~~ {.sourceCode .bash}
 $ ../src/mlgsc_xval Prot Spo0A.msa firmicutes_by_genus.nw
 
 ID_185 Clostridium (202) -> Clostridia (170); Clostridiales (208); Clostridium (168)
@@ -330,12 +359,12 @@ ID_162 Clostridium (187) -> Clostridia (188); Clostridiales (229); Clostridium (
 -   each line represents a different trial, with a different test
     sequence and training set
 
-In all the above lines, the program correctly classifies the queries as
-*Clostridium*. But we're mostly interested in the *errors* -
-specifically, in how many there are. Option `-x` instructs `mlgsc_xval`
-to print only misclassifications:
+In all the above lines, the program correctly classifies the query as
+*Clostridium*. But we're mostly interested in the *errors* - specifically, in
+how many there are. Option `-x` instructs `mlgsc_xval` to print only
+misclassifications:
 
-~~~~ {.bash}
+~~~~ {.sourceCode .bash}
 $ ../src/mlgsc_xval -x Prot Spo0A.msa firmicutes_by_genus.nw 
 
 ID_264 Paenibacillus (196) -> Clostridia (9); Clostridiales (134); Clostridium (59)
@@ -374,7 +403,7 @@ the intended effect? Let's re-run this test, but without the weighting.
 To redo the run on the *same* sequences, we bypass the random draw and
 supply the *seed* shown in the (verbose) output above.
 
-~~~~ {.bash}
+~~~~ {.sourceCode .bash}
 $ ../src/mlgsc_xval -v 2 -R 607539836 -x -W Prot Spo0A.msa firmicutes_by_genus.nw
 Performing 100 rounds of LOO
 alignment:  Spo0A.msa
@@ -399,7 +428,7 @@ at least one sequence of the same taxon is left in the training set. By
 default, it is required that an taxon contain at least three, but this
 number can be changed with option `-m`.
 
-### `mlgsc_train`
+### [](#mlgsc_train)[`mlgsc_train`](#mlgsc_train)
 
 This trains a classifier model (either DNA or protein) from a multiple
 alignment of reference sequences and a phylogenetic tree of the
@@ -409,12 +438,12 @@ This program takes three arguments: (i) one of the two keywords `DNA` or
 `Prot`, to indicate the type of molecule; (ii) the name of the multiple
 alignment file; and (iii) the name of a phylogenetic tree.
 
-##### Example
+##### [](#example-1)[Example](#example-1)
 
 Here are the first three entries in a multiple-FastA alignment of the
 stage 0 sporulation protein A, Spo0A, in Firmicutes, grouped by genus.
 
-### Building the Classifier
+### [](#building-the-classifier)[Building the Classifier](#building-the-classifier)
 
 To train a model using the above alignment and phylogeny, do:
 
@@ -428,7 +457,7 @@ derived from the alignment's name. In this case, the name is
 `Spo0A.bcls` ("binary classifier"). To specify another name, use option
 `-o`.
 
-### `mlgsc`
+### [](#mlgsc)[`mlgsc`](#mlgsc)
 
 The classifier can now be used to classify unknown ("query") sequences.
 This is done with program `mlgsc`, which takes two arguments: the name
@@ -451,14 +480,14 @@ the classifier's accuracy. To do this, we need to evaluate it on queries
 that are *not* part of the training set, and this is the function of the
 third program in the package, `mlgsc_xval`.
 
-Real-world Example
-------------------
+[](#real-world-example)[Real-world Example](#real-world-example)
+----------------------------------------------------------------
 
 The following is an example using real data referred to in the
 [article](http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0129384).
 The data are found in subdirectory `data/manuscript`.
 
-### Building the classifier
+### [](#building-the-classifier-1)[Building the classifier](#building-the-classifier-1)
 
 File `firmicute_Spo0A_prot_train.msa` is a multiple alignment of known
 Spo0A sequences extracted from UniProtKB.
@@ -485,13 +514,13 @@ Option `-v 2` (verbosity level 2) causes run information to be printed.
 Option `-o` specifies a name for the output file, that is, he classifier
 itself.
 
-### Classifying environmental Amplicons
+### [](#classifying-environmental-amplicons)[Classifying environmental Amplicons](#classifying-environmental-amplicons)
 
 File `Spo0A_env_ampl_prot.pep` contains translated amplicons of Spo0A
 from environmental samples (sediment from Lake Geneva). To classify
 these sequences, do:
 
-~~~~ {.bash}
+~~~~ {.sourceCode .bash}
 $ mlgsc Spo0A_env_ampl_prot.pep firmicutes_Spo0A.mod
 IEQTHJI02DW663_1 [1 - 588]  -> unnamed (50); unnamed (44); Brevibacillus (140)
 IEQTHJI02DW663_2 [492 - 1] (REVERSE SENSE)  -> unnamed (135); unnamed (182);
@@ -550,7 +579,7 @@ contains extra information that may not be essential. The format of
 `mlgsc`'s output can be controlled via a printf-like format string, as
 in the following example:
 
-~~~~ {.bash}
+~~~~ {.sourceCode .bash}
 $ mlgsc -f "%i -> %p" Spo0A_env_ampl_prot.pep firmicutes_Spo0A.mod | head
 IEQTHJI02DW663_1 -> Bacilli (50); Paenibacillaceae (44); Brevibacillus (140)
 IEQTHJI02DW663_2 -> Clostridia (135); Clostridiales (182); Clostridium (98)
@@ -583,7 +612,7 @@ short sequence carry less information and may be harder to classify. The
 following format string shows the query length in parentheses, prefixed
 by "`l=`":
 
-~~~~ {.bash}
+~~~~ {.sourceCode .bash}
 $ mlgsc -f "%i (l=%l) -> %p" Spo0A_env_ampl_prot.pep firmicutes_Spo0A.mod
 IEQTHJI02DW663_1 (l=196) -> Bacilli (50); Paenibacillaceae (44); Brevibacillus
 (140)

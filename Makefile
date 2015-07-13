@@ -3,7 +3,7 @@
 INSTALL_DIR=/usr/local/bin
 
 README.html: README.md
-	pandoc --toc -s -o $@ $<
+	pandoc -s -o $@ $<
 
 all: binaries test
 
