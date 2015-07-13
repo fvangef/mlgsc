@@ -334,8 +334,10 @@ so, it takes the alignment and the tree, and does the following:
 2.  Build a classifier using the training set and the tree;
 3.  Classify the test sequence using the classifier.
 
-This procedure is repeated a certain number of times (by default, one
-hundred - the number can be changed with option `-r`).
+This form of cross-validation where the test set contains one datum and the
+training set contains all other data is called *Leave-one-out*.  This procedure
+is repeated a certain number of times (by default, one hundred - the number can
+be changed with option `-r`).
 
 Let's try this:
 
@@ -396,6 +398,8 @@ alignment). It also shows two other possibly important parameters: (i)
 the minimal number of sequences per taxon, and (ii) whether Henikoff
 weighting was applied.
 
+##### Seed
+
 The purpose of weighting is to compensate for the over-representation of
 some taxa (e.g. if one taxon is represented by dozens of reference
 sequences, while another has a single representative). But does it have
@@ -416,39 +420,35 @@ Henikoff weighting: False
 ID_219 Clostridium (201) -> Clostridia (125); Clostridiales (204); Lachnospiraceae (46); Dorea (6)
 ~~~~
 
-In this case, the error rate is *lower* without weighting!
+Where `-R 607539836` specifies the seed, and `-W` suppresses weighting.  In this
+case, the error rate is *lower* without weighting! In our experience, weighting
+is most useful for very unbalanced sets. Cross-validation like this helps
+determine whether or not weighting should be applied.
 
-This form of cross-validation where the test set contains one datum and
-the training set contains all other data is called *Leave-one-out*. In
-the case of `mlgsc_xval`, we are constrained by the fact that a taxon in
-the tree must be represented by *at least one* sequence in the
-alignment, otherwise there is no way for that taxon to be predicted as a
-classification. Therefore, a sequence can become a test sequence only if
-at least one sequence of the same taxon is left in the training set. By
-default, it is required that an taxon contain at least three, but this
-number can be changed with option `-m`.
-
-### [](#mlgsc_train)[`mlgsc_train`](#mlgsc_train)
-
-This trains a classifier model (either DNA or protein) from a multiple
-alignment of reference sequences and a phylogenetic tree of the
-reference taxa.
-
-This program takes three arguments: (i) one of the two keywords `DNA` or
-`Prot`, to indicate the type of molecule; (ii) the name of the multiple
-alignment file; and (iii) the name of a phylogenetic tree.
-
-##### [](#example-1)[Example](#example-1)
-
-Here are the first three entries in a multiple-FastA alignment of the
-stage 0 sporulation protein A, Spo0A, in Firmicutes, grouped by genus.
+<!--
+In the case of `mlgsc_xval`, we are constrained by the fact that a taxon in the
+tree must be represented by *at least one* sequence in the alignment, otherwise
+there is no way for that taxon to be predicted as a classification. Therefore, a
+sequence can become a test sequence only if at least one sequence of the same
+taxon is left in the training set. By default, it is required that an taxon
+contain at least three, but this number can be changed with option `-m`.
+-->
 
 ### [](#building-the-classifier)[Building the Classifier](#building-the-classifier)
 
-To train a model using the above alignment and phylogeny, do:
+An error rate of around 1% seems about right - now we can build the final
+classifier. This is done with `mlgsc_train`.
+
+This program takes the same three arguments as `mlgsc_xval`, namely : (i) one of
+the two keywords `DNA` or `Prot`, to indicate the type of molecule; (ii) the
+name of the multiple alignment file; and (iii) the name of a phylogenetic tree.
+
+Let's build a classifier with the Spo0A sequences from spore-forming Firmicutes
+and the reference phylogeny that we just validated. Since we saw that Henikoff
+weighting did not seem to help, we'll leave it out.
 
 ~~~~ {.shell}
-$ mlgsc_train Prot Spo0A.msa firmicutes_by_genus.nw
+$ mlgsc_train -W Prot Spo0A.msa firmicutes_by_genus.nw
 ~~~~
 
 The output is a binary file. For this reason, it is not written to

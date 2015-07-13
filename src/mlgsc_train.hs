@@ -23,6 +23,7 @@ data Params = Params {
                 , optScaleFactor    :: Double
                 , optOutFName       :: String
                 , optVerbosity      :: Int
+                , optNoHenikoffWt   :: Bool
                 , molType           :: Molecule
                 , alnFName          :: String
                 , treeFName         :: String
@@ -60,12 +61,19 @@ parseVerbosityLevel = option auto
                     <> value 1
                     <> help "0: quiet, 1: normal, 2: verbose")
 
+parseWeighting :: Parser Bool
+parseWeighting =  switch (
+                    short 'W'
+                    <> long "no-Henikoff-weighting"
+                    <> help "don't perform Henikoff weighting of input aln")
+
 parseOptions :: Parser Params
 parseOptions = Params
                 <$> parseSmallProb
                 <*> parseScaleFactor
                 <*> parseOutFName
                 <*> parseVerbosityLevel
+                <*> parseWeighting
                 <*> argument auto (metavar "<DNA|Prot>")
                 <*> argument str (metavar "<alignment file>")
                 <*> argument str (metavar "<tree file>")
@@ -86,7 +94,10 @@ main = do
     fastAInput <-  LTIO.readFile $ alnFName params
     let fastaRecs = fastATextToRecords fastAInput
     let otuAln = (henikoffWeightAln . fastARecordsToAln) fastaRecs
-    let otuAlnMap = alnToAlnMap otuAln
+    let wtOtuAln = if optNoHenikoffWt params
+            then otuAln
+            else henikoffWeightAln otuAln
+    let otuAlnMap = alnToAlnMap wtOtuAln
     let outputFileName = outFName (optOutFName params)
                                   (alnFName params)
     runInfo params outputFileName
@@ -112,13 +123,14 @@ runInfo params outFname
     | optVerbosity params < 2   = do return ()
     | otherwise                 = do
         putStrLn $ unlines [
-            "MLGSC - building model ",
+            "mlgsc_train - building model ",
             ("input alignment:  " ++ (alnFName params)),
             ("input tree: " ++ (treeFName params)),
             ("output: " ++ outFname),
             ("molecule: " ++ (show $ molType params)),
             ("small prob: " ++ (show $ optSmallProb params)),
-            ("scale factor: " ++ (show $ optScaleFactor params))
+            ("scale factor: " ++ (show $ optScaleFactor params)),
+            ("Henikoff weighting: " ++ (show $ not $ optNoHenikoffWt params))
             ]
 
 possibleWarnings :: Params -> OTUTree -> AlnMap -> IO ()
