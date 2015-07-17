@@ -1,7 +1,14 @@
-module FastA (FastA(..), fastATextToRecords, fastAId, fastAOTU,
-    degap) where
+module FastA (
+    FastA(..),
+    fastATextToRecords,
+    fastAId,
+    fastAOTU,
+    degap,
+    idToTaxonMap
+    ) where
 
 import qualified Data.Text.Lazy as LT
+import Data.Map (Map, fromList)
 
 data FastA = FastA { header :: LT.Text, sequence :: LT.Text } deriving (Show)
 
@@ -26,3 +33,9 @@ fastAOTU = (!! 1) . LT.words . FastA.header
 
 degap :: FastA -> FastA
 degap (FastA hdr seq) = FastA hdr $  LT.replace (LT.pack "-") LT.empty seq
+
+idToTaxonMap :: [FastA] -> Map LT.Text LT.Text
+idToTaxonMap records = fromList $ zip ids taxa
+    where   ids     = map fastAId records
+            taxa    = map fastAOTU records
+

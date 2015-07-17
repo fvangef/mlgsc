@@ -6,6 +6,7 @@ import Data.Tree
 data Molecule = DNA | Prot
     deriving (Show, Eq, Read)
 
+type SeqID          = Text
 type Sequence       = Text
 type Column         = Text
 type Residue        = Char
@@ -16,6 +17,8 @@ type OTUTree        = Tree OTUName
 type ScaleFactor    = Double -- TODO shouldn't this be an Int?
 type SmallProb      = Double
 type Score          = Int
+type NewickTree     = Tree Text -- TODO: use this type!
+type IDTaxonPair    = (SeqID, OTUName)
 
 -- A classification step at one node in the model tree, in which the OTU name of
 -- best model, score of best model, score of next-best, and log10 Evidence Ratio

@@ -34,8 +34,6 @@ rowOTU row
     | otherwise = ST.empty
     where lblWords = ST.words $ rowLabel row
 
-
-
 -- Produces an Alignment from a list of FastA records. The row weights are set
 -- to 1.
 
