@@ -5,7 +5,7 @@ import qualified Data.Text.Lazy as LT
 import qualified Data.Text as ST
 import Data.Text (Text)
 import qualified Data.Map as M
-import Data.Map (Map, findWithDefault)
+import Data.Map (Map, findWithDefault, (!))
 import Data.List (nub, sort)
 
 import MlgscTypes
@@ -42,7 +42,9 @@ condenseByTaxon (Node (id,taxon) kids) =
 
 renumberTaxon :: (OTUName, [[SeqID]]) -> [IDTaxonPair]
 -- If a taxon hs a single group (i.e., is monophyletic), don't renumber
-renumberTaxon (taxon,[singleton]) = []
+renumberTaxon (taxon,[singleton]) = 
+    zip singleton $ repeat taxon
+-- Otherwise, append ".1", ".2", etc.
 renumberTaxon (taxon,idgroups) =
     concat $ zipWith (setNumberedTaxon taxon) [1..] idgroups
 
@@ -54,3 +56,6 @@ setNumberedTaxon :: OTUName -> Int -> [SeqID] -> [IDTaxonPair]
 setNumberedTaxon taxon n ids = zip ids $ repeat numtax
     where numtax    = ST.append taxon $ ST.pack $ "." ++ show n
 
+idTreeToRenumTaxonTree :: Map SeqID OTUName -> Tree SeqID -> Tree OTUName
+idTreeToRenumTaxonTree map tree = fmap (rename map) tree
+    where   rename map seqID = findWithDefault ST.empty seqID map
