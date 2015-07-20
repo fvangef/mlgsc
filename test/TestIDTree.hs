@@ -1,9 +1,9 @@
-module TestIDTree where
-
 import Test.HUnit
 
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text as ST
+import Data.Tree (flatten)
+import Data.Tuple (swap)
 
 import IDTree
 import NewickParser
@@ -99,10 +99,8 @@ newick = "(((ID0,ID9,ID10),(ID1,(ID3,ID4),ID5),(ID11,ID12),(ID16,ID17)),((ID6,ID
 fastaRecs1 = fastATextToRecords $ LT.pack fastaInput1
 id2tax = idToTaxonMap fastaRecs1
 -- The map's keys and values are lazy text; we want both strict:
-id2tax' = M.map LT.toStrict id2tax
-id2tax'' = M.mapKeys LT.toStrict id2tax'
-treeWtaxa = fmap (\id -> (id, findWithDefault ST.empty id id2tax'')) tree1 
-cndsTreeWTaxa = condenseByTaxon treeWtaxa
+rnMap = renumberedTaxonMap tree1 fastaRecs1
+
 
 aln1 = fastARecordsToAln fastaRecs1
 map1 = alnToAlnMap aln1
