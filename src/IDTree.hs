@@ -11,8 +11,22 @@ import Data.List (nub, sort)
 import MlgscTypes
 import FastA
 
-renumberedTaxonMap :: Tree SeqID -> [FastA] -> Map SeqID OTUName
+-- Retunrns an ID ->i taxon map, or Nothing if the ID tree's IDs are not unique.
+-- The map renames any multiple clades than may result from paraphyly.
+
+renumberedTaxonMap :: Tree SeqID -> [FastA] -> Maybe (Map SeqID OTUName)
 renumberedTaxonMap tree fastaRecs =
+    if areIdsUnique tree 
+        then Just $ renumberedTaxonMap' tree fastaRecs
+        else Nothing
+        where areIdsUnique tree = idLength == uniqueIdLength
+                where   idLength = length ids
+                        uniqueIdLength = length uniqueIDs 
+                        ids = filter (/= ST.empty) $ flatten tree
+                        uniqueIDs = nub $ sort ids
+
+renumberedTaxonMap' :: Tree SeqID -> [FastA] -> Map SeqID OTUName
+renumberedTaxonMap' tree fastaRecs = 
     M.fromList $ concatMap renumberTaxon $ M.toList tax2id
     where   
             tax2id = M.fromListWith (++) fringe
