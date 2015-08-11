@@ -15,39 +15,39 @@ import Data.Map (findWithDefault)
 
 fastaInput1 = unlines [
     ">ID0 Aeromonas", 
-    "ACGTACGT",
+    "AB-CGTACGT",
     ">ID1 Aeromonas", 
-    "ACGTACGT",
+    "AA-CGTACGT",
     ">ID3 Aeromonas", 
-    "ACGTACGT",
+    "AA-CGTACGT",
     ">ID4 Aeromonas", 
-    "ACGTACGT",
+    "AA-CGTACGT",
     ">ID5 Aeromonas", 
-    "ACGTACGT",
+    "AA-CGTACGT",
     ">ID6 Bacillus", 
-    "BCGTACGT",
+    "BC-CGTACGT",
     ">ID7 Bacillus", 
-    "BCGTACGT",
+    "BB-CGTACGT",
     ">ID8 Bacillus", 
-    "BCGTACGT",
+    "BA-CGTACGT",
     ">ID9 Clostridium", 
-    "CCGTACGT",
+    "CC-CGTACGT",
     ">ID10 Clostridium", 
-    "CCGTACGT",
+    "CB-CGTACGT",
     ">ID11 Clostridium", 
-    "CCGTACGT",
+    "CA-CGTACGT",
     ">ID12 Clostridium", 
-    "CCGTACGT",
+    "CA-CGTACGT",
     ">ID13 Geobacillus", 
-    "GCGTACGT",
+    "GC-CGTACGT",
     ">ID14 Geobacillus", 
-    "GCGTACGT",
+    "GB-CGTACGT",
     ">ID15 Geobacillus", 
-    "GCGTACGT",
+    "GA-CGTACGT",
     ">ID16 Moorea", 
-    "GCGTACGT",
+    "M--CGTACGT",
     ">ID17 Moorea", 
-    "GCGTACGT"
+    "M--CGTACGT"
     ]
 
 
@@ -105,6 +105,73 @@ id2tax = idToTaxonMap fastaRecs1
 
 rnTree = renumTaxonTree rnMap tree1
 rnFastaRecs = renumFastaRecs rnMap fastaRecs1
+
+{- The resulting renamed tree is as follows: note that it is no longer
+paraphyletic, if we consider that some_genus.n != some_genus.m iff m != n. Note
+also that Moorea did not need any renaming as it did not exhibit any paraphyly.
+
+             /-----------+ Aeromonas.2  
+             |                          
+       /-----+-----------+ Clostridium.3
+       |     |                          
+       |     \-----------+ Clostridium.2
+       |                                
+       |     /-----------+ Aeromonas.1  
+       |     |                          
+       |     |     /-----+ Aeromonas.1  
+       +-----+-----+                    
+ /-----+     |     \-----+ Aeromonas.1  
+ |     |     |                          
+ |     |     \-----------+ Aeromonas.1  
+ |     |                                
+ |     |     /-----------+ Clostridium.1
+ |     +-----+                          
+ |     |     \-----------+ Clostridium.1
+ |     |                                
+=+     |     /-----------+ Moorea       
+ |     \-----+                          
+ |           \-----------+ Moorea       
+ |                                      
+ |           /-----------+ Bacillus.3   
+ |     /-----+                          
+ |     |     \-----------+ Geobacillus.3
+ |     |                                
+ \-----+           /-----+ Bacillus.2   
+       |     /-----+                    
+       |     |     \-----+ Geobacillus.2
+       \-----+                          
+             |     /-----+ Bacillus.1   
+             \-----+                    
+                   \-----+ Geobacillus.1
+
+The condensed tree is now:
+
+             /-----------+ Aeromonas.2      ID0
+             |                          
+       /-----+-----------+ Clostridium.3    ID9
+       |     |                          
+       |     \-----------+ Clostridium.2    ID10
+       |                                
+ /-----+-----------------+ Aeromonas.1      ID1,3-5
+ |     |                                
+ |     +-----------------+ Clostridium.1    ID11,12
+ |     |                                
+ |     \-----------------+ Moorea           ID16,17 
+=+                                      
+ |           /-----------+ Bacillus.3       ID6 
+ |     /-----+                          
+ |     |     \-----------+ Geobacillus.3    ID13
+ |     |                                
+ \-----+           /-----+ Bacillus.2       ID7
+       |     /-----+                    
+       |     |     \-----+ Geobacillus.2    ID14
+       \-----+                          
+             |     /-----+ Bacillus.1       ID8 
+             \-----+                    
+                   \-----+ Geobacillus.1    ID15
+
+-}
+
 
 test01 = "ID tree" ~: 0 ~?= 0
 test02 = "ID tree" ~: 0 ~?= 0
