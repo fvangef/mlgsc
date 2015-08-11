@@ -17,6 +17,7 @@ import FastA
 import Classifier (buildClassifier)
 import Weights
 import Alignment
+import IDTree
 
 data Params = Params {
                 optSmallProb        :: Double
@@ -95,10 +96,16 @@ main :: IO ()
 main = do
     params <- execParser parseOptionsInfo
     newickString <- readFile $ treeFName params
-    let (Right rawTtree) = parseNewickTree newickString
+    let (Right rawTree) = parseNewickTree newickString
     fastAInput <-  LTIO.readFile $ alnFName params
     let rawFastaRecs = fastATextToRecords fastAInput
     -- TODO: acc to opt, compute rename map and use renamed tree and record list
+    let (fastaRecs, tree) = if optIDtree params
+                                then (renumFastaRecs rnMap rawFastaRecs,
+                                        renumTaxonTree rnMap rawTree)
+                                else (rawFastaRecs, rawTree)
+                                    where (Just rnMap) = renumberedTaxonMap
+                                                         rawTree rawFastaRecs
     let otuAln = fastARecordsToAln fastaRecs
     let wtOtuAln = if optNoHenikoffWt params
             then otuAln
