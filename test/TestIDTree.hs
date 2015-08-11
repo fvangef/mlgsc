@@ -7,6 +7,7 @@ import Data.Tuple (swap)
 
 import IDTree
 import NewickParser
+import NewickDumper
 import FastA
 import Alignment
 import qualified Data.Map as M
@@ -53,7 +54,7 @@ fastaInput1 = unlines [
 -- A paraphyletic tree, by IDs - not by taxa. This is what one would get from a
 -- tree-building program like RAxML, etc.
 
-newick = "(((ID0,ID9,ID10),(ID1,(ID3,ID4),ID5),(ID11,ID12),(ID16,ID17)),((ID6,ID13),((ID7,ID13),(ID8,ID13))));"
+newick = "(((ID0,ID9,ID10),(ID1,(ID3,ID4),ID5),(ID11,ID12),(ID16,ID17)),((ID6,ID13),((ID7,ID14),(ID8,ID14))));"
 
 -- The genera are as follows - again, note that the tree is (intentionally)
 -- paraphyletic, with most taxa mixed up in several branches:
