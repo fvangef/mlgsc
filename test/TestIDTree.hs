@@ -54,7 +54,7 @@ fastaInput1 = unlines [
 -- A paraphyletic tree, by IDs - not by taxa. This is what one would get from a
 -- tree-building program like RAxML, etc.
 
-newick = "(((ID0,ID9,ID10),(ID1,(ID3,ID4),ID5),(ID11,ID12),(ID16,ID17)),((ID6,ID13),((ID7,ID14),(ID8,ID14))));"
+newick = "(((ID0,ID9,ID10),(ID1,(ID3,ID4),ID5),(ID11,ID12),(ID16,ID17)),((ID6,ID13),((ID7,ID14),(ID8,ID15))));"
 
 -- The genera are as follows - again, note that the tree is (intentionally)
 -- paraphyletic, with most taxa mixed up in several branches:
@@ -99,13 +99,12 @@ newick = "(((ID0,ID9,ID10),(ID1,(ID3,ID4),ID5),(ID11,ID12),(ID16,ID17)),((ID6,ID
 
 fastaRecs1 = fastATextToRecords $ LT.pack fastaInput1
 id2tax = idToTaxonMap fastaRecs1
--- The map's keys and values are lazy text; we want both strict:
-rnMap = renumberedTaxonMap tree1 fastaRecs1
+-- I "know" that this works, in this example, so I assume I can use the Just
+-- c'tor :-)
+(Just rnMap) = renumberedTaxonMap tree1 fastaRecs1
 
-
-aln1 = fastARecordsToAln fastaRecs1
-map1 = alnToAlnMap aln1
-
+rnTree = renumTaxonTree rnMap tree1
+rnFastaRecs = renumFastaRecs rnMap fastaRecs1
 
 test01 = "ID tree" ~: 0 ~?= 0
 test02 = "ID tree" ~: 0 ~?= 0

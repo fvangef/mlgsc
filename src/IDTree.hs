@@ -70,6 +70,17 @@ setNumberedTaxon :: OTUName -> Int -> [SeqID] -> [IDTaxonPair]
 setNumberedTaxon taxon n ids = zip ids $ repeat numtax
     where numtax    = ST.append taxon $ ST.pack $ "." ++ show n
 
-idTreeToRenumTaxonTree :: Map SeqID OTUName -> Tree SeqID -> Tree OTUName
-idTreeToRenumTaxonTree map tree = fmap (rename map) tree
+renumTaxonTree :: Map SeqID OTUName -> Tree SeqID -> Tree OTUName
+renumTaxonTree map tree = fmap (rename map) tree
     where   rename map seqID = findWithDefault ST.empty seqID map
+
+renumFastaRecs :: Map SeqID OTUName -> [FastA] -> [FastA]
+renumFastaRecs rnmap = map updateHdr 
+    where   updateHdr fasta =
+                fasta { header = newHdr } 
+                where   newHdr = LT.replace oldTaxon newTaxon $ header fasta
+                        oldTaxon = fastAOTU fasta 
+                        newTaxon = case M.lookup (LT.toStrict $ fastAId fasta) rnmap of
+                                    (Nothing) -> oldTaxon
+                                    (Just new) -> LT.fromStrict new
+
