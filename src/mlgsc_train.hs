@@ -24,6 +24,7 @@ data Params = Params {
                 , optOutFName       :: String
                 , optVerbosity      :: Int
                 , optNoHenikoffWt   :: Bool
+                , optIDtree         :: Bool
                 , molType           :: Molecule
                 , alnFName          :: String
                 , treeFName         :: String
@@ -74,6 +75,10 @@ parseOptions = Params
                 <*> parseOutFName
                 <*> parseVerbosityLevel
                 <*> parseWeighting
+                <*> switch (
+                    short 'i'
+                    <> long "id-tree"
+                    <> help "input tree labeled by seq ID, not taxa")
                 <*> argument auto (metavar "<DNA|Prot>")
                 <*> argument str (metavar "<alignment file>")
                 <*> argument str (metavar "<tree file>")
@@ -90,10 +95,11 @@ main :: IO ()
 main = do
     params <- execParser parseOptionsInfo
     newickString <- readFile $ treeFName params
-    let (Right tree) = parseNewickTree newickString
+    let (Right rawTtree) = parseNewickTree newickString
     fastAInput <-  LTIO.readFile $ alnFName params
-    let fastaRecs = fastATextToRecords fastAInput
-    let otuAln = (henikoffWeightAln . fastARecordsToAln) fastaRecs
+    let rawFastaRecs = fastATextToRecords fastAInput
+    -- TODO: acc to opt, compute rename map and use renamed tree and record list
+    let otuAln = fastARecordsToAln fastaRecs
     let wtOtuAln = if optNoHenikoffWt params
             then otuAln
             else henikoffWeightAln otuAln
