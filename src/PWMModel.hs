@@ -1,4 +1,4 @@
--- A type class for clade models, i.e., a conserved sequence regions that should
+-- A data type for clade models, i.e., a conserved sequence regions that should
 -- be able to recognize a clade (be it a OTU, or a species, or whatever "rank").
 
 module PWMModel (PWMModel(..), scoreOf, scoreSeq, modLength, cladeName,

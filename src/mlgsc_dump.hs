@@ -25,4 +25,6 @@ main = do
     let taxonTree = fmap cladeName modTree 
     putStrLn "Taxon tree:"
     STIO.putStrLn $ treeToNewick taxonTree 
+    putStrLn "Models"
+    STIO.putStrLn $ foldMap cladeName modTree 
     return ()

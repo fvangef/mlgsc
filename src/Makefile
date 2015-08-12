@@ -1,6 +1,6 @@
 .PHONY: clean install
 
-targets = mlgsc mlgsc_train mlgsc_xval 
+targets = mlgsc mlgsc_train mlgsc_xval mlgsc_dump
 
 GHCFLAGS = -O2
 INSTALLDIR = /usr/local/bin
@@ -19,6 +19,9 @@ mlgsc_train: mlgsc_train.hs MlgscTypes.hs NewickParser.hs FastA.hs \
 mlgsc_xval: mlgsc_xval.hs Align.hs Alignment.hs PWMModelAux.hs PWMModel.hs \
 	Classifier.hs FastA.hs MlgscTypes.hs MlgscTypes.hs \
 	NewickParser.hs PepModel.hs NucModel.hs Weights.hs Output.hs 
+
+mlgsc_dump: mlgsc_dump.hs MlgscTypes.hs NucModel.hs Classifier.hs \
+	NewickDumper.hs
 
 install: all
 	install $(targets) $(INSTALLDIR)
