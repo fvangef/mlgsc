@@ -113,7 +113,7 @@ main = do
     let otuAlnMap = alnToAlnMap wtOtuAln
     let outputFileName = outFName (optOutFName params)
                                   (alnFName params)
-    runInfo params outputFileName
+    runInfo params tree outputFileName
     possibleWarnings params tree otuAlnMap
     let classifier = buildClassifier
                         (molType params)
@@ -131,8 +131,8 @@ main = do
 -- dumpAlnRow :: AlnRow -> ST.Text
 -- dumpAlnRow (AlnRow lbl seq wt) = ST.unwords [lbl, ST.pack $ show wt]
 
-runInfo :: Params -> String -> IO ()
-runInfo params outFname
+runInfo :: Params -> NewickTree -> String -> IO ()
+runInfo params tree outFname
     | optVerbosity params < 2   = do return ()
     | otherwise                 = do
         putStrLn $ unlines [
@@ -143,7 +143,11 @@ runInfo params outFname
             ("molecule: " ++ (show $ molType params)),
             ("small prob: " ++ (show $ optSmallProb params)),
             ("scale factor: " ++ (show $ optScaleFactor params)),
-            ("Henikoff weighting: " ++ (show $ not $ optNoHenikoffWt params))
+            ("Henikoff weighting: " ++ (show $ not $ optNoHenikoffWt params)),
+            ("ID tree: " ++ (show $ optIDtree params)),
+            if (optIDtree params)
+                then "Relabeled tree: " ++ (ST.unpack $ treeToNewick tree)
+                else ""
             ]
 
 possibleWarnings :: Params -> OTUTree -> AlnMap -> IO ()
