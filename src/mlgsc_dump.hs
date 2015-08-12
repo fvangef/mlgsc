@@ -23,9 +23,13 @@ main = do
     [clsfrFname] <- getArgs   
     classifier@(PWMClassifier modTree scale) <- (decodeFile $ clsfrFname) :: IO Classifier
     let taxonTree = fmap cladeName modTree 
-    putStrLn "Taxon tree:"
-    print $ treeToNewick taxonTree 
-    putStrLn "\n"
-    putStrLn "Models"
+    putStrLn $ heading '-' "Taxon tree"
+    STIO.putStrLn $ treeToNewick taxonTree 
+    putStrLn ""
+    putStrLn $ heading '-' "Models"
     putStrLn $ foldMap prettyPrint modTree 
     return ()
+
+heading :: Char -> String -> String
+heading c s = s ++ "\n" ++ (replicate l c) ++ "\n"
+        where l = length s
