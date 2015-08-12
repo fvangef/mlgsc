@@ -14,7 +14,7 @@ import Data.Binary (decodeFile)
 import Data.Tree
 --
 import MlgscTypes
-import PWMModel (cladeName)
+import PWMModel (cladeName, prettyPrint)
 import Classifier (Classifier(..), classifySequence)
 import NewickDumper
 
@@ -24,7 +24,8 @@ main = do
     classifier@(PWMClassifier modTree scale) <- (decodeFile $ clsfrFname) :: IO Classifier
     let taxonTree = fmap cladeName modTree 
     putStrLn "Taxon tree:"
-    STIO.putStrLn $ treeToNewick taxonTree 
+    print $ treeToNewick taxonTree 
+    putStrLn "\n"
     putStrLn "Models"
-    STIO.putStrLn $ foldMap cladeName modTree 
+    putStrLn $ foldMap prettyPrint modTree 
     return ()

@@ -19,7 +19,15 @@
  -}
 
 -- TODO: once it works, restrict exports to the minimal needed set.
-module NucModel (NucModel, nucScoreOf, nucScoreSeq, nucModLength, nucAbsentResScore, nucCladeName, matrix, alnToNucModel) where
+module NucModel (NucModel,
+                    nucScoreOf,
+                    nucScoreSeq,
+                    nucModLength,
+                    nucAbsentResScore,
+                    nucCladeName,
+                    nucPrettyPrint,
+                    matrix,
+                    alnToNucModel) where
 
 -- module  NucModel where -- 
 
@@ -67,6 +75,8 @@ nucModLength nm = U.length vA
 nucAbsentResScore = smallScore
 
 nucCladeName = clade
+
+nucPrettyPrint = undefined
 
 instance Binary NucModel where
     put nm = do

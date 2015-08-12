@@ -21,7 +21,7 @@ mlgsc_xval: mlgsc_xval.hs Align.hs Alignment.hs PWMModelAux.hs PWMModel.hs \
 	NewickParser.hs PepModel.hs NucModel.hs Weights.hs Output.hs 
 
 mlgsc_dump: mlgsc_dump.hs MlgscTypes.hs NucModel.hs Classifier.hs \
-	NewickDumper.hs
+	NewickDumper.hs NucModel.hs PepModel.hs PWMModel.hs
 
 install: all
 	install $(targets) $(INSTALLDIR)

@@ -8,12 +8,16 @@
 -- TODO: once it works, restrict exports to the minimal needed set.
 module PepModel where
 
+import Data.Vector ((!))
 import qualified Data.Vector as V
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
+import Data.List (intercalate, sortBy)
+import Data.Ord (comparing)
 import Data.Binary
 import Data.Vector.Binary
 import Data.Text.Binary
+import Text.Printf
 
 
 import MlgscTypes
@@ -45,6 +49,24 @@ pepModLength = modelLength
 pepAbsentResScore = smallScore
 
 pepCladeName = clade
+
+pepPrettyPrint :: PepModel -> String
+pepPrettyPrint mod = intercalate "\n" [taxonName, modStr, "\n"]
+    where   taxonName = if T.null $ clade mod
+                            then "(unnamed)"
+                            else T.unpack $ clade mod
+            modStr = prettyPrintWM mod
+
+prettyPrintWM :: PepModel -> String
+prettyPrintWM mod = concatMap (\n -> ppMatPos n) [1 .. modelLength mod]   
+    where   ppMatPos n = printf "%3d | %s\n" n posScores
+                     where  posScores = intercalate ", " $
+                                map ppTuple sortedScores :: String
+                            ppTuple (res, score) = 
+                                printf "%c: %d" res score
+                            sortedScores = reverse $ sortBy (comparing snd) $
+                                            M.assocs pMap 
+                            pMap = (matrix mod) ! (n-1)
 
 instance Binary PepModel where
     put mod = do
