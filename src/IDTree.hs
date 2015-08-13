@@ -71,8 +71,21 @@ setNumberedTaxon taxon n ids = zip ids $ repeat numtax
     where numtax    = ST.append taxon $ ST.pack $ "." ++ show n
 
 renumTaxonTree :: Map SeqID OTUName -> Tree SeqID -> Tree OTUName
-renumTaxonTree map tree = fmap (rename map) tree
+renumTaxonTree map tree = condenseByLbl $ fmap (rename map) tree
     where   rename map seqID = findWithDefault ST.empty seqID map
+
+condenseByLbl :: Tree OTUName -> Tree OTUName
+condenseByLbl (Node taxon []) = Node taxon []
+condenseByLbl (Node taxon kids) =
+    case uniqueCondensedKidsTaxa of
+        [] -> error "taxa list must not be empty"
+        [taxon] -> if (taxon == ST.empty)
+                        then Node ST.empty condensedKids
+                        else Node taxon []
+        (txn:taxa) -> Node ST.empty condensedKids
+        where   condensedKids = map condenseByLbl kids
+                condensedKidsTaxa = map rootLabel condensedKids
+                uniqueCondensedKidsTaxa = nub $ sort condensedKidsTaxa 
 
 renumFastaRecs :: Map SeqID OTUName -> [FastA] -> [FastA]
 renumFastaRecs rnmap = map updateHdr 
