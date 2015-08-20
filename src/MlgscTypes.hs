@@ -30,6 +30,7 @@ data Step = PWMStep {
                 , secondBestScore   :: Score
                 , log10ER           :: Double
                 }
+                deriving (Show)
 
 -- A trail of classification steps. Starts at the root of the tree and ends at a
 -- leaf.

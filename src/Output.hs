@@ -149,7 +149,9 @@ formatStep stepFormat step =
 evalStepFmtComponent :: Step -> StepFmtComponent -> ST.Text
 evalStepFmtComponent step component = case component of
     (SLiteral char) -> ST.pack [char]
-    TaxonName       -> otuName step
+    TaxonName       -> if ST.null $ otuName step
+                        then ST.pack "[unnamed]"
+                        else otuName step
     SupportVal      -> ST.pack $ if abs(log10ER step) < 1000
                             then show $ round $ log10ER step
                             else "*"
