@@ -55,7 +55,9 @@ condenseByTaxon (Node (id,taxon) kids) =
                 concatIDs = concatMap (fst . rootLabel) condensedKids 
 
 renumberTaxon :: (OTUName, [[SeqID]]) -> [IDTaxonPair]
--- If a taxon hs a single group (i.e., is monophyletic), don't renumber
+renumberTaxon (empty, _)
+    | ST.null empty = []
+-- If a taxon has a single group (i.e., is monophyletic), don't renumber
 renumberTaxon (taxon,[singleton]) = 
     zip singleton $ repeat taxon
 -- Otherwise, append ".1", ".2", etc.
