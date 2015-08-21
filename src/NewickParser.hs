@@ -9,7 +9,7 @@ import Data.Tree
 
 
 identifier :: Parser String
-identifier = many (letter <|> digit <|> char '_') <?> "identifier"
+identifier = many (letter <|> digit <|> char '_' <|> char '|') <?> "identifier"
 
 -- Note: these "number" parsers actually return (), because they are used to
 -- recognize branch lengths in Newick, which are not used in the classifier.
