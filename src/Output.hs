@@ -36,6 +36,8 @@ data FmtComponent = Literal Char
                     | Query
                     | AlignedQuery
                     | Score
+                    | MinER
+                    | Pred      -- predicted taxon
                     deriving (Show)
                        
 type Format = [FmtComponent]
@@ -49,13 +51,15 @@ literalChar = do
 escape :: Parser FmtComponent
 escape = do
     char '%'
-    f <- oneOf "%ahilpqsu"
+    f <- oneOf "%ahilmPpqsu"
     return $ case f of
                 '%' -> Literal '%'
                 'a' -> AlignedQuery
                 'l' -> QueryLength
                 'h' -> Header
                 'i' -> ID
+                'm' -> MinER
+                'P' -> Pred
                 'p' -> Path
                 'q' -> Query
                 's' -> Score
@@ -83,8 +87,10 @@ evalFmtComponent query alnQry trail stepfmt component = case component of
     Query           -> LT.toStrict $ FastA.sequence query
     AlignedQuery    -> alnQry
     Path            -> trailToPath stepfmt trail 
+    Pred            -> otuName $ last trail
     UPath           -> trailToUPath stepfmt trail 
     Score           -> ST.pack $ show $ bestScore $ last trail
+    MinER           -> pprintER $ minimum $ map log10ER $ trail
     (Literal c)     -> ST.pack [c]
 
 trailToPath :: StepFormat -> Trail -> ST.Text
@@ -130,7 +136,6 @@ stepFmtComponent = sLiteralChar <|> sEscape
 stepFormat :: Parser StepFormat
 stepFormat = many stepFmtComponent
 
-
 parseStepFormatString :: String -> Either ParseError (StepFormat)
 parseStepFormatString sfmt = (parse stepFormat "stepformat" sfmt)
 
@@ -146,13 +151,16 @@ formatStep :: StepFormat -> Step -> ST.Text
 formatStep stepFormat step =
     ST.concat $ map (evalStepFmtComponent step) stepFormat
 
+pprintER :: Double -> ST.Text
+pprintER l10er = ST.pack $ if abs (l10er) < 1000
+                            then show $ round l10er
+                            else "*"
+
 evalStepFmtComponent :: Step -> StepFmtComponent -> ST.Text
 evalStepFmtComponent step component = case component of
     (SLiteral char) -> ST.pack [char]
     TaxonName       -> if ST.null $ otuName step
-                        then ST.pack "[unnamed]"
+                        then ST.empty
                         else otuName step
-    SupportVal      -> ST.pack $ if abs(log10ER step) < 1000
-                            then show $ round $ log10ER step
-                            else "*"
+    SupportVal      -> pprintER $ log10ER step
     BestScore       -> ST.pack $ show $ bestScore step

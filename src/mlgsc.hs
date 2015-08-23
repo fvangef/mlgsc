@@ -16,6 +16,7 @@ import Control.Applicative
 import Control.Monad.Reader
 import Options.Applicative
 
+import Data.Map (Map, fromList, findWithDefault)
 import Data.Binary (decodeFile)
 import Data.Tree
 import MlgscTypes
@@ -65,9 +66,26 @@ parseOptionsInfo = info (helper <*> parseOptions)
                     <> Options.Applicative.header
                         "mlgsc - maximum-likelihood general sequence classifier")
 
+
+-- Some common format options have names (e.g. "simple" -> "%h -> %P"). These
+-- must be translated using the following map
+
+fmtMap :: Map String String
+fmtMap = fromList [
+                    ("minimal", "%i\t%P"),
+                    ("simple", "%h -> %P (%s)")
+                ]
+
+translateFmtKw :: Params -> IO Params
+translateFmtKw params = do
+    let origFmt = optOutFmtString params
+    let fmt = findWithDefault origFmt origFmt fmtMap
+    return params { optOutFmtString = fmt }
+                
+
 main :: IO ()
 main = do
-    params <- execParser parseOptionsInfo
+    params <- execParser parseOptionsInfo >>= translateFmtKw
     queryFastA <- LTIO.readFile $ queryFname params
     let queryRecs = fastATextToRecords queryFastA
     classifier@(PWMClassifier modTree scale) <- (decodeFile $ clsfrFname params) :: IO Classifier
