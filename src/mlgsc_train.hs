@@ -13,6 +13,7 @@ import qualified Data.Text.Lazy.IO as LTIO
 import MlgscTypes
 import NewickParser
 import NewickDumper
+import TaxoParser (parseTaxonomy)
 import FastA
 import Classifier (buildClassifier)
 import Weights
@@ -26,6 +27,7 @@ data Params = Params {
                 , optVerbosity      :: Int
                 , optNoHenikoffWt   :: Bool
                 , optIDtree         :: Bool
+                , optTaxonomy       :: Bool 
                 , molType           :: Molecule
                 , alnFName          :: String
                 , treeFName         :: String
@@ -80,6 +82,10 @@ parseOptions = Params
                     short 'i'
                     <> long "id-tree"
                     <> help "input tree labeled by seq ID, not taxa")
+                <*> switch (
+                    short 'T'
+                    <> long "taxonomy"
+                    <> help "tree file is a taxonomy, not Newick")
                 <*> argument auto (metavar "<DNA|Prot>")
                 <*> argument str (metavar "<alignment file>")
                 <*> argument str (metavar "<tree file>")
@@ -95,8 +101,11 @@ parseOptionsInfo = info (helper <*> parseOptions)
 main :: IO ()
 main = do
     params <- execParser parseOptionsInfo
-    newickString <- readFile $ treeFName params
-    let (Right rawTree) = parseNewickTree newickString
+    treeString <- readFile $ treeFName params
+    let rawTree = if optTaxonomy params
+                    then parseTaxonomy $ treeString
+                    else nwTree
+                        where (Right nwTree) = parseNewickTree treeString
     fastAInput <-  LTIO.readFile $ alnFName params
     let rawFastaRecs = fastATextToRecords fastAInput
     -- TODO: acc to opt, compute rename map and use renamed tree and record list
