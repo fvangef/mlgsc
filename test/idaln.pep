@@ -1,0 +1,34 @@
+>ID0 Aeromonas
+ABCGTACGT
+>ID1 Aeromonas
+AACGTACGT
+>ID3 Aeromonas
+AACGTACGT
+>ID4 Aeromonas
+AACGTACGT
+>ID5 Aeromonas
+AACGTACGT
+>ID6 Bacillus
+BCCGTACGT
+>ID7 Bacillus
+BBCGTACGT
+>ID8 Bacillus
+BACGTACGT
+>ID9 Clostridium
+CCCGTACGT
+>ID10 Clostridium
+CBCGTACGT
+>ID11 Clostridium
+CACGTACGT
+>ID12 Clostridium
+CACGTACGT
+>ID13 Geobacillus
+GCCGTACGT
+>ID14 Geobacillus
+GBCGTACGT
+>ID15 Geobacillus
+GACGTACGT
+>ID16 Moorea
+MCGTACGT
+>ID17 Moorea
+MCGTACGT
