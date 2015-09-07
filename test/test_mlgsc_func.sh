@@ -11,6 +11,6 @@ function test_init
 	fi
 	if [ $BINDIR/mlgsc_train -nt frc_4train.bcls ] ; then
 		echo "re-building frc taxo classifier (binary is newer)"
-		$BINDIR/mlgsc_train -T Prot frc_4train.msa bacteria.taxo
+		$BINDIR/mlgsc_train -T Taxo Prot frc_4train.msa bacteria.taxo
 	fi
 }

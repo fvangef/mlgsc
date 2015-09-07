@@ -70,11 +70,13 @@ parseWeighting =  switch (
                     <> long "no-Henikoff-weighting"
                     <> help "don't perform Henikoff weighting of input aln")
 
-parsePhyloFormat :: Parser PhyloFormat
-parsePhyloFormat = undefined
-                    {- short 'T'
-                    <> long "taxonomy"
-                    <> help "tree file is a taxonomy, not Newick") -}
+-- TODO: extend this to any prefix of "Newick" or "Taxonomy"; handle unknown
+-- format
+
+parsePhyloFormat :: Monad m => String -> m PhyloFormat
+parsePhyloFormat s = if 'N' == head s
+                                then return Newick
+                                else return Taxonomy
 
 parseOptions :: Parser Params
 parseOptions = Params
@@ -87,7 +89,10 @@ parseOptions = Params
                     short 'i'
                     <> long "id-tree"
                     <> help "input tree labeled by seq ID, not taxa")
-                <*> parsePhyloFormat
+                <*> option (str >>= parsePhyloFormat) (
+                    short 'T'
+                    <> long "tree-file-format"
+                    <> value Newick )
                 <*> argument auto (metavar "<DNA|Prot>")
                 <*> argument str (metavar "<alignment file>")
                 <*> argument str (metavar "<tree file>")
@@ -132,6 +137,7 @@ runInfo params tree outFname
             ("small prob: " ++ (show $ optSmallProb params)),
             ("scale factor: " ++ (show $ optScaleFactor params)),
             ("Henikoff weighting: " ++ (show $ not $ optNoHenikoffWt params)),
+            ("Tree format: " ++ (show $ optPhyloFormat params)),
             ("ID tree: " ++ (show $ optIDtree params)),
             if (optIDtree params)
                 then "Relabeled tree: " ++ (ST.unpack $ treeToNewick tree)
