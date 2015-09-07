@@ -19,6 +19,8 @@ import Classifier (buildClassifier)
 import Weights
 import Alignment
 import IDTree
+-- TODO should replace (most of) the above with:
+import API
 
 data Params = Params {
                 optSmallProb        :: Double
@@ -108,7 +110,6 @@ main = do
                         where (Right nwTree) = parseNewickTree treeString
     fastAInput <-  LTIO.readFile $ alnFName params
     let rawFastaRecs = fastATextToRecords fastAInput
-    -- TODO: acc to opt, compute rename map and use renamed tree and record list
     let (fastaRecs, tree) = if optIDtree params
                                 then (renumFastaRecs rnMap rawFastaRecs,
                                         renumTaxonTree rnMap rawTree)
