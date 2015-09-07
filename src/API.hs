@@ -6,45 +6,49 @@
  -}
 
 module API (
-    seqsAndTree
+    rawTree,
+    fastaRecsAndTree,
+    otuAlignmentMap
    )  where
 
+import qualified Data.Text as ST
 import Data.Tree
 
 import MlgscTypes
+import NewickParser
+import Alignment
+import Weights
+import TaxoParser (parseTaxonomy)
 import IDTree (renumFastaRecs, renumTaxonTree,
                 renumberedTaxonMap)
 import FastA
 
-    {-
-    let rawTree = if optTaxonomy params
-                    then parseTaxonomy $ treeString
-                    else nwTree
-                        where (Right nwTree) = parseNewickTree treeString
-    fastAInput <-  LTIO.readFile $ alnFName params
-    let rawFastaRecs = fastATextToRecords fastAInput
-    let (fastaRecs, tree) = if optIDtree params
-                                then (renumFastaRecs rnMap rawFastaRecs,
-                                        renumTaxonTree rnMap rawTree)
-                                else (rawFastaRecs, rawTree)
-                                    where (Just rnMap) = renumberedTaxonMap
-                                                         rawTree rawFastaRecs
-                                                         -}
+{- The phylogeny may be passed as a tree (Newick) or as a taxonomy. The contents
+ - of the phylogeny file must be passed 
+ - TODO: this function does no error handling!
+ -}
 
-{- If the tree is an ID tree (that is, the leaf labels are sequence IDs rather than
- - reference taxon manes - e.g. if the tree has been computed from the sequences
- - in the reference alignment), then a few things need to happen:
- - 1) The sequence IDs must be mapped to taxa. For this, we use the ID and taxon
- -    names from the Fasta headers in the alignment, as usual.
- - 2) The tree must be condensed, i.e. all clades consisting of the same taxon
- -    must be reduced to a single leaf (à la nw_condense).
- - 3) Any remaining multiple occurrences of the same taxon (IOW, the taxon was
- -    not monophyletic - this often occurs and may be due to many causes,
+rawTree :: PhyloFormat -> String -> Tree ST.Text
+rawTree Newick treeString = nwTree
+    where (Right nwTree) = parseNewickTree treeString
+rawTree Taxonomy treeString = parseTaxonomy treeString
+
+{- If the tree is an ID tree (that is, the leaf labels are sequence IDs rather
+ - than reference taxon manes e.g. if the tree has been computed from the
+ - sequences in the reference alignment), then a few things need to happen:
+ -
+ - 1) The sequence IDs must be mapped to taxa. For this, we use the ID and
+ -    taxon names from the Fasta headers in the alignment, as usual.
+ - 2) The tre must be condensed, i.e. all clades consisting of the same
+ -    taxon must be reduced to a single leaf (à la nw_condense).
+ - 3) Any remaining multiple occurrences of the same taxon (IOW, the taxon
+ -    was not monophyletic this often occurs and may be due to many causes,
  -    including noise and nomenclature discrepancies) must be sorted out. In
  -    this case, we just number them, for example if taxon A appears three times
  -    in the tree even after condensing, we renumber them to A.1, A.2 and A.3.
- - 4) The taxa in the reference sequence headers must be renamed to reflect this
- -    fact. This way, the classifier will distinguish A.1 from A.2 and A.3, etc.
+ - 4) The taxa in the reference sequence headers must be renamed to reflect
+ -    this fact. This way, the classifier will distinguish A.1 from A.2 and A.3,
+ -    etc.
  -
  - The following function takes care of this. The boolean isIDtree states if the
  - tree is an ID tree or not. The other two arguments are the "raw" records and
@@ -53,10 +57,18 @@ import FastA
  -}
 
 
-seqsAndTree :: Bool -> [FastA] -> Tree SeqID -> ([FastA], Tree OTUName)
-seqsAndTree isIDtree rawFastaRecs rawTree
-    | isIDtree  = (renumFastaRecs rnMap rawFastaRecs, renumTaxonTree rnMap rawTree)
+fastaRecsAndTree :: Bool -> [FastA] -> Tree SeqID -> ([FastA], Tree OTUName)
+fastaRecsAndTree isIDtree rawFastaRecs rawTree
+    | isIDtree  = (renumFastaRecs rnMap rawFastaRecs,
+                   renumTaxonTree rnMap rawTree)
     | otherwise = (rawFastaRecs, rawTree)
         where (Just rnMap) = renumberedTaxonMap rawTree rawFastaRecs
     
-mkClassifier = undefined
+{- Takes the list of FastA records and builds a Taxon -> Record map; also takes
+ - care of applying Henikoff weighting unless disabled ('noHenWt'). -}
+
+otuAlignmentMap noHenWt fastaRecs = alnToAlnMap wtOtuAln
+    where   otuAln = fastARecordsToAln fastaRecs
+            wtOtuAln = if noHenWt
+                        then otuAln
+                        else henikoffWeightAln otuAln

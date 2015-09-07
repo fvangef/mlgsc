@@ -6,6 +6,8 @@ import Data.Tree
 data Molecule = DNA | Prot
     deriving (Show, Eq, Read)
 
+data PhyloFormat = Newick | Taxonomy
+
 type SeqID          = Text
 type Sequence       = Text
 type Column         = Text
