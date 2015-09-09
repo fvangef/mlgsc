@@ -18,7 +18,6 @@
  -  >
  -}
 
--- TODO: once it works, restrict exports to the minimal needed set.
 module NucModel (NucModel,
                     nucScoreOf,
                     nucScoreSeq,

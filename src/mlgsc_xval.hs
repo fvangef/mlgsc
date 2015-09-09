@@ -27,14 +27,13 @@ import MlgscTypes
 import FastA
 import Alignment
 import Align
-import CladeModel
+import PWMModel
 import Classifier (Classifier(..), buildClassifier, classifySequence, leafOTU)
 import NewickParser
 import NewickDumper
 import Weights
 import Shuffle
 import Output
-import OutputFormatStringParser
 
 data Params = Params {
                 optSmallProb        :: Double
@@ -45,6 +44,7 @@ data Params = Params {
                 , optVerbosity      :: Int
                 , optNoHenikoffWt   :: Bool
                 , optOutFmtString   :: String
+                , optStepFmtString  :: String
                 , optOnlyFalse      :: Bool
                 , optIndices        :: String
                 , molType           :: Molecule
@@ -86,11 +86,11 @@ parseSeed = option auto
 
 parseMinSeqInOTU :: Parser Int
 parseMinSeqInOTU = option auto
-                    (long "min-seq-ino-OTU"
+                    (long "min-seq-in-taxon"
                     <> short 'm'
-                    <> metavar "MIN_SEQ_IN_OTU"
+                    <> metavar "MIN_SEQ_IN_TAXON"
                     <> value (3)
-                    <> help "minimum #member seqs in an OTU")
+                    <> help "minimum #member seqs in a taxon")
 
 parseVerbosity :: Parser Int
 parseVerbosity = option auto
@@ -266,6 +266,12 @@ spliceElemAt seq n = (elem, head >< tail)
 
 -- TODO: rmove the hard-coded constants below!
 -- TODO: refactor, passing params as a single argument, or using a Reader monad
+
+{-
+leaveOneOut :: FmtString -> Molecule -> Bool -> SmallProb -> ScaleFactor ->
+    OTUTree -> Seq FastA -> Int -> ST.Text
+leaveOneOut fmtString mol noHWt smallProb scaleFactor tree fastaRecs n =
+    formatResult fmtString origRec alignedTestSeq prediction 
     where   header = LT.toStrict $ FastA.header testRec
             prediction = classifySequenceWithExtendedTrail classifier alignedTestSeq
             alignedTestSeq = msalign scoringScheme rootMod testSeq
@@ -303,6 +309,7 @@ oneRoundLOO params otuTree fastARecs testRecNdx =
 looReader :: OTUTree -> Seq FastA -> Int -> Reader Params (Maybe ST.Text)
 looReader otuTree fastaRecs testRecNdx = do
     fmtString <- asks optOutFmtString
+    stepFmtString <- asks optStepFmtString
     noHwt <- asks optNoHenikoffWt
     let wtOtuAln = if noHwt
             then otuAln
@@ -311,18 +318,19 @@ looReader otuTree fastaRecs testRecNdx = do
     mol <- asks molType
     smallProb <- asks optSmallProb
     scaleFactor <- asks optScaleFactor
-    let classifier@(Classifier modTree) =
+    let classifier@(PWMClassifier modTree scale) =
             buildClassifier mol smallProb scaleFactor otuAlnMap otuTree
     let rootMod = rootLabel modTree 
     let scoringScheme =
             ScoringScheme (-2) (scoringSchemeMap (absentResScore rootMod))
     let alignedTestSeq = msalign scoringScheme rootMod testSeq
-    let prediction = classifySequence classifier alignedTestSeq
+    let prediction = classifySequence classifier 0 alignedTestSeq
     onlyFalse <- asks optOnlyFalse
     if  (onlyFalse && 
          (leafOTU prediction) == (LT.toStrict $ fastAOTU testRec))
         then return Nothing
-        else return $ Just $ formatResult fmtString origRec alignedTestSeq prediction
+        else return $ Just $ formatResult fmtString
+                stepFmtString origRec alignedTestSeq prediction
     where   header = LT.toStrict $ FastA.header testRec
             testSeq = LT.toStrict $ FastA.sequence origRec
             otuAln = fastARecordsToAln trainSet
