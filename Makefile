@@ -2,9 +2,6 @@
 
 INSTALL_DIR=/usr/local/bin
 
-README.html: README.md
-	pandoc -s -o $@ $<
-
 all: binaries test
 
 binaries:
@@ -15,6 +12,9 @@ test: binaries
 
 install: 
 	install -t $(INSTALL_DIR) src/mlgsc src/mlgsc_train src/mlgsc_xval
+
+README.html: README.md
+	pandoc -s -o $@ $<
 
 clean:
 	cd src && $(MAKE) clean
