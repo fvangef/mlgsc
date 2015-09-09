@@ -12,31 +12,54 @@ import qualified Data.Text.Lazy.IO as LTIO
 import qualified Data.Text as ST
 import qualified Data.Text.IO as STIO
 import Text.Printf
+import qualified Text.Parse as TP
 import Control.Applicative
 import Control.Monad.Reader
 import Options.Applicative
 
 import Data.Binary (decodeFile)
 import Data.Tree
+import Data.Char
+import Data.List
+import Data.Ord
 import MlgscTypes
 import FastA
 import PWMModel
 import Align
-import Classifier (Classifier(..), classifySequence)
+import Classifier (Classifier(..), classifySequence, classifySequenceMulti,
+                    classifySequenceAll)
 import Output
 
+data TreeTraversalMode = BestTraversal | FullTraversal | RecoverTraversal Int
+    
 data Params = Params {
-                optNoAlign          :: Bool
-                , optOutFmtString   :: String
-                , optStepFmtString  :: String
-                , optERCutoff       :: Int
-                , queryFname        :: String
-                , clsfrFname        :: String
+                optTreeTraversalMode   :: TreeTraversalMode
+                , optNoAlign           :: Bool
+                , optOutFmtString      :: String
+                , optStepFmtString     :: String
+                , optERCutoff          :: Int   -- for Best mode
+                , queryFname           :: String
+                , clsfrFname           :: String
                 }
+
+parseTreeTraversal :: Monad m => String -> m TreeTraversalMode
+parseTreeTraversal optString
+    | 'b' == initC = return BestTraversal
+    | 'a' == initC = return FullTraversal
+    | otherwise    = do
+                        let (Right num,_) = TP.runParser TP.parseDec optString
+                        -- TODO: handle bad parse
+                        return $ RecoverTraversal num
+    where initC = toLower $ head optString
 
 parseOptions :: Parser Params
 parseOptions = Params
-                <$> switch
+                <$> option (str >>= parseTreeTraversal)
+                    (long "traversal-mode"
+                    <> short 'm'
+                    <> help "tree traversal mode (b|a|<int>)"
+                    <> value BestTraversal)
+                <*> switch
                     (long "no-align"
                     <> short 'A'
                     <> help "do not align query sequences")
@@ -80,13 +103,53 @@ main = do
     let processedQueries =
             map (processQuery . ST.toUpper .
                 LT.toStrict. FastA.sequence) queryRecs
-    let log10ER = (optERCutoff params)
-    let predictions = map (classifySequence classifier log10ER) processedQueries
-    let outLines = getZipList $ (formatResultWrapper params)
-                                <$> ZipList queryRecs
-                                <*> ZipList processedQueries
-                                <*> ZipList predictions
-    mapM_ STIO.putStrLn outLines
+    let outlines =
+            case optTreeTraversalMode params of
+                BestTraversal -> bestTraversal params classifier queryRecs processedQueries
+                (RecoverTraversal _) -> recoverTraversal params classifier queryRecs processedQueries
+                FullTraversal -> fullTraversal params classifier queryRecs processedQueries
+
+    mapM_ STIO.putStrLn outlines
+
+bestTraversal :: Params -> Classifier -> [FastA] -> [Sequence] -> [ST.Text]
+bestTraversal params classifier queryRecs processedQueries =
+    getZipList $ (formatResultWrapper params)
+        <$> ZipList queryRecs
+        <*> ZipList processedQueries
+        <*> ZipList predictions 
+    where
+        log10ER = optERCutoff params
+        predictions = map (classifySequence classifier log10ER) processedQueries
+
+recoverTraversal :: Params -> Classifier -> [FastA] -> [Sequence] -> [ST.Text]
+recoverTraversal params classifier queryRecs processedQueries =
+    getZipList $ (formatResultWrapper params)
+        <$> ZipList queryRecs
+        <*> ZipList processedQueries
+        <*> ZipList bestPredictions
+    where
+        (RecoverTraversal tieThreshold)  = optTreeTraversalMode params
+        bestPredictions = map getBestPrediction predictions
+        predictions = map (classifySequenceMulti classifier tieThreshold) processedQueries
+    
+getBestPrediction :: [Trail] -> Trail
+getBestPrediction trails = maximumBy (comparing lastScore) trails
+
+lastScore :: Trail -> Score
+lastScore trail = bestScore $ last trail 
+
+fullTraversal :: Params -> Classifier -> [FastA] -> [Sequence] -> [ST.Text]
+fullTraversal params classifier queryRecs processedQueries =
+    concat $ getZipList $ (fullTraversalFmt1Query params)
+        <$> ZipList queryRecs
+        <*> ZipList processedQueries
+        <*> ZipList predictions
+    where
+        predictions = map (classifySequenceAll classifier) processedQueries
+    
+fullTraversalFmt1Query :: Params -> FastA -> Sequence -> [Trail] -> [ST.Text]
+fullTraversalFmt1Query params queryRec processQuery trails =
+    map (formatResultWrapper params queryRec processQuery) trails
 
 {- I like to apply the output formatter in aplicative style to the lists of
  - arguments. However, I'm not sure how to make this play with the Reader monad,

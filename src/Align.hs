@@ -185,11 +185,11 @@ msdpmat scsc hmod vseq = runSTUArray $ do
 {-
 seqISLMatScore :: (PWMModel mod) => mod -> VSequence -> Position -> Position -> Int
 seqISLMatScore hmod vseq i j
-    | prob == -4000 = -1	-- not found at that position
-    | prob == 0 	= 3
-    | prob > -300 	= 2	-- ~ 1000 * log10(0.5)
-    | prob > -600 	= 1	-- ~ 1000 * log10(0.25)
-    | otherwise	= 0
+    | prob == -4000 = -1        -- not found at that position
+    | prob == 0         = 3
+    | prob > -300       = 2     -- ~ 1000 * log10(0.5)
+    | prob > -600       = 1     -- ~ 1000 * log10(0.25)
+    | otherwise = 0
     where   prob    = scoreOf hmod res j
             res     = vseq ! (i-1)
 -}
@@ -210,9 +210,9 @@ scoreModVseq scThr hmod vseq i j =
 {-
 topCell :: Array (Int,Int) DPCell -> (Int,Int)
 topCell mat = fst $ maximumBy cellCmp (assocs mat)
-	where cellCmp (ix1, (DPCell val1 _)) (ix2, (DPCell val2 _))
-		| val1 > val2	= GT
-		| otherwise	= LT
+        where cellCmp (ix1, (DPCell val1 _)) (ix2, (DPCell val2 _))
+                | val1 > val2   = GT
+                | otherwise     = LT
 -}
 
 msalignIA :: ScoringScheme -> PWMModel -> Sequence -> Sequence
@@ -227,8 +227,8 @@ msalign scsc mat seq = T.pack $ nwMatBacktrack (msdpmat scsc mat vseq) vseq
 {-
 nwMatPath :: RawProbMatrix -> String -> String
 nwMatPath hm vs = toPathMatrix (fmap dirSym (nw seqMatScore (-1) hra vra))
-	where 	hra = Mat hm (length hm)
-		vra = Seq vs (length vs)
+        where   hra = Mat hm (length hm)
+                vra = Seq vs (length vs)
 -}
 
 -- TODO: according to DP matrix graph, this function may actually be

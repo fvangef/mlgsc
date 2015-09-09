@@ -8,9 +8,6 @@ test_scripts := $(filter-out $(wildcard *func.sh), $(test_scripts))
 % :: %.hs
 	ghc -i../src --make $<
 
-debug:
-	echo $(test_scripts)
-
 check: check_bins check_scripts
 
 check_bins: $(test_bins)
@@ -19,5 +16,8 @@ check_bins: $(test_bins)
 check_scripts: $(test_scripts)
 	@for test in $(test_scripts); do echo "$$test" ; ./$$test ; done
 
+debug:
+	echo $(test_scripts)
+
 clean:
-	$(RM) $(test_bins) *.o *.hi
+	$(RM) $(test_bins) *.o *.hi clssfr1.bcls

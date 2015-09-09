@@ -2,6 +2,11 @@
 Ideas and TODOs for MLgsc
 =========================
 
+Documentation
+-------------
+
+* **fix README.md**! it is a mess due to a merge.
+
 `mlgsc_dump`
 ------------
 

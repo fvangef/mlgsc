@@ -2,6 +2,8 @@ module Classifier (
     Classifier(..),
     buildClassifier,
     classifySequence,
+    classifySequenceMulti,
+    classifySequenceAll,
     leafOTU) where
 
 import Data.Tree
@@ -9,6 +11,7 @@ import qualified Data.Map.Strict as M
 import qualified Data.List as L
 import Data.Binary (Binary, put, get, Get)
 import Data.Ord
+import Data.Tuple.Select
 
 import MlgscTypes
 import Alignment
@@ -80,10 +83,12 @@ classifySequence (PWMClassifier modTree scale) log10ERcutoff seq =
     chooseSubtree modTree scale log10ERcutoff seq
 
 chooseSubtree :: Tree PWMModel -> ScaleFactor -> Int -> Sequence -> Trail
-chooseSubtree (Node model []) _ _ _ = []
+chooseSubtree (Node _ []) _ _ _ = []
+-- single-kid-node case - there is no meaningful ER to speak of so I just use
+-- 1000 - could be optimized :-)
 chooseSubtree (Node model [kid]) scale cutoff seq
     = PWMStep (cladeName $ rootLabel kid) kidScore 0 1000
-        : chooseSubtree kid scale cutoff seq
+            : chooseSubtree kid scale cutoff seq
     where kidScore = scoreSeq (rootLabel kid) seq
 chooseSubtree (Node model kids) scale cutoff seq
     | diff < (round scale * cutoff) = []
@@ -98,6 +103,59 @@ chooseSubtree (Node model kids) scale cutoff seq
             scores = map (flip scoreSeq seq . rootLabel) kids
             log10ER = log10evidenceRatio (round scale) bestKidScore sndBestKidScore
 
+-- Intended mainly for debugging, as it enables to see a
+-- query's score at every node of the tree, and therefore allows identifying
+-- where the classifier chooses the wrong branch. The recursion starts at the
+-- root (rather than at its children), so we get rid of the Trail's head (hence
+-- the call to map tail).
+
+classifySequenceAll :: Classifier -> Sequence -> [Trail]
+classifySequenceAll (PWMClassifier modTree scale) seq =
+    map tail $ walkSubtrees modTree scale seq bestScore
+        where bestScore = maximum $ map (flip scoreSeq seq . rootLabel) (subForest modTree)
+
+walkSubtrees :: Tree PWMModel -> ScaleFactor -> Sequence -> Score -> [Trail]
+walkSubtrees (Node model []) scale seq bestScore = [[PWMStep name score (-1) log10ER]]
+    where   name = cladeName model
+            score = scoreSeq model seq
+            log10ER = log10evidenceRatio (round scale) bestScore score
+walkSubtrees (Node model kids) scale seq bestScore = 
+    map (thisstep:) $ concat $ map (\kid -> walkSubtrees kid scale seq bestKidScore) kids
+    where   thisstep = PWMStep (cladeName model) score (-1) log10ER
+            score = scoreSeq model seq
+            log10ER = log10evidenceRatio (round scale) bestScore score
+            bestKidScore = maximum kidsScores
+            kidsScores = map (flip scoreSeq seq . rootLabel) kids
+
+classifySequenceMulti :: Classifier -> Int -> Sequence -> [Trail]
+classifySequenceMulti (PWMClassifier modTree scale) log10ERcutoff seq =
+    map tail $ chooseSubtrees modTree scale log10ERcutoff seq bestScore
+        where bestScore = maximum $ map (flip scoreSeq seq . rootLabel) (subForest modTree)
+
+chooseSubtrees :: Tree PWMModel -> ScaleFactor -> Int -> Sequence -> Score -> [Trail]
+chooseSubtrees (Node model []) scale _ seq bestScore = [[PWMStep name score (-1) log10ER]]
+    where   name = cladeName model
+            score = scoreSeq model seq
+            log10ER = log10evidenceRatio (round scale) score bestScore
+chooseSubtrees (Node model kids) scale cutoff seq bestNonTiedScore = 
+    map (thisstep:) $ concat $ map (\kid -> chooseSubtrees kid scale cutoff seq bestNonTiedKidsScore) tiedKids
+    where   thisstep = PWMStep (cladeName model) score (-1) log10ER
+            score = scoreSeq model seq
+            log10ER = log10evidenceRatio (round scale) score bestNonTiedScore 
+            bestKidScore = maximum kidsScores
+            kidsScores = map (flip scoreSeq seq . rootLabel) kids
+            kidlog10ERs = map (log10evidenceRatio (round scale) bestKidScore) kidsScores
+            tiedKids = L.map sel1 tiedKids_tpl
+            (tiedKids_tpl, otherKids_tpl) = L.partition (\(_,_,er) -> er <= cutoff') $ zip3 kids kidsScores kidlog10ERs
+            cutoff' = fromIntegral cutoff
+            bestNonTiedKidsScore = case otherKids_tpl of
+                [] -> sel2 $ L.minimumBy (comparing sel2) tiedKids_tpl
+                otherwise -> sel2 $ L.maximumBy (comparing sel2) otherKids_tpl
+
+
+paths :: OTUTree -> [[OTUName]]
+paths (Node name []) = [[name]]
+paths (Node name kids) = map (name:) $ foldl1 (++) $ map paths kids
 -- finds the (first) object in a list that maximizes some metric m (think score
 -- of a sequence according to a model), returns that object and its index in
 -- the list, as well as the best score and second-best score themselves. Not

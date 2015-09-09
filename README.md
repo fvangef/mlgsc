@@ -165,6 +165,12 @@ level). Spo0A is found in every spore-forming Firmicute species.
 
 ### [Obtaining a reference Alignment and Phylogeny](#obtaining-a-reference-alignment-and-phylogeny)
 
+The alignment should be in aligned (gapped) FastA format. The header lines
+should contain an ID followed by a taxon name. The ID is ignored for training,
+but can be used to identify problematic training sequences; since the first word
+of a FastA header is usually an ID this will allow existing FastA alignments to
+be used with minimal editing.
+
 #### [Reference Alignment](#reference-alignment)
 
 We need reference sequences for all the target taxa, in the form of a
@@ -456,7 +462,85 @@ queries were part of the training set, this cannot be used to validate
 the classifier's accuracy. 
 
 [Real-world Example](#real-world-example)
----------------------------------------------------------------------------------------
+-----------------------------------------
+
+
+The classifier can now be used to classify unknown ("query") sequences. This is
+done with program `mlgsc`, which takes two arguments: the name of the queries
+file, and the name of the classifier. Let's run it on its own input, to see if
+its predicted classifications make sense:
+
+
+```
+$ mlgsc Spo0A.pep Spo0A.bcls
+ID_001 Bacillus -> Bacilli (56); Bacillaceae (97); Bacillus (87)
+ID_002 Clostridium -> Clostridia (106); unnamed (138); Clostridium (83)
+ID_003 Clostridium -> Clostridia (106); unnamed (138); Clostridium (83)
+ID_004 Bacillus -> Bacilli (79); Bacillaceae (95); Bacillus (99)
+ID_005 Bacillus -> Bacilli (84); Bacillaceae (89); Bacillus (104)
+ID_006 Bacillus -> Bacilli (84); Bacillaceae (89); Bacillus (104)
+...
+```
+
+where `Spo0A.pep` contains the (unaligned) Spo0A sequences. As we can see, the
+first six queries are predicted correctly. However, since these queries were
+part of the training set, this cannot be used to validate the classifier's
+accuracy. To do this, we need to evaluate it on queries that are _not_ part of
+the training set, and this is the function of the third program in the package,
+`mlgsc_xval`.
+
+##### Alternative Modes
+
+`mlgsc` has two other modes:
+
+1. Error-recovery: the program explores more of the tree, allowing it to avoid
+   some misclassifications (at the price of longer run times)
+2. Full traversal ("debug"): the program traverses the whole tree. This is used
+   in case of  misclassification, to see where the classifier makes a wrong choice.
+
+###### Error-Recovery mode
+
+By default, when deciding which subtree to explore, `mlgsc` chooses the subtree
+rooted at the node that yields the best score. But with option `-m <threshold>`,
+`mlgsc` will explore _all subtree whose evidence ratio with respect to the best
+score is less than the threshold_. In other words, if a node's ER is less than
+the threshold, the corresponding subtree is considered tied. All ties are
+explored, and at the end, the best among the ties (in terms of score of the leaf
+node) is reported.
+
+For example, with `-m 10`, `mlgsc` will explore the best-scoring branch _as well
+as any branch wth an ER <= 10 with respect to the best one._
+
+Of course, this means that as more branches are explored, the program takes
+longer to run. The effect of the tie threshold can be seen on this plot:
+
+![ER tie cutoff](./img/recovery_err_vs_time.pdf)
+
+
+#### `mlgsc_xval`
+
+The function of `mlgsc_xval` is to validate a classifier. To do so, it takes
+the same inputs as `mlgsc_train` (namely, an alignment and a tree), but instead
+of directly building a classifier, it does the following:
+
+1. Randomly draw one sequence from the alignment. This sequence becomes the
+   _test sequence_, while all the other sequences form the _training set_. The
+   test sequence is thus not part of the training set;
+2. Build a classifier using the training set and the tree;
+3. Classify the test sequence using the classifier.
+
+This procedure is repeated one hundred times (the number can be changed with option `-r`).
+
+This form of cross-validation where the test set contains one datum and the
+training set contains all other data is called _Leave-one-out_. In the case of
+`mlgsc_xval`, we are constrained by the fact that a taxon in the tree must be
+represented by _at least one_ sequence in the alignment, otherwise there is no
+way for that taxon to be predicted as a classification. Therefore, a sequence can
+become a test sequence only if at least one sequence of the same taxon is left in
+the training set. By default, it is required that an taxon contain at least three,
+but this number can be changed with option `-m`.
+
+### Complete Example
 
 The following is an example using real data referred to in the
 [article](http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0129384).
@@ -485,6 +569,38 @@ small prob: 1.0e-4
 scale factor: 1000.0
 ~~~~
 
+Option `-v 2` (verbosity level 2) causes run information to be printed. Option
+`-o` specifies a name for the output file, that is, he classifier itself.
+
+#### Classifying environmental Amplicons
+
+File `Spo0A_env_ampl_prot.pep` contains translated amplicons of Spo0A from
+environmental samples (sediment from Lake Geneva). To classify these sequences,
+do:
+
+```bash
+$ mlgsc Spo0A_env_ampl_prot.pep firmicutes_Spo0A.mod
+IEQTHJI02DW663_1 [1 - 588]  -> unnamed (50); unnamed (44); Brevibacillus (140)
+IEQTHJI02DW663_2 [492 - 1] (REVERSE SENSE)  -> unnamed (135); unnamed (182);
+Clostridium (98)
+IEQTHJI02DXXW9_1 [587 - 3] (REVERSE SENSE)  -> unnamed (3); unnamed (23);
+Paenibacillus (5)
+IEQTHJI02D2KPX_1 [404 - 3] (REVERSE SENSE)  -> unnamed (23); unnamed (86);
+Clostridium (80)
+IEQTHJI02D8PM8_1 [1 - 546]  -> unnamed (14); unnamed (147); Clostridium (162)
+IEQTHJI02D28VO_1 [183 - 593]  -> unnamed (90); unnamed (191); Clostridium (104)
+IEQTHJI02D28VO_2 [593 - 3] (REVERSE SENSE)  -> unnamed (25); unnamed (66);
+Paenibacillus (96)
+IEQTHJI02C9B6J_1 [1 - 534]  -> unnamed (60); unnamed (96); Clostridium (117)
+IEQTHJI02EN3F3_1 [1 - 480]  -> unnamed (5); unnamed (137); Clostridium (151)
+IEQTHJI02C74FC_1 [1 - 438]  -> unnamed (8); unnamed (124); Clostridium (152)
+...
+```
+
+This example uses a tree in which only the leaves are labeled. Leaves must be
+labeled with taxon names for classification to work at all, but MLgsc can also
+use trees with internal labels, as shown below.
+
 Option `-v 2` (verbosity level 2) causes run information to be printed.
 Option `-o` specifies a name for the output file, that is, he model
 itself.
@@ -494,6 +610,18 @@ itself.
 File `Spo0A_env_ampl_prot.pep` contains translated amplicons of Spo0A
 from environmental samples (sediment from Lake Geneva). To classify
 these sequences, do:
+```
+$ mlgsc_train -o firmicutes_Spo0A.mod Prot firmicute_Spo0A_prot_train.msa firmicute_genera_fully-labeled.nw 
+The following tree taxa are NOT found in the alignment:
+Listeria
+```
+
+MLgsc outputs a warning about the taxon name found in the tree but not in the
+alignment. The taxon is simply ignored and this does not prevent MLgsc from
+building a classifier, but discrepancies between alignment and tree may
+indicate that the wrong file(s) are being used, hence the warnings. At any
+rate, any actual _Listeria_ among the queries will be misclassified. To
+suppress all warnings, pass `-v 0` (verbosity level 0: quiet).
 
 ~~~~ 
 $ ../../src/mlgsc Spo0A_env_ampl_prot.pep firmicutes_Spo0A.mod
