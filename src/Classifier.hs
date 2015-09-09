@@ -83,10 +83,12 @@ classifySequence (PWMClassifier modTree scale) log10ERcutoff seq =
     chooseSubtree modTree scale log10ERcutoff seq
 
 chooseSubtree :: Tree PWMModel -> ScaleFactor -> Int -> Sequence -> Trail
-chooseSubtree (Node model []) _ _ _ = []
+chooseSubtree (Node _ []) _ _ _ = []
+-- single-kid-node case - there is no meaningful ER to speak of so I just use
+-- 1000 - could be optimized :-)
 chooseSubtree (Node model [kid]) scale cutoff seq
     = PWMStep (cladeName $ rootLabel kid) kidScore 0 1000
-        : chooseSubtree kid scale cutoff seq
+            : chooseSubtree kid scale cutoff seq
     where kidScore = scoreSeq (rootLabel kid) seq
 chooseSubtree (Node model kids) scale cutoff seq
     | diff < (round scale * cutoff) = []
