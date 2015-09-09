@@ -4,3 +4,4 @@ firmic-Spo0A-prot-optA -A final_prot_aln.msa final_prot_aln.bcls
 firmic-Spo0A-prot-optf1 -f "%i -> %p: %s" final_prot_seq.pep final_prot_aln.bcls
 idaln-def -f "%h -> %P (%s; min ER %m)" idaln.pep idaln.bcls
 frc-taxo-def frc.pep frc_4train.bcls
+all -m a query1.pep frc_4train.bcls
