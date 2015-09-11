@@ -15,14 +15,14 @@ small_prob = 0.0001 :: Double -- need to be specific, else logBase complains
 scale_factor = 1000 :: Double
 
 test_aln1 = [
-	AlnRow "my-OTU" "ATGC-" 1,
-	AlnRow "my-OTU" "AACG-" 1,
-	AlnRow "my-OTU" "AACTN" 1,
-	AlnRow "my-OTU" "ATG--" 1,
-	AlnRow "my-OTU" "ATAAT" 1
-	]
+    AlnRow "my-OTU" "ATGC-" 1,
+    AlnRow "my-OTU" "AACG-" 1,
+    AlnRow "my-OTU" "AACTN" 1,
+    AlnRow "my-OTU" "ATG--" 1,
+    AlnRow "my-OTU" "ATAAT" 1
+    ]
 
-aln1Mod = alnToNucModel small_prob scale_factor test_aln1 
+aln1Mod = alnToNucModel small_prob scale_factor "my-OTU" test_aln1 
 
 -- There are 5 out of 5 'A's in the first column, hence 5/5 ... 1
 test_1 = TestCase (assertEqual "A@1(aln1)" (round (scale_factor * (logBase 10 (5/5)))) (nucScoreOf aln1Mod 'A' 1))
@@ -121,7 +121,7 @@ test_31 = "modLength" ~: (nucModLength aln1Mod) ~?= 5
 
 -- Tests for empty alignments
 --
-aln2Mod = alnToNucModel small_prob scale_factor []
+aln2Mod = alnToNucModel small_prob scale_factor "anonymous" []
 
 test_32 = "emptyAln score" ~: (nucScoreSeq aln2Mod "AATGC") ~?= (minBound :: Int)
 
@@ -133,14 +133,14 @@ test_32 = "emptyAln score" ~: (nucScoreSeq aln2Mod "AATGC") ~?= (minBound :: Int
 -- type, apart from having the same value.
 
 test_aln3 = [
-	AlnRow "my_OTU" "ATGC-" 1,
-	AlnRow "my_OTU" "AACG-" 1,
-	AlnRow "my_OTU" "AACTN" 1,
-	AlnRow "my_OTU" "ATG--" 1,
-	AlnRow "my_OTU" "ATAAT" 1
-	]
+    AlnRow "my_OTU" "ATGC-" 1,
+    AlnRow "my_OTU" "AACG-" 1,
+    AlnRow "my_OTU" "AACTN" 1,
+    AlnRow "my_OTU" "ATG--" 1,
+    AlnRow "my_OTU" "ATAAT" 1
+    ]
 
-aln3Mod = alnToNucModel small_prob scale_factor test_aln3 
+aln3Mod = alnToNucModel small_prob scale_factor "my_OTU" test_aln3 
 
 test_40 = TestCase (assertEqual "A@1(aln3)" (round (scale_factor * (logBase 10 (5/5)))) (nucScoreOf aln3Mod 'A' 1))
 test_41 = TestCase (assertEqual "C@1(aln3)" (round (scale_factor * (logBase 10 small_prob))) (nucScoreOf aln3Mod 'C' 1))
@@ -151,14 +151,14 @@ test_44 = TestCase (assertEqual "D@1(aln3)" (round (scale_factor * (logBase 10 s
 -- Now, we use non-unit weights.
 
 test_aln4 = [
-	AlnRow "my_OTU_wght" "ATGC-" 2,
-	AlnRow "my_OTU_wght" "AACG-" 1,
-	AlnRow "my_OTU_wght" "AACTN" 3,
-	AlnRow "my_OTU_wght" "ATG--" 2,
-	AlnRow "my_OTU_wght" "ATAAT" 1
-	]
+    AlnRow "my_OTU_wght" "ATGC-" 2,
+    AlnRow "my_OTU_wght" "AACG-" 1,
+    AlnRow "my_OTU_wght" "AACTN" 3,
+    AlnRow "my_OTU_wght" "ATG--" 2,
+    AlnRow "my_OTU_wght" "ATAAT" 1
+    ]
 
-aln4Mod = alnToNucModel small_prob scale_factor test_aln4 
+aln4Mod = alnToNucModel small_prob scale_factor "my_OTU_wght" test_aln4 
 
 
 test_51 = TestCase (assertEqual "A@1(aln4)" (round (scale_factor * (logBase 10 (9/9)))) (nucScoreOf aln4Mod 'A' 1))
@@ -205,32 +205,32 @@ test_83 = "ATCGN" ~: (nucScoreSeq aln4Mod "ATCGN") ~?= (es [9/9, 5/9, 4/9, 1/9, 
 -- Test model length
 
 tests = TestList [
-		    TestLabel "nucScoreOf" test_1
-		    , TestLabel "nucScoreOf" test_2
-		    , TestLabel "nucScoreOf" test_3
-		    , TestLabel "nucScoreOf" test_4
-		    , TestLabel "nucScoreOf" test_5
-		    , TestLabel "nucScoreOf" test_6
-		    , TestLabel "nucScoreOf" test_7
-		    , TestLabel "nucScoreOf" test_8
-		    , TestLabel "nucScoreOf" test_9
-		    , TestLabel "nucScoreOf" test_10
-		    , TestLabel "nucScoreOf" test_11
-		    , TestLabel "nucScoreOf" test_12
-		    , TestLabel "nucScoreOf" test_13
-		    , TestLabel "nucScoreOf" test_14
-		    , TestLabel "nucScoreOf" test_15
-		    , TestLabel "nucScoreOf" test_16
-		    , TestLabel "nucScoreOf" test_17
-		    , TestLabel "nucScoreOf" test_18
-		    , TestLabel "nucScoreOf" test_19
-		    , TestLabel "nucScoreOf" test_20
-		    , TestLabel "nucScoreOf" test_21
-		    , TestLabel "nucScoreOf" test_22
-		    , TestLabel "nucScoreOf" test_23
-		    , TestLabel "nucScoreOf" test_24
-		    , TestLabel "nucScoreOf" test_25
-		    , TestLabel "nucScoreOf" test_26
+            TestLabel "nucScoreOf" test_1
+            , TestLabel "nucScoreOf" test_2
+            , TestLabel "nucScoreOf" test_3
+            , TestLabel "nucScoreOf" test_4
+            , TestLabel "nucScoreOf" test_5
+            , TestLabel "nucScoreOf" test_6
+            , TestLabel "nucScoreOf" test_7
+            , TestLabel "nucScoreOf" test_8
+            , TestLabel "nucScoreOf" test_9
+            , TestLabel "nucScoreOf" test_10
+            , TestLabel "nucScoreOf" test_11
+            , TestLabel "nucScoreOf" test_12
+            , TestLabel "nucScoreOf" test_13
+            , TestLabel "nucScoreOf" test_14
+            , TestLabel "nucScoreOf" test_15
+            , TestLabel "nucScoreOf" test_16
+            , TestLabel "nucScoreOf" test_17
+            , TestLabel "nucScoreOf" test_18
+            , TestLabel "nucScoreOf" test_19
+            , TestLabel "nucScoreOf" test_20
+            , TestLabel "nucScoreOf" test_21
+            , TestLabel "nucScoreOf" test_22
+            , TestLabel "nucScoreOf" test_23
+            , TestLabel "nucScoreOf" test_24
+            , TestLabel "nucScoreOf" test_25
+            , TestLabel "nucScoreOf" test_26
             , TestLabel "nucScoreSeq" test_27
             , TestLabel "nucScoreSeq" test_28
             , TestLabel "nucScoreSeq" test_29
@@ -271,7 +271,7 @@ tests = TestList [
             , TestLabel "nucScoreSeq" test_81
             , TestLabel "nucScoreSeq" test_82
             , TestLabel "nucScoreSeq" test_83
-		]
+        ]
 
 main = do
     runTestTT tests

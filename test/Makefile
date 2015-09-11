@@ -1,23 +1,24 @@
-.PHONY: clean check_scripts
+.PHONY: clean check_scripts unit_tests
 
-test_sources = $(wildcard *.hs)
-test_bins = $(basename $(test_sources))
+unit_test_srcs = $(wildcard Test[A-Z]*.hs) 
+unit_test_progs = $(basename $(unit_test_srcs))
 test_scripts = $(filter-out test_prog.sh, $(wildcard test*.sh))
 test_scripts := $(filter-out $(wildcard *func.sh), $(test_scripts))
 
 % :: %.hs
 	ghc -i../src --make $<
 
-check: check_bins check_scripts
+check: unit_tests check_scripts
 
-check_bins: $(test_bins)
-	@for test in $(test_bins) ; do echo "$$test" ; ./$$test ; done
+unit_tests: $(unit_test_progs)
+	@for unittest in $(unit_test_progs); do echo "$$unittest" ; ./$$unittest ; done
 
 check_scripts: $(test_scripts)
 	@for test in $(test_scripts); do echo "$$test" ; ./$$test ; done
 
 debug:
-	echo $(test_scripts)
+	@echo Test scripts: $(test_scripts)
+	@echo Unit tests: $(unit_test_progs)
 
 clean:
 	$(RM) $(test_bins) *.o *.hi clssfr1.bcls
