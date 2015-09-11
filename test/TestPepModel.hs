@@ -84,9 +84,9 @@ test_25 = "D@5(aln1)" ~: (round (scale_factor * (logBase 10 (3/5))))
 
 test_26 = TestCase
     (do
-        removeIfExists "aln1Mod.bmod"
-        encodeFile "aln1Mod.bmod" aln1Mod
-        aln2Mod <- decodeFile "aln1Mod.bmod"
+        removeIfExists "aln1Mod.bcls"
+        encodeFile "aln1Mod.bcls" aln1Mod
+        aln2Mod <- decodeFile "aln1Mod.bcls"
         assertEqual "store-read" aln1Mod aln2Mod
         round (scale_factor * (logBase 10 (5/5)))
             @=? pepScoreOf aln1Mod 'V' 1

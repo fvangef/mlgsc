@@ -71,7 +71,7 @@ exp8 = "RE--KQPSVIMKPFDMENLVYHIRQVHG"
 test8 = TestCase (assertEqual "small real 4" exp8 (msalign scoring mod2 input8))
 
 input9 = "VAILGYMDIPKMPKPFDFVVFINRIRELVSPCWFL"
-exp9 = "MDIPKMP----KPFDFVVFINRIRELVS"
+exp9 = "MDIPKMPK----PFDFVVFINRIRELVS"
 test9 = TestCase (assertEqual "small real 5" exp9 (msalign scoring mod2 input9))
 
 input10 = "VAILGYMDIPKMPKIIVKVFINRIRELVSPCWFL"

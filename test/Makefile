@@ -2,6 +2,8 @@
 
 unit_test_srcs = $(wildcard Test[A-Z]*.hs) 
 unit_test_progs = $(basename $(unit_test_srcs))
+unit_test_srcs := $(filter-out TestFileUtils, $(unit_test_progs))
+
 test_scripts = $(filter-out test_prog.sh, $(wildcard test*.sh))
 test_scripts := $(filter-out $(wildcard *func.sh), $(test_scripts))
 
@@ -21,4 +23,4 @@ debug:
 	@echo Unit tests: $(unit_test_progs)
 
 clean:
-	$(RM) $(unit_test_progs) *.o *.hi clssfr1.bcls
+	$(RM) $(unit_test_progs) *.o *.hi clssfr1.bcls aln1Mod.bcls
