@@ -35,6 +35,7 @@ data PepModel = PepModel {
 -- start at 0.
 pepScoreOf :: PepModel -> Residue -> Position -> Int
 pepScoreOf (PepModel _ _ smallScore 0) _ _ = smallScore -- empty models
+pepScoreOf _ '.' _ = 0 -- masked residues have a score of 0
 pepScoreOf mod res pos = M.findWithDefault (smallScore mod) res posMap
     where posMap = (matrix mod) V.! (pos - 1)
 

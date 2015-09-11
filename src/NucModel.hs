@@ -51,6 +51,7 @@ data NucModel = NucModel {
 
 --Remember: sequence positions start -- at 1, but vector indexes (sensibly)
 -- start at 0.
+nucScoreOf _ '.' _  = 0 -- masked residues have a score of zero
 nucScoreOf nm res pos
     | res == 'A'    = (mat V.! 0) U.! (pos - 1)
     | res == 'C'    = (mat V.! 1) U.! (pos - 1)
