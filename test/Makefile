@@ -21,4 +21,4 @@ debug:
 	@echo Unit tests: $(unit_test_progs)
 
 clean:
-	$(RM) $(test_bins) *.o *.hi clssfr1.bcls
+	$(RM) $(unit_test_progs) *.o *.hi clssfr1.bcls

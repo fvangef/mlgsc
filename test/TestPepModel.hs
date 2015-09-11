@@ -135,21 +135,23 @@ es ps = sum $ map (round . (scale_factor *) . (logBase 10)) ps
 
 test_27 = "AAAAA" ~: (pepScoreSeq aln1Mod "AAAAA") ~?= (es [small_prob, 2/5, small_prob, small_prob, small_prob])
 test_28 = "-----" ~: (pepScoreSeq aln1Mod "-----") ~?= (es [small_prob, small_prob, small_prob, 1/5, 3/5])
-test_29 = "ATCG-" ~: (pepScoreSeq aln1Mod "ATCG-") ~?= (es [5/5, 3/5, 2/5, 1/5, 3/5])
-test_30 = "ATCGN" ~: (pepScoreSeq aln1Mod "ATCGN") ~?= (es [5/5, 3/5, 2/5, 1/5, small_prob])
+test_29 = "VIRQY" ~: (pepScoreSeq aln1Mod "VIRQY") ~?= (es [5/5, 3/5, 2/5, 1/5, 1/5])
+test_30 = "VIK--" ~: (pepScoreSeq aln1Mod "VIK--") ~?= (es [5/5, 3/5, 2/5, 1/5, 3/5])
                              
 -- Test model length
 
 test_31 = "modLength" ~: (pepModLength aln1Mod) ~?= 5
 
--- Tests for empty alignments
+-- Tests for empty alignments (as they can appear if some taxon is mentioned in
+-- a tree but no representatives are found in the training alignment).
 --
 aln2Mod = alnToPepModel small_prob scale_factor "anonymous" []
 
-test_32 = "emptyAln score" ~: (pepScoreSeq aln2Mod "AATGC") ~?= (minBound :: Int)
+test_32 = "emptyAln score" ~: (pepScoreSeq aln2Mod "LEHQWVN") ~?= (minBound :: Int)
 
 -- Tests models with weighted sequences
---
+-- NOTE: I will leave A, C, G, and T for these tests - just think of them as
+-- alanine, cysteine, glycine, and threonine :-)
 
 -- This is exactly the same as aln1, so we can happiliy re-use those tests.
 -- TODO: once the test pass, remove this aln - aln1 and aln3 are now of the same
@@ -223,7 +225,7 @@ test_75 = "D@5(aln4)" ~: (round (scale_factor * (logBase 10 (5/9)))) ~?= (pepSco
 test_80 = "AAAAA" ~: (pepScoreSeq aln4Mod "AAAAA") ~?= (es [9/9, 4/9, 1/9, 1/9, small_prob])
 test_81 = "-----" ~: (pepScoreSeq aln4Mod "-----") ~?= (es [small_prob, small_prob, small_prob, 2/9, 5/9])
 test_82 = "ATCG-" ~: (pepScoreSeq aln4Mod "ATCG-") ~?= (es [9/9, 5/9, 4/9, 1/9, 5/9])
-test_83 = "ATCGN" ~: (pepScoreSeq aln4Mod "ATCGN") ~?= (es [9/9, 5/9, 4/9, 1/9, small_prob])
+test_83 = "ATCGN" ~: (pepScoreSeq aln4Mod "ATCGN") ~?= (es [9/9, 5/9, 4/9, 1/9, 3/9])
                              
 -- Test model length
 

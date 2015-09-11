@@ -40,7 +40,7 @@ pepScoreOf mod res pos = M.findWithDefault (smallScore mod) res posMap
 
 -- TODO: try to rewrite this in applicative style
 pepScoreSeq :: PepModel -> Sequence -> Int
-pepScoreSeq (PepModel _ _ smallScore 0) seq = smallScore * T.length seq
+pepScoreSeq (PepModel _ _ smallScore 0) seq = minBound :: Int
 pepScoreSeq mod seq = sum $ map (\(res,pos) -> pepScoreOf mod res pos) seqWithPos
     where seqWithPos = zip (T.unpack seq) [1..] -- eg [('A',1), ...], etc.
 
