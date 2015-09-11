@@ -88,10 +88,8 @@ test_26 = TestCase
         assertEqual "store-read" aln1Mod aln2Mod
         round (scale_factor * (logBase 10 (5/5)))
             @=? pepScoreOf aln1Mod 'V' 1
-        -- There are 0 out of 5 'C's in the first column: use small_prob
         round (scale_factor * (logBase 10 small_prob))
             @=? pepScoreOf aln1Mod 'C' 1
-        -- 'D' is for 'dash'
         round (scale_factor * (logBase 10 small_prob))
             @=? pepScoreOf aln1Mod '-' 1
         
@@ -124,13 +122,10 @@ test_26 = TestCase
         
         round (scale_factor * (logBase 10 small_prob))
             @=? pepScoreOf aln1Mod 'A' 5
-        -- we _always_ divide by the number of sequences in the aln, even when non-{ATGC-} residues occur (like N)
         round (scale_factor * (logBase 10 (1/5)))
             @=? pepScoreOf aln1Mod 'Y' 5
         round (scale_factor * (logBase 10 (3/5)))
             @=? pepScoreOf aln1Mod '-' 5
-        
-
         )
 
 -- Computes the expected score from the list of positional frequencies. Short
@@ -138,7 +133,7 @@ test_26 = TestCase
 --
 es ps = sum $ map (round . (scale_factor *) . (logBase 10)) ps
 
-test_27 = "AAAAA" ~: (pepScoreSeq aln1Mod "AAAAA") ~?= (es [5/5, 2/5, 1/5, 1/5, small_prob])
+test_27 = "AAAAA" ~: (pepScoreSeq aln1Mod "AAAAA") ~?= (es [small_prob, 2/5, small_prob, small_prob, small_prob])
 test_28 = "-----" ~: (pepScoreSeq aln1Mod "-----") ~?= (es [small_prob, small_prob, small_prob, 1/5, 3/5])
 test_29 = "ATCG-" ~: (pepScoreSeq aln1Mod "ATCG-") ~?= (es [5/5, 3/5, 2/5, 1/5, 3/5])
 test_30 = "ATCGN" ~: (pepScoreSeq aln1Mod "ATCGN") ~?= (es [5/5, 3/5, 2/5, 1/5, small_prob])
