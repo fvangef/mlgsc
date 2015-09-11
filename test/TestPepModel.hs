@@ -1,12 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import Test.HUnit
-import Data.Binary
 import qualified Data.Text as T
-
+import Data.Binary
+  
 import TestFileUtils
 import CladeModel
 import PepModel
+import NucModel
+import PWMModel
 import Alignment
 
 -- Numeric testing of PepModels:
@@ -137,6 +139,8 @@ test_27 = "AAAAA" ~: (pepScoreSeq aln1Mod "AAAAA") ~?= (es [small_prob, 2/5, sma
 test_28 = "-----" ~: (pepScoreSeq aln1Mod "-----") ~?= (es [small_prob, small_prob, small_prob, 1/5, 3/5])
 test_29 = "VIRQY" ~: (pepScoreSeq aln1Mod "VIRQY") ~?= (es [5/5, 3/5, 2/5, 1/5, 1/5])
 test_30 = "VIK--" ~: (pepScoreSeq aln1Mod "VIK--") ~?= (es [5/5, 3/5, 2/5, 1/5, 3/5])
+-- A dot stands for a masked position, and has a score of 0
+test_33 = "mask" ~: (pepScoreSeq aln1Mod ".....") ~?= 0
                              
 -- Test model length
 
@@ -255,6 +259,7 @@ tests = TestList [
             , TestLabel "pepScoreSeq" test_30
             , TestLabel "pepScoreSeq" test_31
             , TestLabel "pepScoreSeq" test_32
+            , TestLabel "pepScoreSeq" test_33
             , TestLabel "wgt pepScoreOf" test_40
             , TestLabel "wgt pepScoreOf" test_41
             , TestLabel "wgt pepScoreOf" test_42

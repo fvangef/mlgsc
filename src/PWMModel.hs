@@ -14,10 +14,7 @@ data PWMModel = NucPWMModel NucModel
                 | PepPWMModel PepModel
                 deriving (Show, Eq)
 
--- By convention, a '.' denotes a masked position, to which we attribute a score
--- of zero.
 scoreOf :: PWMModel -> Residue -> Position -> Int
-scoreOf _ '.' _                 = 0
 scoreOf (NucPWMModel nm) res pos = nucScoreOf nm res pos
 scoreOf (PepPWMModel spm) res pos = pepScoreOf spm res pos
 
