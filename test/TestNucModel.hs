@@ -112,6 +112,9 @@ test_27 = "AAAAA" ~: (nucScoreSeq aln1Mod "AAAAA") ~?= (es [5/5, 2/5, 1/5, 1/5, 
 test_28 = "-----" ~: (nucScoreSeq aln1Mod "-----") ~?= (es [small_prob, small_prob, small_prob, 1/5, 3/5])
 test_29 = "ATCG-" ~: (nucScoreSeq aln1Mod "ATCG-") ~?= (es [5/5, 3/5, 2/5, 1/5, 3/5])
 test_30 = "ATCGN" ~: (nucScoreSeq aln1Mod "ATCGN") ~?= (es [5/5, 3/5, 2/5, 1/5, small_prob])
+-- A dot stands for a masked position, and has a score of 0
+test_33 = "mask" ~: (nucScoreSeq aln1Mod ".....") ~?= 0
+test_34 = "pmask" ~: (nucScoreSeq aln1Mod ".TCG.") ~?= (es [3/5, 2/5, 1/5])
                              
 -- Test model length
 
@@ -235,6 +238,8 @@ tests = TestList [
             , TestLabel "nucScoreSeq" test_30
             , TestLabel "nucScoreSeq" test_31
             , TestLabel "nucScoreSeq" test_32
+            , TestLabel "nucScoreSeq" test_33
+            , TestLabel "nucScoreSeq" test_34
             , TestLabel "wgt nucScoreOf" test_40
             , TestLabel "wgt nucScoreOf" test_41
             , TestLabel "wgt nucScoreOf" test_42
