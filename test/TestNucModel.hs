@@ -12,6 +12,7 @@ import Alignment
 -- Numeric testing of NucModels:
 
 small_prob = 0.0001 :: Double -- need to be specific, else logBase complains
+small_score = round (scale_factor * (logBase 10 small_prob))
 scale_factor = 1000 :: Double
 
 test_aln1 = [
@@ -124,7 +125,7 @@ test_31 = "modLength" ~: (nucModLength aln1Mod) ~?= 5
 --
 aln2Mod = alnToNucModel small_prob scale_factor "anonymous" []
 
-test_32 = "emptyAln score" ~: (nucScoreSeq aln2Mod "AATGC") ~?= (minBound :: Int)
+test_32 = "emptyAln score" ~: (nucScoreSeq aln2Mod "AATGC") ~?= 5 * small_score
 
 -- Tests models with weighted sequences
 --
