@@ -31,15 +31,18 @@ import Classifier (Classifier(..), classifySequence, classifySequenceMulti,
 import Output
 
 data TreeTraversalMode = BestTraversal | FullTraversal | RecoverTraversal Int
+
+data MaskMode = None | Trim
     
 data Params = Params {
-                optTreeTraversalMode   :: TreeTraversalMode
-                , optNoAlign           :: Bool
-                , optOutFmtString      :: String
-                , optStepFmtString     :: String
-                , optERCutoff          :: Int   -- for Best mode
-                , queryFname           :: String
-                , clsfrFname           :: String
+                optTreeTraversalMode    :: TreeTraversalMode
+                , optNoAlign            :: Bool
+                , optOutFmtString       :: String
+                , optStepFmtString      :: String
+                , optERCutoff           :: Int   -- for Best mode (TODO: could be an argument to the BestTraversal c'tor)
+                , optMaskMode           :: MaskMode
+                , queryFname            :: String
+                , clsfrFname            :: String
                 }
 
 parseTreeTraversal :: Monad m => String -> m TreeTraversalMode
@@ -50,6 +53,13 @@ parseTreeTraversal optString
                         let (Right num,_) = TP.runParser TP.parseDec optString
                         -- TODO: handle bad parse
                         return $ RecoverTraversal num
+    where initC = toLower $ head optString
+
+parseMaskMode :: Monad m => String -> m MaskMode
+parseMaskMode optString
+    | 't' == initC = return Trim
+    | 'n' == initC = return None
+    | otherwise = return None -- TODO: warn about unrecognized opt
     where initC = toLower $ head optString
 
 parseOptions :: Parser Params
@@ -78,6 +88,11 @@ parseOptions = Params
                     <> short 'e'
                     <> help "drop clades with ER lower than this"
                     <> value 0)
+                <*> option (str >>= parseMaskMode)
+                    (long "mask-mode"
+                    <> short 'M'
+                    <> help "mask aligned query: n)one* | t)trim"
+                    <> value None)
                 <*> argument str (metavar "<query seq file>")
                 <*> argument str (metavar "<classifier file>")
 
@@ -95,14 +110,20 @@ main = do
     let queryRecs = fastATextToRecords queryFastA
     classifier@(PWMClassifier modTree scale) <- (decodeFile $ clsfrFname params) :: IO Classifier
     let rootMod = rootLabel modTree
+    -- TODO: replace the magic "2" below by a meaningful constant/param
     let scoringScheme = ScoringScheme (-2) (scoringSchemeMap (absentResScore rootMod))
-    let processQuery = if (optNoAlign params)
-                            then id
-                            else (msalign scoringScheme rootMod)
     let headers = map FastA.header queryRecs
     let processedQueries =
-            map (processQuery . ST.toUpper .
-                LT.toStrict. FastA.sequence) queryRecs
+            map (
+                -- All the transformations from Fasta record to ready-to-score
+                -- query. Note that some (mb*) depend on params among other
+                -- things.
+                mbMask params
+                . mbAlign params scoringScheme rootMod
+                . ST.toUpper
+                . LT.toStrict
+                . FastA.sequence
+            ) queryRecs
     let outlines =
             case optTreeTraversalMode params of
                 BestTraversal -> bestTraversal params classifier queryRecs processedQueries
@@ -110,6 +131,20 @@ main = do
                 FullTraversal -> fullTraversal params classifier queryRecs processedQueries
 
     mapM_ STIO.putStrLn outlines
+
+-- Returns an alignment step (technically, a ST.Text -> ST.Text function), or
+-- just id if option 'optNoAlign' is set.
+mbAlign params scsc rootMod =
+    if optNoAlign params
+            then id
+            else msalign scsc rootMod
+
+-- Returns a masking step (a ST.Text -> ST.Text function), or just id if no
+-- masking was requested.
+mbMask params =
+    case optMaskMode params of
+        None -> id
+        Trim -> undefined
 
 bestTraversal :: Params -> Classifier -> [FastA] -> [Sequence] -> [ST.Text]
 bestTraversal params classifier queryRecs processedQueries =
