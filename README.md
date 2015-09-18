@@ -45,30 +45,18 @@ tree of the Firmicute genera (file `firmicute_genera.nw`).
 
 First, we train the model with the following command:
 
-~~~~ {.shell}
+~~~~ {.sourceCode .Bash}
 $ mlgsc_train Prot Spo0A.msa firmicute_genera.nw
 ~~~~
 
-<<<<<<< HEAD
-This produces a binary file named `Spo0A.bcls`, which contains the
-model.
-=======
-MLGSC is a set of programs for classifying sequences into taxa (in other words, recognizing taxa from sequences). The classifier is trained using reference sequences from a user-specified conserved region (e.g., a gene) as well as a phylogeny of the taxa of interest. It can work on *protein as well as nucleic acid* sequences.
-
-The package consists of the following:
->>>>>>> recover
+This produces a binary file named `Spo0A.bcls`, which contains the model.
 
 We can now use it to classify Spo0A sequences of unknown genus, in this
 case they are stored in file `queries.pep` (a Fasta file):
 
-<<<<<<< HEAD
 ~~~~ {.sourceCode .Bash}
 $ mlgsc queries.pep Spo0A.bcls
 ~~~~
-=======
-The distribution contains source code, binaries and example data, including data
-used in the [article](http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0129384).
->>>>>>> recover
 
 This produces output like the following:
 
@@ -105,12 +93,12 @@ The [tutorial](#tutorial) section has more details about training and
 validating model, as well as on the various options that can be used to
 change the programs' logic and/or output.
 
-[Installation](#installation)
+[Installing](#installation)
 ---------------------------------------------------------------
 
-MLgsc is available as **binaries** (Linux x86-64) and as **source
-code**. The binaries are found in subdirectory `src` of the
-distribution. They can be installed by issuing
+MLgsc is available as **binaries** (Linux x86-64) and as **source code**. The
+binaries are found in subdirectory `src` of the distribution. They can be
+installed by issuing
 
     $ sudo make install
 
@@ -160,13 +148,8 @@ $ sudo make install
 
 This will install the programs in `/usr/local/bin`.
 
-<<<<<<< HEAD
 [Tutorial](#tutorial)
------------------------------------------------
-=======
-This trains a classifier model (either DNA or protein) from a multiple alignment
-of reference sequences and a phylogenetic tree of the reference taxa.
->>>>>>> recover
+---------------------
 
 ### [Choosing the Clade and Classifying region](#choosing-the-clade-and-classifying-region)
 
@@ -179,15 +162,13 @@ classify the spore-forming
 [Spo0A](http://www.uniprot.org/uniprot/P06534) gene (at the protein
 level). Spo0A is found in every spore-forming Firmicute species.
 
-<<<<<<< HEAD
 ### [Obtaining a reference Alignment and Phylogeny](#obtaining-a-reference-alignment-and-phylogeny)
-=======
+
 The alignment should be in aligned (gapped) FastA format. The header lines
 should contain an ID followed by a taxon name. The ID is ignored for training,
 but can be used to identify problematic training sequences; since the first word
 of a FastA header is usually an ID this will allow existing FastA alignments to
 be used with minimal editing.
->>>>>>> recover
 
 #### [Reference Alignment](#reference-alignment)
 
@@ -198,14 +179,8 @@ training, but can be used to identify problematic training sequences;
 since the first word of a FastA header is usually an ID this will allow
 existing FastA alignments to be used with minimal editing.
 
-<<<<<<< HEAD
 We will use file `Spo0A.msa`, found in the `data` subdirectory. It looks
 like this:
-=======
-The first entry in the alignment has ID `ID_001` and taxon `Bacillus`. This
-states that the sequence is a reference for the _Bacillus_ genus. The next two
-(`ID_001` and `ID_002`) are reference sequences for genus _Clostridium_.
->>>>>>> recover
 
     >ID_001 Bacillus
     IMPHLDGLAVLERLRE-SQLKK-QPN-VIMLTAFGQEDVTKKAVDLGASYFILKPFDMEN
@@ -224,7 +199,6 @@ states that the sequence is a reference for the _Bacillus_ genus. The next two
     VERAIRHAIEVAWSRGQIDTIDSLFGYTINVGKGKPTNSEFIAMVAD
     ...
 
-<<<<<<< HEAD
 The first entry in the alignment has ID `ID_001` and taxon `Bacillus`.
 This states that the sequence is a reference for the *Bacillus* genus.
 The next two (`ID_001` and `ID_002`) are reference sequences for genus
@@ -386,7 +360,7 @@ $ ../src/mlgsc_xval -x Prot Spo0A.msa firmicutes_by_genus.nw
 ID_264 Paenibacillus (196) -> Clostridia (9); Clostridiales (134); Clostridium (59)
 ~~~~
 
-This run had one error in 100 trials, that is, a 1% error rate. I
+This run had one error out of 100 trials, that is, a 1% error rate. I
 usually get between 0 and 4 errors per 100 trials with this data set.
 
 We can ask for details about the run by passing (`-v 2`). This sets the
@@ -487,8 +461,8 @@ queries were part of the training set, this cannot be used to validate
 the classifier's accuracy. 
 
 [Real-world Example](#real-world-example)
----------------------------------------------------------------------------------------
-=======
+-----------------------------------------
+
 It is advisable to have more than one sequence per reference taxon, but in our
 experience adding more than a dozen does little to enhance the classifier's
 accuracy. Ideally each taxon should be represented by roughly the same number of
@@ -663,7 +637,6 @@ the training set. By default, it is required that an taxon contain at least thre
 but this number can be changed with option `-m`.
 
 ### Complete Example
->>>>>>> recover
 
 The following is an example using real data referred to in the
 [article](http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0129384).
@@ -690,10 +663,7 @@ output: firmicutes_Spo0A.mod
 molecule: Prot
 small prob: 1.0e-4
 scale factor: 1000.0
-<<<<<<< HEAD
 ~~~~
-=======
-```
 
 Option `-v 2` (verbosity level 2) causes run information to be printed. Option
 `-o` specifies a name for the output file, that is, he classifier itself.
@@ -726,19 +696,16 @@ IEQTHJI02C74FC_1 [1 - 438]  -> unnamed (8); unnamed (124); Clostridium (152)
 This example uses a tree in which only the leaves are labeled. Leaves must be
 labeled with taxon names for classification to work at all, but MLgsc can also
 use trees with internal labels, as shown below.
->>>>>>> recover
 
 Option `-v 2` (verbosity level 2) causes run information to be printed.
 Option `-o` specifies a name for the output file, that is, he model
 itself.
 
-<<<<<<< HEAD
 ### [Classifying environmental Amplicons](#classifying-environmental-amplicons)
 
 File `Spo0A_env_ampl_prot.pep` contains translated amplicons of Spo0A
 from environmental samples (sediment from Lake Geneva). To classify
 these sequences, do:
-=======
 ```
 $ mlgsc_train -o firmicutes_Spo0A.mod Prot firmicute_Spo0A_prot_train.msa firmicute_genera_fully-labeled.nw 
 The following tree taxa are NOT found in the alignment:
@@ -751,7 +718,6 @@ building a classifier, but discrepancies between alignment and tree may
 indicate that the wrong file(s) are being used, hence the warnings. At any
 rate, any actual _Listeria_ among the queries will be misclassified. To
 suppress all warnings, pass `-v 0` (verbosity level 0: quiet).
->>>>>>> recover
 
 ~~~~ 
 $ ../../src/mlgsc Spo0A_env_ampl_prot.pep firmicutes_Spo0A.mod
@@ -760,7 +726,6 @@ IEQTHJI02DW663_2 [492 - 1] (REVERSE SENSE)  -> Clostridia (135); Clostridiales (
 IEQTHJI02DXXW9_1 [587 - 3] (REVERSE SENSE)  -> 
 IEQTHJI02D2KPX_1 [404 - 3] (REVERSE SENSE)  -> Clostridia (23); Clostridiales (86); Clostridium (80)
 IEQTHJI02D8PM8_1 [1 - 546]  -> Clostridia (14); Clostridiales (147); Clostridium (162)
-<<<<<<< HEAD
 ...
 ~~~~
 
@@ -774,14 +739,12 @@ include:
 * and of course, weaknesses in the classification algorithm.
 
 #### Tweaking the Output Format
-=======
 IEQTHJI02D28VO_1 [183 - 593]  -> Clostridia (90); Clostridiales (191); Clostridium (104)
 IEQTHJI02D28VO_2 [593 - 3] (REVERSE SENSE)  -> Bacilli (25); Paenibacillaceae (66); Paenibacillus (96)
 IEQTHJI02C9B6J_1 [1 - 534]  -> Clostridia (60); Clostridiales (96); Clostridium (117)
 IEQTHJI02EN3F3_1 [1 - 480]  -> Clostridia (5); Clostridiales (137); Clostridium (151)
 IEQTHJI02C74FC_1 [1 - 438]  -> Clostridia (8); Clostridiales (124); Clostridium (152)
 ```
->>>>>>> recover
 
 By default, `mlgsc` outputs the whole header of the query sequence - often it
 contains just an ID. Sometimes, as is the case here, the header contains extra

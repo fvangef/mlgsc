@@ -11,14 +11,13 @@ import qualified Data.Text.IO as STIO
 import qualified Data.Text.Lazy.IO as LTIO
 
 import MlgscTypes
-import NewickParser
 import NewickDumper
-import TaxoParser (parseTaxonomy)
 import FastA
 import Classifier (buildClassifier)
-import Weights
 import Alignment
 import IDTree
+-- TODO should replace (most of) the above with:
+import API (rawTree, fastaRecsAndTree, otuAlignmentMap)
 
 data Params = Params {
                 optSmallProb        :: Double
@@ -27,7 +26,7 @@ data Params = Params {
                 , optVerbosity      :: Int
                 , optNoHenikoffWt   :: Bool
                 , optIDtree         :: Bool
-                , optTaxonomy       :: Bool 
+                , optPhyloFormat    :: PhyloFormat 
                 , molType           :: Molecule
                 , alnFName          :: String
                 , treeFName         :: String
@@ -71,6 +70,14 @@ parseWeighting =  switch (
                     <> long "no-Henikoff-weighting"
                     <> help "don't perform Henikoff weighting of input aln")
 
+-- TODO: extend this to any prefix of "Newick" or "Taxonomy"; handle unknown
+-- format
+
+parsePhyloFormat :: Monad m => String -> m PhyloFormat
+parsePhyloFormat s = if 'N' == head s
+                                then return Newick
+                                else return Taxonomy
+
 parseOptions :: Parser Params
 parseOptions = Params
                 <$> parseSmallProb
@@ -82,10 +89,10 @@ parseOptions = Params
                     short 'i'
                     <> long "id-tree"
                     <> help "input tree labeled by seq ID, not taxa")
-                <*> switch (
+                <*> option (str >>= parsePhyloFormat) (
                     short 'T'
-                    <> long "taxonomy"
-                    <> help "tree file is a taxonomy, not Newick")
+                    <> long "tree-file-format"
+                    <> value Newick )
                 <*> argument auto (metavar "<DNA|Prot>")
                 <*> argument str (metavar "<alignment file>")
                 <*> argument str (metavar "<tree file>")
@@ -102,26 +109,13 @@ main :: IO ()
 main = do
     params <- execParser parseOptionsInfo
     treeString <- readFile $ treeFName params
-    let rawTree = if optTaxonomy params
-                    then parseTaxonomy $ treeString
-                    else nwTree
-                        where (Right nwTree) = parseNewickTree treeString
     fastAInput <-  LTIO.readFile $ alnFName params
-    let rawFastaRecs = fastATextToRecords fastAInput
-    -- TODO: acc to opt, compute rename map and use renamed tree and record list
-    let (fastaRecs, tree) = if optIDtree params
-                                then (renumFastaRecs rnMap rawFastaRecs,
-                                        renumTaxonTree rnMap rawTree)
-                                else (rawFastaRecs, rawTree)
-                                    where (Just rnMap) = renumberedTaxonMap
-                                                         rawTree rawFastaRecs
-    let otuAln = fastARecordsToAln fastaRecs
-    let wtOtuAln = if optNoHenikoffWt params
-            then otuAln
-            else henikoffWeightAln otuAln
-    let otuAlnMap = alnToAlnMap wtOtuAln
-    let outputFileName = outFName (optOutFName params)
-                                  (alnFName params)
+    let (fastaRecs, tree) = fastaRecsAndTree
+                                (optIDtree params)
+                                (fastATextToRecords fastAInput)
+                                (rawTree (optPhyloFormat params) treeString)
+    let otuAlnMap = otuAlignmentMap (optNoHenikoffWt params) fastaRecs
+    let outputFileName = outFName (optOutFName params) (alnFName params)
     runInfo params tree outputFileName
     possibleWarnings params tree otuAlnMap
     let classifier = buildClassifier
@@ -129,16 +123,6 @@ main = do
                         (optSmallProb params) (optScaleFactor params)
                         otuAlnMap tree
     encodeFile outputFileName classifier
-
-
--- dumpAlnMap :: AlnMap -> [String]
--- dumpAlnMap otuAlnMap = map f $ M.assocs otuAlnMap
---     where f (k, v) = otu ++ " (" ++ num ++ " seq)"
---             where   otu = ST.unpack k
---                     num = show $ length v 
--- 
--- dumpAlnRow :: AlnRow -> ST.Text
--- dumpAlnRow (AlnRow lbl seq wt) = ST.unwords [lbl, ST.pack $ show wt]
 
 runInfo :: Params -> NewickTree -> String -> IO ()
 runInfo params tree outFname
@@ -153,6 +137,7 @@ runInfo params tree outFname
             ("small prob: " ++ (show $ optSmallProb params)),
             ("scale factor: " ++ (show $ optScaleFactor params)),
             ("Henikoff weighting: " ++ (show $ not $ optNoHenikoffWt params)),
+            ("Tree format: " ++ (show $ optPhyloFormat params)),
             ("ID tree: " ++ (show $ optIDtree params)),
             if (optIDtree params)
                 then "Relabeled tree: " ++ (ST.unpack $ treeToNewick tree)
