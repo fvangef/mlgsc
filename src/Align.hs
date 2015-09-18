@@ -57,6 +57,7 @@ data ScoringScheme = ScoringScheme {
                             gapOP :: Int
                             , scThresholds :: M.Map Int Int
                             }
+
 defScScheme = ScoringScheme (-2) (M.fromList [(-4000,-1),(-800,1),(-400,2),(0,3)])
 
 -- With a smallScore of -4000, yields same threshold map as in defScScheme.
