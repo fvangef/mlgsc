@@ -14,6 +14,7 @@ import Alignment
 -- Numeric testing of PepModels:
 
 small_prob = 0.0001 :: Double -- need to be specific, else logBase complains
+small_score = round (scale_factor * (logBase 10 small_prob))
 scale_factor = 1000 :: Double
 
 test_aln1 = [
@@ -152,7 +153,7 @@ test_31 = "modLength" ~: (pepModLength aln1Mod) ~?= 5
 --
 aln2Mod = alnToPepModel small_prob scale_factor "anonymous" []
 
-test_32 = "emptyAln score" ~: (pepScoreSeq aln2Mod "LEHQWVN") ~?= (minBound :: Int)
+test_32 = "emptyAln score" ~: (pepScoreSeq aln2Mod "LEHVN") ~?= 5 * small_score
 
 -- Tests models with weighted sequences
 -- NOTE: I will leave A, C, G, and T for these tests - just think of them as

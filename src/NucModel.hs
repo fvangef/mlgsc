@@ -63,7 +63,7 @@ nucScoreOf nm res pos
     where mat = matrix nm
 
 nucScoreSeq nm seq
-    | (U.null $ V.head $ matrix nm)   = minBound :: Int
+    | (U.null $ V.head $ matrix nm)   = smallScore nm * T.length seq
     | otherwise = sum $ map (\(c,i) -> nucScoreOf nm c i) seqWithPos
     where seqWithPos = zip (T.unpack seq) [1..] -- eg [('A',1), ...], etc.
 
