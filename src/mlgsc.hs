@@ -16,14 +16,15 @@ import qualified Text.Parse as TP
 import Control.Applicative
 import Control.Monad.Reader
 import Options.Applicative
-
 import Data.Binary (decodeFile)
 import Data.Tree
 import Data.Char
 import Data.List
 import Data.Ord
+
 import MlgscTypes
 import FastA
+import Trim
 import PWMModel
 import Align
 import Classifier (Classifier(..), classifySequence, classifySequenceMulti,
@@ -144,7 +145,7 @@ mbAlign params scsc rootMod =
 mbMask params =
     case optMaskMode params of
         None -> id
-        Trim -> undefined
+        Trim -> trimSeq
 
 bestTraversal :: Params -> Classifier -> [FastA] -> [Sequence] -> [ST.Text]
 bestTraversal params classifier queryRecs processedQueries =

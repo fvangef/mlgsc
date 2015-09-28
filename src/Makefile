@@ -11,7 +11,7 @@ INSTALLDIR = /usr/local/bin
 all: $(targets)
 
 mlgsc: mlgsc.hs API.hs MlgscTypes.hs FastA.hs PepModel.hs NucModel.hs \
-	Classifier.hs Align.hs PWMModel.hs PWMModelAux.hs Output.hs
+	Classifier.hs Align.hs PWMModel.hs PWMModelAux.hs Output.hs Trim.hs
 
 mlgsc_train: mlgsc_train.hs API.hs MlgscTypes.hs NewickParser.hs FastA.hs \
 	Classifier.hs Weights.hs Alignment.hs PWMModel.hs PWMModelAux.hs \

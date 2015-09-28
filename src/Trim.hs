@@ -1,14 +1,22 @@
+module Trim (trimSeq) where
+
 import Learning.HMM
 import Data.Random.Distribution.Categorical as C
 
 import Data.Map ((!))
 import Data.Map as M
+import Data.Text (Text)
+import qualified Data.Text as ST
+
+-- An HMM for trimming leading and trailing unaligned regions from aligned
+-- sequences that are much shorter than the model
 
 data State = Pre | Aln | Post
   deriving (Show, Ord, Eq)
 
 type Path = [State]
 
+-- Shouldn't these be called Emission, or somethng?
 data Output = Gap | Residue
   deriving (Show, Eq)
 
@@ -28,6 +36,15 @@ emProb Aln = C.fromList [(0.05, Gap), (0.95, Residue)]
 emProb Post = C.fromList [(0.95, Gap), (0.05, Residue)]
 
 hmm = HMM hmmStates hmmOutputs initProb transProb emProb
+
+trimSeq :: Text -> Text
+trimSeq seq = ST.pack $ zipWith translate path seqAsStr
+    where   (path, _)   = viterbi hmm $ alnSeqToHMMSym seqAsStr
+            seqAsStr    = ST.unpack seq    
+            translate state c = case state of
+                                    Pre -> '.'
+                                    Aln -> c
+                                    Post -> '.'
 
 alnSeqToHMMSym :: String -> [Output]
 alnSeqToHMMSym = Prelude.map (\c -> if c == '-' then Gap else Residue) 
