@@ -17,7 +17,7 @@ import Control.Applicative
 import Control.Monad.Reader
 import Options.Applicative
 
--- import Data.Map (Map, fromList, findWithDefault)
+import Data.Map (Map, fromList, findWithDefault)
 import Data.Binary (decodeFile)
 import Data.Tree
 import Data.Char
@@ -108,12 +108,15 @@ parseOptionsInfo = info (helper <*> parseOptions)
 
 
 -- Some common format options have names (e.g. "simple" -> "%h -> %P"). These
--- must be translated using the following map
+-- must be translated using the following map (some short forms are possible)
 
 fmtMap :: Map String String
 fmtMap = fromList [
                     ("minimal", "%i\t%P"),
-                    ("simple", "%h -> %P (%s)")
+                    ("min", "%i\t%P"),
+                    ("m", "%i\t%P"),
+                    ("simple", "%h -> %P (%s)"),
+                    ("s", "%h -> %P (%s)")
                 ]
 
 translateFmtKw :: Params -> IO Params

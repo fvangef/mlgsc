@@ -1,3 +1,4 @@
+dna-def dna_test.fasta dna_test.bcls
 firmic-Spo0A-prot-def final_prot_seq.pep final_prot_aln.bcls
 firmic-Spo0A-prot-opte -e 80 final_prot_seq.pep final_prot_aln.bcls
 firmic-Spo0A-prot-optA -A final_prot_aln.msa final_prot_aln.bcls
@@ -7,3 +8,5 @@ frc-taxo-def frc.pep frc_4train.bcls
 all -m a query1.pep frc_4train.bcls
 trim-off test_trim.pep test_trim.bcls
 trim-on -M t test_trim.pep test_trim.bcls
+dna-def-simple -f simple dna_test.fasta dna_test.bcls
+dna-def-min -f min dna_test.fasta dna_test.bcls
