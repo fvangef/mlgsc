@@ -24,6 +24,7 @@ import Data.Binary (decodeFile)
 import Data.Tree
 
 import MlgscTypes
+import API (rawTree, fastaRecsAndTree, otuAlignmentMap, parsePhyloFormat)
 import FastA
 import Alignment
 import Align
@@ -47,9 +48,11 @@ data Params = Params {
                 , optStepFmtString  :: String
                 , optOnlyFalse      :: Bool
                 , optIndices        :: String
+                , optIDtree         :: Bool
+                , optPhyloFormat    :: PhyloFormat 
                 , molType           :: Molecule
-                , alnFname          :: String
-                , treeFname         :: String
+                , alnFName          :: String
+                , treeFName         :: String
                 }
 
 parseSmallProb :: Parser Double
@@ -131,6 +134,13 @@ parseOptions = Params
                     <> short 'i'
                     <> value ""
                     <> help "whitespace-separated list of indices of sequences to use [testing]")
+                <*> switch (
+                        short 'I' <> long "id-tree"
+                        <> help "input tree labeled by seq ID, not taxa")
+                <*> option (str >>= parsePhyloFormat) (
+                    short 'T'
+                    <> long "tree-file-format"
+                    <> value Newick )
                 <*> argument auto (metavar "<DNA|Prot>")
                 <*> argument str (metavar "<alignment file>")
                 <*> argument str (metavar "<tree file>")
@@ -147,17 +157,20 @@ main = do
     params <- execParser parseOptionsInfo
     let smallProb = optSmallProb params
     let scaleFactor = optScaleFactor params
-    newickString <- readFile $ treeFname params
-    let (Right tree) = parseNewickTree newickString
-    fastAInput <-  LTIO.readFile $ alnFname params
-    let fastARecs = Sq.fromList $ fastATextToRecords fastAInput
-    let bounds = (0, Sq.length fastARecs)
+    treeString <- readFile $ treeFName params
+    fastAInput <-  LTIO.readFile $ alnFName params
+    let (fastaRecs, tree) = fastaRecsAndTree
+                                (optIDtree params)
+                                (fastATextToRecords fastAInput)
+                                (rawTree (optPhyloFormat params) treeString)
+    let fastaRecSeq = Sq.fromList fastaRecs
+    let bounds = (0, Sq.length fastaRecSeq)
     gen <- getGen $ optSeed params
-    seqIndices <- getSeqIndices gen params fastARecs
+    seqIndices <- getSeqIndices gen params fastaRecSeq
     let mol = molType params
     putStrLn $ runInfo params seqIndices gen
     mapM_ STIO.putStrLn $ catMaybes $
-        map (oneRoundLOO params tree fastARecs) seqIndices
+        map (oneRoundLOO params tree fastaRecSeq) seqIndices
 
 warn :: String -> IO ()
 warn msg = hPutStrLn stderr $ "WARNING: " ++ msg
@@ -192,10 +205,10 @@ warn msg = hPutStrLn stderr $ "WARNING: " ++ msg
  -}
 
 getSeqIndices :: StdGen -> Params -> Seq FastA -> IO [Int]
-getSeqIndices gen params fastARecs = do
+getSeqIndices gen params fastaRecs = do
         let nbRounds = optNbRounds params
         let outputWarnings = (optVerbosity params > 0)
-        let validNdx = validIndices fastARecs
+        let validNdx = validIndices fastaRecs
         if null $ optIndices params 
             then do if nbRounds > length validNdx
                         then do
@@ -225,12 +238,12 @@ getGen seed
 -- represented in the training set.
 
 validIndices :: Seq FastA -> [Int]
-validIndices fastARecs = map snd validFreqIdxPairs
+validIndices fastaRecs = map snd validFreqIdxPairs
     where   validFreqIdxPairs = filter
                         (\(freq, index) -> freq > 3) freqIdxPairs
-            freqIdxPairs = toList $ Sq.mapWithIndex toFreqIdxPair fastARecs
+            freqIdxPairs = toList $ Sq.mapWithIndex toFreqIdxPair fastaRecs
             otu2freq = M.fromListWith (+) [(otu, 1) | otu <- fastAOTUs] 
-            fastAOTUs = toList $ fmap fastAOTU fastARecs
+            fastAOTUs = toList $ fmap fastAOTU fastaRecs
             toFreqIdxPair idx fasta = (freq, idx)
                 where   freq = otu2freq ! (fastAOTU fasta)
 
@@ -239,8 +252,8 @@ runInfo params seqIndices gen
     | (optVerbosity params <= 1) = ""
     | otherwise = unlines [
         ("Performing " ++ (show $ length seqIndices) ++  " rounds of LOO"),
-        ("alignment:\t" ++ alnFname params),
-        ("phylogeny:\t" ++ treeFname params),
+        ("alignment:\t" ++ alnFName params),
+        ("phylogeny:\t" ++ treeFName params),
         ("seed:\t" ++ (head $ words $ show gen)),
         ("indices:\t" ++ (show seqIndices)),
         ("min #nb seq / taxon:\t" ++ (show $ optMinSeqInOTU params)),
@@ -302,8 +315,8 @@ leaveOneOut fmtString mol noHWt smallProb scaleFactor tree fastaRecs n =
 -- not sure which is best.
 
 oneRoundLOO :: Params -> OTUTree -> Seq FastA -> Int -> Maybe ST.Text
-oneRoundLOO params otuTree fastARecs testRecNdx = 
-    runReader (looReader otuTree fastARecs testRecNdx) params
+oneRoundLOO params otuTree fastaRecs testRecNdx = 
+    runReader (looReader otuTree fastaRecs testRecNdx) params
 
 
 looReader :: OTUTree -> Seq FastA -> Int -> Reader Params (Maybe ST.Text)

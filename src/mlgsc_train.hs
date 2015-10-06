@@ -17,7 +17,7 @@ import Classifier (buildClassifier)
 import Alignment
 import IDTree
 -- TODO should replace (most of) the above with:
-import API (rawTree, fastaRecsAndTree, otuAlignmentMap)
+import API (rawTree, fastaRecsAndTree, otuAlignmentMap, parsePhyloFormat)
 
 data Params = Params {
                 optSmallProb        :: Double
@@ -70,14 +70,6 @@ parseWeighting =  switch (
                     <> long "no-Henikoff-weighting"
                     <> help "don't perform Henikoff weighting of input aln")
 
--- TODO: extend this to any prefix of "Newick" or "Taxonomy"; handle unknown
--- format
-
-parsePhyloFormat :: Monad m => String -> m PhyloFormat
-parsePhyloFormat s = if 'N' == head s
-                                then return Newick
-                                else return Taxonomy
-
 parseOptions :: Parser Params
 parseOptions = Params
                 <$> parseSmallProb
@@ -86,7 +78,7 @@ parseOptions = Params
                 <*> parseVerbosityLevel
                 <*> parseWeighting
                 <*> switch (
-                    short 'i'
+                    short 'I'
                     <> long "id-tree"
                     <> help "input tree labeled by seq ID, not taxa")
                 <*> option (str >>= parsePhyloFormat) (

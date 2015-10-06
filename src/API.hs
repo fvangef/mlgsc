@@ -8,7 +8,8 @@
 module API (
     rawTree,
     fastaRecsAndTree,
-    otuAlignmentMap
+    otuAlignmentMap,
+    parsePhyloFormat
    )  where
 
 import qualified Data.Text as ST
@@ -22,6 +23,16 @@ import TaxoParser (parseTaxonomy)
 import IDTree (renumFastaRecs, renumTaxonTree,
                 renumberedTaxonMap)
 import FastA
+
+
+-- Used in the options parser to determine if tree is Newick or Taxo
+-- TODO: extend this to any prefix of "Newick" or "Taxonomy"; handle unknown
+-- format
+
+parsePhyloFormat :: Monad m => String -> m PhyloFormat
+parsePhyloFormat s = if 'N' == head s
+                                then return Newick
+                                else return Taxonomy
 
 {- The phylogeny may be passed as a tree (Newick) or as a taxonomy. The contents
  - of the phylogeny file must be passed 
@@ -72,3 +83,4 @@ otuAlignmentMap noHenWt fastaRecs = alnToAlnMap wtOtuAln
             wtOtuAln = if noHenWt
                         then otuAln
                         else henikoffWeightAln otuAln
+
