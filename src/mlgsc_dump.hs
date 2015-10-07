@@ -25,7 +25,13 @@ main = do
     storedClassifier <- decodeFile $ clsfrFname :: IO StoredClassifier
     let (StoredClassifier classifier@(PWMClassifier modTree scale) 
             metadata) = storedClassifier
-    putStrLn $ "Command line: " ++  (cmdLine metadata)
+    putStrLn "Date:\t<add>"
+    putStrLn "User:\t<add>"
+    putStr "CRC32:\t" 
+    print $ checksum metadata
+    putStrLn $ heading '-' "Command line"
+    putStrLn $ cmdLine metadata
+    putStrLn ""
     let taxonTree = fmap cladeName modTree 
     putStrLn $ heading '-' "Taxon tree"
     STIO.putStrLn $ treeToNewick taxonTree 

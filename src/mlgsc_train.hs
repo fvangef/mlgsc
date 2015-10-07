@@ -5,16 +5,19 @@ import System.FilePath.Posix
 import qualified Data.List as L
 import qualified Data.Set as S
 import qualified Data.Map.Strict as M
-import Data.Binary (encodeFile)
+import Data.Binary (encodeFile, encode)
+import Data.ByteString.Lazy (ByteString, unpack)
 import qualified Data.Text as ST
 import qualified Data.Text.IO as STIO
 import qualified Data.Text.Lazy.IO as LTIO
 import System.Environment (getArgs, getProgName)
+import Data.Digest.Pure.CRC32
 
 import MlgscTypes
 import NewickDumper
 import FastA
-import Classifier (buildClassifier, StoredClassifier(..), Metadata(..))
+import Classifier (buildClassifier, Classifier, 
+        StoredClassifier(..), Metadata(..))
 import Alignment
 import IDTree
 -- TODO should replace (most of) the above with:
@@ -115,10 +118,10 @@ main = do
                         (molType params)
                         (optSmallProb params) (optScaleFactor params)
                         otuAlnMap tree
-    -- TODO: replace "" below by command line arguments
-    cl <- getCmdLine
-    let md = Metadata cl
-    let sc = StoredClassifier classifier md
+    cmdln <- getCmdLine
+    -- TODO: the classifier gets encoded twice... this is inefficient.
+    let cksum = crc32 $ encode classifier
+    let sc = StoredClassifier classifier (Metadata cmdln cksum)
     encodeFile outputFileName sc
 
 runInfo :: Params -> NewickTree -> String -> IO ()

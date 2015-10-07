@@ -14,6 +14,7 @@ import qualified Data.List as L
 import Data.Binary (Binary, put, get, Get)
 import Data.Ord
 import Data.Tuple.Select
+import Data.Word
 
 import MlgscTypes
 import Alignment
@@ -41,13 +42,17 @@ instance Binary StoredClassifier where
 
 data Metadata = Metadata {
                 cmdLine :: String
+                , checksum :: Word32
                 }
 
 instance Binary Metadata where
-    put md = put $ cmdLine md
+    put md = do
+        put $ cmdLine md
+        put $ checksum md
     get = do 
         cmdLine <- get :: Get String
-        return $ Metadata cmdLine
+        checksum <- get :: Get Word32
+        return $ Metadata cmdLine checksum
 
 data Classifier = PWMClassifier (Tree PWMModel) ScaleFactor
                 deriving (Show, Eq)
