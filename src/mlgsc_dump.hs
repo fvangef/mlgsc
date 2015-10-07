@@ -15,13 +15,17 @@ import Data.Tree
 --
 import MlgscTypes
 import PWMModel (cladeName, prettyPrint)
-import Classifier (Classifier(..), classifySequence)
+import Classifier (Classifier(..), classifySequence,
+    StoredClassifier(..), Metadata(..))
 import NewickDumper
 
 main :: IO ()
 main = do
     [clsfrFname] <- getArgs   
-    classifier@(PWMClassifier modTree scale) <- (decodeFile $ clsfrFname) :: IO Classifier
+    storedClassifier <- decodeFile $ clsfrFname :: IO StoredClassifier
+    let (StoredClassifier classifier@(PWMClassifier modTree scale) 
+            metadata) = storedClassifier
+    putStrLn $ "Command line: " ++  (cmdLine metadata)
     let taxonTree = fmap cladeName modTree 
     putStrLn $ heading '-' "Taxon tree"
     STIO.putStrLn $ treeToNewick taxonTree 

@@ -9,11 +9,12 @@ import Data.Binary (encodeFile)
 import qualified Data.Text as ST
 import qualified Data.Text.IO as STIO
 import qualified Data.Text.Lazy.IO as LTIO
+import System.Environment (getArgs, getProgName)
 
 import MlgscTypes
 import NewickDumper
 import FastA
-import Classifier (buildClassifier)
+import Classifier (buildClassifier, StoredClassifier(..), Metadata(..))
 import Alignment
 import IDTree
 -- TODO should replace (most of) the above with:
@@ -114,7 +115,11 @@ main = do
                         (molType params)
                         (optSmallProb params) (optScaleFactor params)
                         otuAlnMap tree
-    encodeFile outputFileName classifier
+    -- TODO: replace "" below by command line arguments
+    cl <- getCmdLine
+    let md = Metadata cl
+    let sc = StoredClassifier classifier md
+    encodeFile outputFileName sc
 
 runInfo :: Params -> NewickTree -> String -> IO ()
 runInfo params tree outFname
@@ -135,6 +140,12 @@ runInfo params tree outFname
                 then "Relabeled tree: " ++ (ST.unpack $ treeToNewick tree)
                 else ""
             ]
+
+getCmdLine :: IO String
+getCmdLine = do
+            prog <- getProgName
+            args <- getArgs
+            return $ L.intercalate " " $ prog : args
 
 possibleWarnings :: Params -> OTUTree -> AlnMap -> IO ()
 possibleWarnings params tree otuAlnMap =

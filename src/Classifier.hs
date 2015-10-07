@@ -1,5 +1,7 @@
 module Classifier (
     Classifier(..),
+    Metadata(..),
+    StoredClassifier(..),
     buildClassifier,
     classifySequence,
     classifySequenceMulti,
@@ -19,13 +21,33 @@ import NucModel
 import PepModel
 import PWMModel (PWMModel(..), scoreSeq, cladeName)
 
--- TODO: rename CladeModel to PWMModel, and the Classifier c'tor to
--- PWMClassifier. This  should have the scale factor as a second argument. In
--- this way we can add other kinds of models, e.g. if we add a k-mer model, it
--- could look like:
--- data Classifier = PWMClassifier (Tree PWMModel) ScaleFactor
---                 | KmerClassifier (Tree KmerModel)
---                 
+-- When storing a Classifier to disk, we add some metadata. They may be quieried
+-- with mlgsc_dump.
+
+data StoredClassifier = StoredClassifier {
+                            classifier :: Classifier
+                            , metadata ::Metadata
+                            }
+
+instance Binary StoredClassifier where
+    put storedCls = do
+        put $ classifier storedCls
+        put $ metadata storedCls
+
+    get = do
+        cls <- get :: Get Classifier
+        md <- get :: Get Metadata
+        return $ StoredClassifier cls md
+
+data Metadata = Metadata {
+                cmdLine :: String
+                }
+
+instance Binary Metadata where
+    put md = put $ cmdLine md
+    get = do 
+        cmdLine <- get :: Get String
+        return $ Metadata cmdLine
 
 data Classifier = PWMClassifier (Tree PWMModel) ScaleFactor
                 deriving (Show, Eq)

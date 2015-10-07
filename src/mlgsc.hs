@@ -30,7 +30,7 @@ import Trim
 import PWMModel
 import Align
 import Classifier (Classifier(..), classifySequence, classifySequenceMulti,
-                    classifySequenceAll)
+                    classifySequenceAll, StoredClassifier(..))
 import Output
 
 data TreeTraversalMode = BestTraversal | FullTraversal | RecoverTraversal Int
@@ -131,7 +131,8 @@ main = do
     params <- execParser parseOptionsInfo >>= translateFmtKw
     queryFastA <- LTIO.readFile $ queryFname params
     let queryRecs = fastATextToRecords queryFastA
-    classifier@(PWMClassifier modTree scale) <- (decodeFile $ clsfrFname params) :: IO Classifier
+    storedClassifier <- (decodeFile $ clsfrFname params) :: IO StoredClassifier
+    let (StoredClassifier classifier@(PWMClassifier modTree scale) _) = storedClassifier
     let rootMod = rootLabel modTree
     -- TODO: replace the magic "2" below by a meaningful constant/param
     let scoringScheme = ScoringScheme (-2) (scoringSchemeMap (absentResScore rootMod))
