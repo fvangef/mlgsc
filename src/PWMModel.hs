@@ -2,7 +2,7 @@
 -- be able to recognize a clade (be it a OTU, or a species, or whatever "rank").
 
 module PWMModel (PWMModel(..), scoreOf, scoreSeq, modLength, cladeName,
-    absentResScore, prettyPrint) where
+    absentResScore, tablePrint, prettyPrint) where
 
 import Data.Binary (Binary, put, get, Get, Word8)
 
@@ -37,6 +37,10 @@ cladeName (NucPWMModel nm) = nucCladeName nm
 prettyPrint :: PWMModel -> String
 prettyPrint (PepPWMModel spm) = pepPrettyPrint spm
 prettyPrint (NucPWMModel nm) = nucPrettyPrint nm
+
+tablePrint :: PWMModel -> String
+tablePrint (PepPWMModel spm) = pepTablePrint spm
+tablePrint (NucPWMModel nm) = undefined
 
 instance Binary PWMModel where
     put (NucPWMModel nm) = do

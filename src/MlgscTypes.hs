@@ -2,9 +2,12 @@ module MlgscTypes where
 
 import Data.Text
 import Data.Tree
+import Data.Set (fromList)
 
 data Molecule = DNA | Prot
     deriving (Show, Eq, Read)
+
+amino_acids = fromList "ACDEFGHIKLMNPQRSTVWY-"
 
 data PhyloFormat = Newick | Taxonomy
     deriving (Show)

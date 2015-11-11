@@ -33,9 +33,13 @@ import Classifier (Classifier(..), classifySequence, classifySequenceMulti,
                     classifySequenceAll, StoredClassifier(..))
 import Output
 
-data TreeTraversalMode = BestTraversal | FullTraversal | RecoverTraversal Int
 
 data MaskMode = None | Trim
+
+data TreeTraversalMode = BestTraversal
+                       | FullTraversal
+                       | RecoverTraversal Int
+                       | SingleNodeTraversal CladeName
     
 data Params = Params {
                 optTreeTraversalMode    :: TreeTraversalMode
@@ -52,7 +56,7 @@ parseTreeTraversal :: Monad m => String -> m TreeTraversalMode
 parseTreeTraversal optString
     | 'b' == initC = return BestTraversal
     | 'a' == initC = return FullTraversal
-    | otherwise    = do
+    | 'r' == initC = do
                         let (Right num,_) = TP.runParser TP.parseDec optString
                         -- TODO: handle bad parse
                         return $ RecoverTraversal num

@@ -12,7 +12,8 @@ import Data.Vector ((!))
 import qualified Data.Vector as V
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
-import Data.List (intercalate, sortBy)
+import qualified Data.Set as S
+import Data.List (intersperse, intercalate, sortBy)
 import Data.Ord (comparing)
 import Data.Binary
 import Data.Vector.Binary
@@ -68,6 +69,24 @@ prettyPrintWM mod = concatMap (\n -> ppMatPos n) [1 .. modelLength mod]
                             sortedScores = reverse $ sortBy (comparing snd) $
                                             M.assocs pMap 
                             pMap = (matrix mod) ! (n-1)
+
+pepTablePrint :: PepModel -> String
+pepTablePrint mod = intercalate "\n" [taxonName, modHdr, modStr, "\n"]
+    where   taxonName = if T.null $ clade mod
+                            then "(unnamed)"
+                            else T.unpack $ clade mod
+            modHdr = "pos | " ++ (intersperse ' ' $ S.toList amino_acids)
+            modStr = tablePrintWM mod
+
+tablePrintWM :: PepModel -> String
+tablePrintWM mod = concatMap (\n -> ppMatPos n) [1 .. modelLength mod]   
+    where   ppMatPos n = printf "%3d | %s\n" n posScores
+                where   posScores = intercalate " " $
+                            map matScore $ S.toList amino_acids
+                        matScore aa = show $ case M.lookup aa pMap of
+                            Just score -> score
+                            Nothing -> smallScore mod
+                        pMap = (matrix mod) ! (n-1)
 
 instance Binary PepModel where
     put mod = do
