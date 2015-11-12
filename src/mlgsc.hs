@@ -6,6 +6,7 @@ module Main (main) where
 
 -- module Main where
 
+import System.IO (hPutStrLn, stderr)
 import System.Environment (getArgs)
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text.Lazy.IO as LTIO
@@ -36,6 +37,8 @@ import Output
 data TreeTraversalMode = BestTraversal | FullTraversal | RecoverTraversal Int
 
 data MaskMode = None | Trim
+
+data SingleNodeScope = NodeItself | NodesChildren
     
 data Params = Params {
                 optTreeTraversalMode    :: TreeTraversalMode
@@ -44,6 +47,7 @@ data Params = Params {
                 , optStepFmtString      :: String
                 , optERCutoff           :: Int   -- for Best mode (TODO: could be an argument to the BestTraversal c'tor)
                 , optMaskMode           :: MaskMode
+                , opt1NodeScope         :: SingleNodeScope
                 , queryFname            :: String
                 , clsfrFname            :: String
                 }
@@ -63,6 +67,13 @@ parseMaskMode optString
     | 't' == initC = return Trim
     | 'n' == initC = return None
     | otherwise = return None -- TODO: warn about unrecognized opt
+    where initC = toLower $ head optString
+
+parseSingleNodeScope :: Monad m => String -> m SingleNodeScope
+parseSingleNodeScope optString
+    | 's' == initC = return NodeItself
+    | 'c' == initC = return NodesChildren
+    -- TODO: handle others
     where initC = toLower $ head optString
 
 parseOptions :: Parser Params
@@ -96,6 +107,11 @@ parseOptions = Params
                     <> short 'M'
                     <> help "mask aligned query: n)one* | t)trim"
                     <> value None)
+                <*> option (str >>= parseSingleNodeScope)
+                    (long "single-node-scope"
+                    <> short 'S'
+                    <> help "only score vs s) single node or its c)hildren"
+                    <> value NodeItself)
                 <*> argument str (metavar "<query seq file>")
                 <*> argument str (metavar "<classifier file>")
 
