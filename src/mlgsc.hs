@@ -2,8 +2,7 @@
 
 module Main (main) where
 
--- Classifies a set of sequences using a classifier produced by gsc_mk.
-
+-- Classifies a set of sequences using a classifier produced by gsc_mk.  
 -- module Main where
 
 import System.IO (hPutStrLn, stderr)
@@ -30,11 +29,14 @@ import FastA
 import Trim
 import PWMModel
 import Align
-import Classifier (Classifier(..), classifySequence, classifySequenceMulti,
-                    classifySequenceAll, StoredClassifier(..))
+import Classifier (Classifier(..), classifySequence,
+    classifySequenceMulti, classifySequenceAll,
+    StoredClassifier(..))
 import Output
 
-data TreeTraversalMode = BestTraversal | FullTraversal | RecoverTraversal Int
+data TreeTraversalMode = BestTraversal
+                       | FullTraversal
+                       | RecoverTraversal Int
 
 data MaskMode = None | Trim
 
@@ -48,8 +50,7 @@ data Params = Params {
                 , optERCutoff           :: Int   -- for Best mode (TODO: could be an argument to the BestTraversal c'tor)
                 , optMaskMode           :: MaskMode
                 , opt1NodeScope         :: SingleNodeScope
-                , queryFname            :: String
-                , clsfrFname            :: String
+                , posParams             :: [String]
                 }
 
 parseTreeTraversal :: Monad m => String -> m TreeTraversalMode
@@ -112,8 +113,7 @@ parseOptions = Params
                     <> short 'S'
                     <> help "only score vs s) single node or its c)hildren"
                     <> value NodeItself)
-                <*> argument str (metavar "<query seq file>")
-                <*> argument str (metavar "<classifier file>")
+                <*> many (argument str (metavar "<query seq file> <classifier filename> [clade name]"))
 
 parseOptionsInfo :: ParserInfo Params
 parseOptionsInfo = info (helper <*> parseOptions) 
@@ -123,8 +123,9 @@ parseOptionsInfo = info (helper <*> parseOptions)
                         "mlgsc - maximum-likelihood general sequence classifier")
 
 
--- Some common format options have names (e.g. "simple" -> "%h -> %P"). These
--- must be translated using the following map (some short forms are possible)
+-- Some common format options have names (e.g.  "simple" -> "%h -> %P").
+-- These must be translated using the following map (some short forms are
+-- possible)
 
 fmtMap :: Map String String
 fmtMap = fromList [
@@ -145,19 +146,32 @@ translateFmtKw params = do
 main :: IO ()
 main = do
     params <- execParser parseOptionsInfo >>= translateFmtKw
-    queryFastA <- LTIO.readFile $ queryFname params
+    let positionalParams = posParams params
+    let (queryFname, clsfrFname, singleNode) =
+            case positionalParams of
+                [q,c,n] -> (q,c,Just n)
+                [q,c]   -> (q,c,Nothing)
+    queryFastA <- LTIO.readFile queryFname
     let queryRecs = fastATextToRecords queryFastA
-    storedClassifier <- (decodeFile $ clsfrFname params) :: IO StoredClassifier
-    let (StoredClassifier classifier@(PWMClassifier modTree scale) _) = storedClassifier
+    storedClassifier <- (decodeFile clsfrFname) :: IO StoredClassifier
+    let (StoredClassifier
+            origClassifier@(PWMClassifier modTree scale)
+            _) = storedClassifier
     let rootMod = rootLabel modTree
-    -- TODO: replace the magic "2" below by a meaningful constant/param
-    let scoringScheme = ScoringScheme (-2) (scoringSchemeMap (absentResScore rootMod))
+    -- Some options reduce the classifier to a subclade
+    let classifier = case singleNode of
+                         Nothing -> origClassifier
+    -- TODO: replace the magic "-2" below by a meaningful
+    -- constant/param
+    let scoringScheme =
+            ScoringScheme (-2) (scoringSchemeMap
+            (absentResScore rootMod))
     let headers = map FastA.header queryRecs
     let processedQueries =
             map (
-                -- All the transformations from Fasta record to ready-to-score
-                -- query. Note that some (mb*) depend on params among other
-                -- things.
+                -- All the transformations from Fasta record to
+                -- ready-to-score query. Note that some (mb*)
+                -- depend on params among other things.
                 mbMask params
                 . mbAlign params scoringScheme rootMod
                 . ST.toUpper
@@ -166,21 +180,28 @@ main = do
             ) queryRecs
     let outlines =
             case optTreeTraversalMode params of
-                BestTraversal -> bestTraversal params classifier queryRecs processedQueries
-                (RecoverTraversal _) -> recoverTraversal params classifier queryRecs processedQueries
-                FullTraversal -> fullTraversal params classifier queryRecs processedQueries
+                BestTraversal ->
+                    bestTraversal params classifier queryRecs
+                    processedQueries
+                (RecoverTraversal _) ->
+                    recoverTraversal params classifier queryRecs
+                    processedQueries
+                FullTraversal -> fullTraversal params classifier
+                    queryRecs processedQueries
 
     mapM_ STIO.putStrLn outlines
 
--- Returns an alignment step (technically, a ST.Text -> ST.Text function), or
--- just id if option 'optNoAlign' is set.
+-- Returns an alignment step (technically, a ST.Text -> ST.Text
+-- function), or just id if option 'optNoAlign' is set.
+--
 mbAlign params scsc rootMod =
     if optNoAlign params
             then id
             else msalign scsc rootMod
 
--- Returns a masking step (a ST.Text -> ST.Text function), or just id if no
--- masking was requested.
+-- Returns a masking step (a ST.Text -> ST.Text function),
+-- or just id if no masking was requested.
+
 mbMask params =
     case optMaskMode params of
         None -> id
@@ -227,8 +248,8 @@ fullTraversalFmt1Query params queryRec processQuery trails =
     map (formatResultWrapper params queryRec processQuery) trails
 
 {- I like to apply the output formatter in aplicative style to the lists of
- - arguments. However, I'm not sure how to make this play with the Reader monad,
- - except by using a wrapper like below. -}
+- arguments. However, I'm not sure how to make this play with the Reader
+- monad, except by using a wrapper like below. -}
 
 formatResultWrapper :: Params -> FastA -> Sequence -> Trail -> ST.Text  
 formatResultWrapper params query alnQry trail =
