@@ -17,6 +17,7 @@ import Control.Applicative
 import Control.Monad.Reader
 import Options.Applicative
 
+import Data.Maybe
 import Data.Map (Map, fromList, findWithDefault)
 import Data.Binary (decodeFile)
 import Data.Tree
@@ -159,8 +160,13 @@ main = do
             _) = storedClassifier
     let rootMod = rootLabel modTree
     -- Some options reduce the classifier to a subclade
-    let classifier = case singleNode of
-                         Nothing -> origClassifier
+    let classifier =
+            case singleNode of
+                 Nothing -> origClassifier
+                 Just node -> case subClsf of
+                                  Nothing -> error "node not found"
+                                  (Just c) -> c
+                        where subClsf = subsetClassifier origClassifier (ST.pack node) (opt1NodeScope params) 
     -- TODO: replace the magic "-2" below by a meaningful
     -- constant/param
     let scoringScheme =
@@ -191,9 +197,28 @@ main = do
 
     mapM_ STIO.putStrLn outlines
 
+subsetClassifier :: Classifier -> CladeName -> SingleNodeScope ->
+    Maybe Classifier
+subsetClassifier (PWMClassifier modtree scale) name scope = 
+            case subtree of
+                (Just s) -> Just $ PWMClassifier s scale
+                Nothing  -> Nothing
+            where subtree = subTreeNamed name modtree 
+
+subTreeNamed :: CladeName -> (Tree PWMModel) -> Maybe (Tree PWMModel)
+subTreeNamed name subtree@(Node model kids)
+    | name == cladeName model = Just subtree
+    | otherwise =
+        case kids of
+           [] -> Nothing
+           (k:ks) -> listToMaybe $ catMaybes $ map (subTreeNamed name) kids
+
 -- Returns an alignment step (technically, a ST.Text -> ST.Text
--- function), or just id if option 'optNoAlign' is set.
---
+-- function), or just id if option 'optNoAlign' is set. The parens in the
+-- signature are not strictly necessary, but emphasize the fact that we
+-- return a function.
+
+mbAlign :: Params -> ScoringScheme -> PWMModel -> (Sequence -> Sequence)
 mbAlign params scsc rootMod =
     if optNoAlign params
             then id
@@ -202,6 +227,7 @@ mbAlign params scsc rootMod =
 -- Returns a masking step (a ST.Text -> ST.Text function),
 -- or just id if no masking was requested.
 
+mbMask :: Params -> (ST.Text -> ST.Text)
 mbMask params =
     case optMaskMode params of
         None -> id
