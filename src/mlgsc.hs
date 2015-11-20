@@ -207,11 +207,18 @@ subsetClassifier (PWMClassifier modtree scale) name scope =
 
 subTreeNamed :: CladeName -> (Tree PWMModel) -> Maybe (Tree PWMModel)
 subTreeNamed name subtree@(Node model kids)
-    | name == cladeName model = Just subtree
+    | name == cladeName model = Just $ trim subtree
     | otherwise =
         case kids of
            [] -> Nothing
            (k:ks) -> listToMaybe $ catMaybes $ map (subTreeNamed name) kids
+
+trim:: Tree a -> Tree a
+trim leaf@(Node _ []) = leaf
+trim (Node x kids) = Node x $ map toLeaf kids
+
+toLeaf :: Tree a -> Tree a
+toLeaf n = n {subForest = []}
 
 -- Returns an alignment step (technically, a ST.Text -> ST.Text
 -- function), or just id if option 'optNoAlign' is set. The parens in the
