@@ -41,7 +41,7 @@ data TreeTraversalMode = BestTraversal
 
 data MaskMode = None | Trim
 
-data SingleNodeScope = NodeItself | NodesChildren
+data SingleNodeScope =  NodesChildren | WholeSubtree
     
 data Params = Params {
                 optTreeTraversalMode    :: TreeTraversalMode
@@ -73,8 +73,8 @@ parseMaskMode optString
 
 parseSingleNodeScope :: Monad m => String -> m SingleNodeScope
 parseSingleNodeScope optString
-    | 's' == initC = return NodeItself
     | 'c' == initC = return NodesChildren
+    | 'w' == initC = return WholeSubtree
     -- TODO: handle others
     where initC = toLower $ head optString
 
@@ -113,7 +113,7 @@ parseOptions = Params
                     (long "single-node-scope"
                     <> short 'S'
                     <> help "only score vs s) single node or its c)hildren"
-                    <> value NodeItself)
+                    <> value NodesChildren)
                 <*> many (argument str (metavar "<query seq file> <classifier filename> [clade name]"))
 
 parseOptionsInfo :: ParserInfo Params
@@ -200,25 +200,28 @@ main = do
 subsetClassifier :: Classifier -> CladeName -> SingleNodeScope ->
     Maybe Classifier
 subsetClassifier (PWMClassifier modtree scale) name scope = 
-            case subtree of
+            case trimmedSubtree of
                 (Just s) -> Just $ PWMClassifier s scale
                 Nothing  -> Nothing
-            where subtree = subTreeNamed name modtree 
+            where   trimmedSubtree = case scope of
+                                        NodesChildren -> subtree >>= trim
+                                        WholeSubtree -> subtree
+                    subtree = subTreeNamed name modtree
 
 subTreeNamed :: CladeName -> (Tree PWMModel) -> Maybe (Tree PWMModel)
 subTreeNamed name subtree@(Node model kids)
-    | name == cladeName model = Just $ trim subtree
+    | name == cladeName model = Just subtree
     | otherwise =
         case kids of
            [] -> Nothing
            (k:ks) -> listToMaybe $ catMaybes $ map (subTreeNamed name) kids
 
-trim:: Tree a -> Tree a
-trim leaf@(Node _ []) = leaf
-trim (Node x kids) = Node x $ map toLeaf kids
+trim:: Tree a -> Maybe (Tree a)
+trim leaf@(Node _ []) = Just leaf
+trim (Node x kids) = Just $ Node x $ catMaybes $ map toLeaf kids
 
-toLeaf :: Tree a -> Tree a
-toLeaf n = n {subForest = []}
+toLeaf :: Tree a -> Maybe (Tree a)
+toLeaf n = Just $ n {subForest = []}
 
 -- Returns an alignment step (technically, a ST.Text -> ST.Text
 -- function), or just id if option 'optNoAlign' is set. The parens in the
