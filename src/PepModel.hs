@@ -13,12 +13,15 @@ import qualified Data.Vector as V
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import qualified Data.Set as S
-import Data.List (intersperse, intercalate, sortBy)
+import Data.List (intersperse, intercalate, sortBy, map)
 import Data.Ord (comparing)
+import Data.Int
 import Data.Binary
 import Data.Vector.Binary
 import Data.Text.Binary
 import Text.Printf
+import Numeric.LinearAlgebra.Data (Z)
+import qualified Numeric.LinearAlgebra.Data as LA
 
 
 import MlgscTypes
@@ -82,7 +85,7 @@ tablePrintWM :: PepModel -> String
 tablePrintWM mod = concatMap (\n -> ppMatPos n) [1 .. modelLength mod]   
     where   ppMatPos n = printf "%3d | %s\n" n posScores
                 where   posScores = intercalate " " $
-                            map matScore $ S.toList amino_acids
+                            map matScore $ S.toAscList amino_acids
                         matScore aa = show $ case M.lookup aa pMap of
                             Just score -> score
                             Nothing -> smallScore mod
@@ -120,3 +123,16 @@ alnToPepModel smallProb scale name aln = PepModel name scoreMapVector smallScore
             sequences = map rowSeq aln
             weights = map rowWeight aln
             length = T.length $ rowSeq $ head aln 
+
+-- reduceNoise :: Int -> PepModel -> PepModel
+reduceNoise _ mod = matrix mod
+
+posMapVec2Matrix :: V.Vector (M.Map Residue Int) -> Int -> LA.Matrix Z
+posMapVec2Matrix mat smallScore =
+    LA.fromColumns $ map (posMap2List smallScore) $ V.toList mat
+
+
+posMap2List :: Int -> M.Map Residue Int -> LA.Vector Z
+posMap2List smallScore posMap = LA.fromList $
+    map (\res -> fromIntegral $ M.findWithDefault smallScore res posMap) $
+        S.toAscList amino_acids

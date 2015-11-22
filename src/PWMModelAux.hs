@@ -8,7 +8,8 @@ import MlgscTypes
 -- some functions useful for building clade models from alignents
 
 -- Converts a residue probability (estimated by its relative frequency) to a
--- rounded, scaled, logarithm.
+-- rounded, scaled, logarithm. TODO: all small scores should be computed by
+-- this function.
 
 probToScore :: Double -> Double -> Int
 probToScore scale prob = round (scale * (logBase 10 prob))
