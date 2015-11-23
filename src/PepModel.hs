@@ -20,7 +20,9 @@ import Data.Binary
 import Data.Vector.Binary
 import Data.Text.Binary
 import Text.Printf
-import Numeric.LinearAlgebra.Data (Z)
+import Numeric.LinearAlgebra ((<>), svd)
+import Numeric.LinearAlgebra.Data (Z, R, fromColumns, toColumns, fromZ, toZ,
+            rows, cols, diagRect, tr)
 import qualified Numeric.LinearAlgebra.Data as LA
 
 
@@ -112,7 +114,8 @@ alnToPepModel :: SmallProb -> ScaleFactor -> CladeName -> Alignment
     -> PepModel
 alnToPepModel smallProb scale name [] = PepModel name V.empty smallScore 0
     where   smallScore = round (scale * (logBase 10 smallProb))
-alnToPepModel smallProb scale name aln = PepModel name scoreMapVector smallScore length
+alnToPepModel smallProb scale name aln =
+    PepModel name scoreMapVector smallScore length
     where   scoreMapVector = V.fromList scoreMapList
             scoreMapList = fmap (freqMapToScoreMap scale
                                 . countsMapToRelFreqMap wsize
@@ -124,15 +127,43 @@ alnToPepModel smallProb scale name aln = PepModel name scoreMapVector smallScore
             weights = map rowWeight aln
             length = T.length $ rowSeq $ head aln 
 
--- reduceNoise :: Int -> PepModel -> PepModel
-reduceNoise _ mod = matrix mod
 
-posMapVec2Matrix :: V.Vector (M.Map Residue Int) -> Int -> LA.Matrix Z
-posMapVec2Matrix mat smallScore =
-    LA.fromColumns $ map (posMap2List smallScore) $ V.toList mat
+-- WARNING: there are two kinds of Vector here (though possibly the same behind
+-- the scences): LA.Vector and V.Vector.
+
+-- Attempts to reduce noise in the PWM by applying singular value decomposition
+-- and setting the `remove` smallest singular values to zero.
+
+reduceNoise :: Int -> LA.Matrix R -> LA.Matrix R
+reduceNoise remove rMat = u <> sigma' <> tr(v)
+                    where   (u, sv, v) = svd rMat
+                            sigma' = diagRect 0 sv' r c
+                            sv' = trimSingularValues sv remove
+                            r = rows rMat
+                            c = cols rMat
+
+-- replaces the last `remove` singular values (in `sv`) by zero, in the hope of
+-- reducing noise
+trimSingularValues :: LA.Vector R -> Int -> LA.Vector R
+trimSingularValues sv remove = LA.fromList (svs ++ zeroes)
+                        where   svs = take (length svl - remove) svl
+                                zeroes = take remove $ repeat 0.0
+                                svl = LA.toList sv
+
+posMapVec2Matrix :: V.Vector (M.Map Residue Int) -> Int -> LA.Matrix R
+posMapVec2Matrix mat smallScore = fromZ $
+    fromColumns $ map (posMap2LAVector smallScore) $ V.toList mat
 
 
-posMap2List :: Int -> M.Map Residue Int -> LA.Vector Z
-posMap2List smallScore posMap = LA.fromList $
+posMap2LAVector :: Int -> M.Map Residue Int -> LA.Vector Z
+posMap2LAVector smallScore posMap = LA.fromList $
     map (\res -> fromIntegral $ M.findWithDefault smallScore res posMap) $
         S.toAscList amino_acids
+
+matrix2posMapVec :: LA.Matrix R -> V.Vector (M.Map Residue Int)
+matrix2posMapVec = V.fromList . map laVector2PosMap . toColumns . toZ
+
+laVector2PosMap :: LA.Vector Z -> M.Map Residue Int
+laVector2PosMap col = M.fromList $ zip residues scores 
+                    where   residues = S.toAscList amino_acids 
+                            scores = map fromIntegral $ LA.toList col :: [Int]

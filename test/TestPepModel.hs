@@ -26,6 +26,11 @@ test_aln1 = [
     ]
 
 aln1Mod = alnToPepModel small_prob scale_factor "my-OTU" test_aln1 
+-- TODO: remove when devel done
+aln1Mat = PepModel.matrix aln1Mod
+aln1RMat = posMapVec2Matrix aln1Mat small_score 
+aln1RMatRN = reduceNoise 0 aln1RMat
+aln1Mat' = matrix2posMapVec aln1RMatRN
 
 -- These tests are calques from TestNucModel (this is also why the test numbers
 -- are discontinuous), but while for nucleotides it is practical to test all
