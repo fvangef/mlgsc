@@ -15,7 +15,7 @@ mlgsc: mlgsc.hs API.hs MlgscTypes.hs FastA.hs PepModel.hs NucModel.hs \
 
 mlgsc_train: mlgsc_train.hs API.hs MlgscTypes.hs NewickParser.hs FastA.hs \
 	Classifier.hs Weights.hs Alignment.hs PWMModel.hs PWMModelAux.hs \
-	IDTree.hs
+	IDTree.hs PepModel.hs NucModel.hs
 
 mlgsc_xval: mlgsc_xval.hs API.hs Align.hs Alignment.hs PWMModelAux.hs \
 	PWMModel.hs Classifier.hs FastA.hs MlgscTypes.hs MlgscTypes.hs \

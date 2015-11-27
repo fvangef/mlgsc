@@ -113,10 +113,11 @@ instance Binary PepModel where
 alnToPepModel :: SmallProb -> ScaleFactor -> CladeName -> Alignment
     -> PepModel
 alnToPepModel smallProb scale name [] = PepModel name V.empty smallScore 0
-    where   smallScore = round (scale * (logBase 10 smallProb))
+    where   smallScore = round (scale * (logBase 18 smallProb))
 alnToPepModel smallProb scale name aln =
-    PepModel name scoreMapVector smallScore length
-    where   scoreMapVector = V.fromList scoreMapList
+    PepModel name denoisedScoreMapVector smallScore length
+    where   denoisedScoreMapVector = denoise 0 scoreMapVector
+            scoreMapVector = V.fromList scoreMapList
             scoreMapList = fmap (freqMapToScoreMap scale
                                 . countsMapToRelFreqMap wsize
                                 . weightedColToCountsMap weights)
@@ -133,6 +134,9 @@ alnToPepModel smallProb scale name aln =
 
 -- Attempts to reduce noise in the PWM by applying singular value decomposition
 -- and setting the `remove` smallest singular values to zero.
+
+denoise :: Int -> V.Vector (M.Map Residue Int) -> V.Vector (M.Map Residue Int)
+denoise remove mat = matrix2posMapVec $ reduceNoise remove $  posMapVec2Matrix mat (-4000)
 
 reduceNoise :: Int -> LA.Matrix R -> LA.Matrix R
 reduceNoise remove rMat = u <> sigma' <> tr(v)
