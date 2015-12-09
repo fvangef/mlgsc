@@ -11,13 +11,10 @@ test: binaries
 	cd test && $(MAKE)
 
 README.html: README.md
-	pandoc -s -o $@ $<
+	esmd < $< | pandoc -s -o $@
 
 install: 
 	install -t $(INSTALL_DIR) src/mlgsc src/mlgsc_train src/mlgsc_xval
-
-README.html: README.md
-	pandoc -s -o $@ $<
 
 clean:
 	cd src && $(MAKE) clean

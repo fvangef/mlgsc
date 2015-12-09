@@ -1,112 +1,98 @@
--   [MLgsc - Maximum-likelihood general sequence classifier](#mlgsc---maximum-likelihood-general-sequence-classifier)
-    -   [Example](#example)
-    -   [Installation](#installation)
-        -   [Installing Haskell](#installing-haskell_)_
-        -   [Building](#building)
-    -   [Tutorial](#tutorial)
-        -   [Choosing the Clade and Classifying region](#choosing-the-clade-and-classifying-region)
-        -   [Obtaining a reference Alignment and Phylogeny](#obtaining-a-reference-alignment-and-phylogeny)
-        -   [Evaluating the Clade and Classifying region](#evaluating-the-clade-and-classifying-region)
-        -   [Training the Model](#training-the-model)
-    -   [Real-world Example](#real-world-example)
-
 MLgsc - Maximum-likelihood general sequence classifier
 ======================================================
 
-MLgsc is a set of programs for classifying sequences into taxa (in other
-words, recognizing taxa from sequences). MLgsc trains a model using
-reference sequences from a user-specified conserved region (e.g., a
-gene) as well as a phylogeny of the taxa of interest. It can work on
-*protein as well as nucleic acid* sequences.
+Summary
+-------
 
-The package consists of the following:
+MLgsc is a set of programs for classifying sequences into taxa (in other words,
+recognizing taxa from sequences).
 
--   `mlgsc_train`: trains a model using an alignment and a phylogenetic
-    tree
--   `mlgsc`: classifies unknown sequences according to a model produced
-    by `mlgsc_train`
--   `mlgsc_xval`: performs leave-one-out cross-validation on an
-    alignment and a tree
+Compared to other programs, MLgsc
 
-The distribution contains source code, binaries and example data,
-including data used in the
-[article](http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0129384).
+- can work on any conserved region (in particular, not just 16S rRNA)
+- can work on any set of taxa (not just prokaryotes)
+- can work on nucleic acid *and protein* sequences
+- has a simple command-line interface
+- has no dependencies to other packages
 
-[Example](#example)
--------------------------------------------
+A technical description of MLgsc can be found in the [article](http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0129384).
 
-Here is a short example of MLgsc used for classifying protein sequences
-of Spo0A to genus level in the Firmicutes (for more details, see the
-[real-world example](#real-world-example) below).
+Example
+-------
 
-We start with a multiple alignment of Spo0A protein sequences (stored in
-a Fasta file called, in this example, `Spo0A.msa`) and a phylogenetic
-tree of the Firmicute genera (file `firmicute_genera.nw`).
+Here is a short example of MLgsc in action, in which we classify the sequences
+in file `data/queries.pep` (which is just a Fasta file) according to a
+classifier for endospore-forming Firmicutes based on the protein sequence of the
+Spo0A gene (file `data/Spo0A.bcls`):
 
-First, we train the model with the following command:
+```bash
+$ mlgsc data/queries.pep data/Spo0A.bcls | head
+```
 
-~~~~ {.sourceCode .Bash}
-$ mlgsc_train Prot Spo0A.msa firmicute_genera.nw
+The output has one line per query sequence. Each line contains the query's name
+(`query_001`, etc.), followed by an arrow, and finally by `mlgsc`'s
+classification of the query. The classification lists the taxa the query is
+inferred to belong to, in order of increasing specificity; and each taxon name is followed by a measure of confidence (the higher the better) in parentheses.
+
+For instance, `query_001` is inferred to belong to genus _Bacillus_, itself
+within family Bacillaceae, which in turn belongs to class Bacilli. In this
+example, confidence values above 10 are fairly reliable (for more about
+confidence measures, see below), so all queries are confidently classified at
+all levels.
+
+Roadmap
+--------
+
+The rest of this document explains:
+
+* how to install MLgsc
+* how to build classifiers with your own data
+* how to check a classifier's performance
+* how to classify unknown sequences with your classifiers, including how to fine-tune the output and the classification parameters
+
+
+
+[Downloading and Installing](#installation)
+---------------------------
+
+The package is available for download from [GitHub](https://github.com/tjunier/mlgsc.git).  To download, `cd` to where you want to download, and do:
+
+~~~~ {.sourceCode .bash}
+$ git clone https://github.com/tjunier/mlgsc.git
+$ cd mlgsc
 ~~~~
 
-This produces a binary file named `Spo0A.bcls`, which contains the model.
+The distribution contains  both **binaries** (Linux x86-64) and **source code**.
 
-We can now use it to classify Spo0A sequences of unknown genus, in this
-case they are stored in file `queries.pep` (a Fasta file):
+### Binaries
 
-~~~~ {.sourceCode .Bash}
-$ mlgsc queries.pep Spo0A.bcls
+The package contains the following binaries (a.k.a "executables"):
+
+-   `mlgsc`, the classifier program itself
+-   `mlgsc_train`, used to train models for use with `mlgsc`
+-   `mlgsc_xval`, used to validate models
+-   `mlgsc_dump`, a helper program that prints information about models
+
+The binaries are found in subdirectory `src` of the distribution. They can be
+installed by issuing:
+
+~~~~ {.sourceCode .bash}
+$ cd src
+$ sudo make install
 ~~~~
 
-This produces output like the following:
+at the top-level directory of the distribution.  This will install them in `/usr/local/bin`.
 
-    query_001 -> Bacilli (56); Bacillaceae (97); Bacillus (87)
-    query_002 -> Clostridia (106); Clostridiales (138); Clostridium (83)
-    query_003 -> Clostridia (106); Clostridiales (138); Clostridium (83)
-    ...
+That's it. You can jump to the tutorial.
 
-Each line lists a query ID (`query_001`, etc.), then an arrow (`->`),
-then MLgsc's classification of this query. This consists of a list of
-tree nodes, from the most general (leftmost) to the most specific
-(rightmost) - in this case, genus. Each node is shown with a support
-value (number in parentheses). High values indicate high confidence, in
-the sense that well-supported node is much more likely to be correct
-than the second best. In the example above, query 001 is confidently
-classified as *Bacillus*, while queries 002 and 003 are (also
-confidently) classified as *Clostridium*.
+### Source 
 
-In some cases, the confidence is so high that the support value is shown
-as an asterisk, as in
+Compiling from source isn't extremely complicated. Basically, it involves:
 
-    query_214 -> Clostridia (301); Clostridiales (*); Pseudoflavonifractor (*)
+1. Making sure you have a (recent) Haskell Compiler
+1. Building
 
-Of course, confidence values can also be low. This reflects `mlgsc`'s
-unability to confidently classify a query. If the value drops below 10,
-`mlgsc` does not try to be more specific, as in
-
-    query_200 -> Clostridia (105)
-
-which shows that while query 200 probably belongs to the Clostridia, it
-is not possible to tell to which subclade of the Clostridia it belongs.
-
-The [tutorial](#tutorial) section has more details about training and
-validating model, as well as on the various options that can be used to
-change the programs' logic and/or output.
-
-[Installing](#installation)
----------------------------------------------------------------
-
-MLgsc is available as **binaries** (Linux x86-64) and as **source code**. The
-binaries are found in subdirectory `src` of the distribution. They can be
-installed by issuing
-
-    $ sudo make install
-
-in that directory.
-
-To compile from source, see below.
-
-### [Installing Haskell](#installing-haskell)
+#### [Installing Haskell](#installing-haskell)
 
 MLgsc is written in the [Haskell](https://www.haskell.org) language. You
 will need a Haskell compiler and libraries; the easiest way of obtaining
@@ -116,14 +102,23 @@ platform](https://www.haskell.org/platform) on your machine - it is
 precompiled package for several major Linux distribution including
 Ubuntu, Fedora, Mint, etc.
 
-#### [Additional Libraries](#additional-libraries)
+I use the Glasgow Haskell Compiler version 7.10.2, you may still be able to
+compile with a slightly older version. To see which version you have, do
+
+```bash
+$ ghc --version
+```
+
+##### [Additional Libraries](#additional-libraries)
 
 Libraries not included in the Haskell platform may be installed with the
 `cabal` tool (which comes with the platform). The following command will
 install all additional packages (you may need to run this as root):
 
 ~~~~ {.sourceCode .bash}
-# cabal install array binary containers filepath mtl optparse-applicative parsec random text text-binary vector vector-binary$
+$ cabal install array binary containers filepath \
+  mtl optparse-applicative parsec random text \
+  text-binary vector vector-binary$
 ~~~~
 
 ### [Building](#building)
@@ -142,6 +137,7 @@ $ sudo cabal install --global
 If you have GNU make, you can also just do
 
 ~~~~ {.shell}
+$ make clean # remove the existing binaries
 $ make
 $ sudo make install
 ~~~~
