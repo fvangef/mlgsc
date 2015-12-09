@@ -55,7 +55,9 @@ The rest of this document explains:
 [Downloading and Installing](#installation)
 ---------------------------
 
-The package is available for download from [GitHub](https://github.com/tjunier/mlgsc.git).  To download, `cd` to where you want to download, and do:
+The package is available for download from
+[GitHub](https://github.com/tjunier/mlgsc.git).  You can either download it from
+the GitHub website using the "Download ZIP" button, or from the shell by `cd`ing to where you want to download, and doing:
 
 ~~~~ {.sourceCode .bash}
 $ git clone https://github.com/tjunier/mlgsc.git
@@ -123,10 +125,9 @@ $ cabal install array binary containers filepath \
 
 ### [Building](#building)
 
-If not already done, obtain the source from GitHub (e.g. using the
-"Download ZIP" button, or with `git clone`, etc.). Uncompress the
-archive if needed, then issue the following commands in the top-level
-directory of the source distribution:
+
+Issue the following commands in the top-level directory of the source
+distribution:
 
 ~~~~ {.shell}
 $ runhaskell Setup.hs configure # may need --user
@@ -134,10 +135,9 @@ $ cabal build
 $ sudo cabal install --global
 ~~~~
 
-If you have GNU make, you can also just do
+Or, if you have GNU make, you can also just do
 
 ~~~~ {.shell}
-$ make clean # remove the existing binaries
 $ make
 $ sudo make install
 ~~~~
@@ -147,16 +147,30 @@ This will install the programs in `/usr/local/bin`.
 [Tutorial](#tutorial)
 ---------------------
 
-### [Choosing the Clade and Classifying region](#choosing-the-clade-and-classifying-region)
+This section will walk you through a complete example of using MLgsc to build a
+model and use it to classify sequences. The steps involved are:
+
+1. Decide on the target taxa and classifying region
+1. Obtain a set of aligned reference sequences of the classifying region for
+   each of the target taxa, as well as a phylogeny of the target taxa
+1. Validate the alignment and phylogeny
+1. Build the final classifier
+1. Classify unknown sequences
+
+Here are the steps in detail.
+
+### [Choosing the Target taxa and Classifying region](#choosing-the-clade-and-classifying-region)
 
 The first decisions to make are (i) what organisms we wish to be able to
-recognize, which we refer to as the *target taxa*, and (ii) with which
-conserved region. Obviously, the conserved region must be found in all
-the organisms under consideration. In this tutorial, we have chosen to
+recognize, which we refer to as the *target taxa*, and (ii) with which conserved
+region. Obviously, the conserved region must be found in all the organisms under
+consideration, preferably as a single copy. In this tutorial, we have chosen to
 classify the spore-forming
 [Firmicutes](https://en.wikipedia.org/wiki/Firmicutes) using the
-[Spo0A](http://www.uniprot.org/uniprot/P06534) gene (at the protein
-level). Spo0A is found in every spore-forming Firmicute species.
+[Spo0A](http://www.uniprot.org/uniprot/P06534) gene (at the protein level).
+Spo0A is found in every spore-forming Firmicute species, almost always as a
+single-copy gene.
+
 
 ### [Obtaining a reference Alignment and Phylogeny](#obtaining-a-reference-alignment-and-phylogeny)
 
