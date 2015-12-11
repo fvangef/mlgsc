@@ -159,7 +159,7 @@ regulator of sporulation in some bacteria. It looks like this:
 
 ```bash
 $ head data/unknown.pep
-``` 
+```
 
 Our task is to determine which genus each sequence belongs to. For this, we
 need _reference sequences_, that is, Spo0A sequences from bacteria of known
@@ -181,7 +181,8 @@ MLgsc also needs a _phylogeny_ of the reference taxa. This is mostly to speed
 up the computation, the details are in the
 [article](http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0129384).
 
-One way of supplying this information is with a _taxonomy file_, such as this one (another is with a phylogenetic tree, see in the Reference part below):
+One way of supplying this information is with a _taxonomy file_, such as this
+one (another is with a phylogenetic tree, see in the Reference part below):
 
 ```bash
 $ head data/firmicutes.taxo
@@ -201,10 +202,31 @@ The output of this command is our Spo0A model for Firmicutes, contained in file
 `data/reference.bcls`. We can now use it to classify our unknown sequences:
 
 ```bash
-#$ mlgsc data
+$ mlgsc data/unknown.pep data/reference.bcls | head
 ```
 
+This means, for example, that `query_001` is inferred by MLgsc to belong to the
+Firmicutes, and within these, to the Bacilli; within the Bacilli, to the
+Bacillaceae, and finally to genus _Bacillus_.
 
+The values between parentheses are measures of confidence. Higher values mean
+higher confidence, and values above 1000 are shown as an asterisk, indicating
+virtual certainty. In this case, values above 10 are already quite reliable (we
+show below how we determine this). This means that, unsurprisingly, all the
+queries shown above are classified to genus level with high confidence.
+
+As a check, let's classify a set of sequences whose genus is known:
+
+```bash
+$ mlgsc -f "%h -> %p"  data/queries.pep data/reference.bcls | head
+```
+
+I pass option `-f "%h -> %p", which causes the full header (`%h`) to be printed out, instead of only the ID. We see that the classifications are correct. 
+
+**Note**: the above check is not very strong, because in this case the
+sequences have all been part of the training set. MLgsc come swith a program
+(`mlgsc_xval`) that does cross-validation with disjoint training and test sets.
+This is discussed below.
 
 Theory
 ------
