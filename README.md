@@ -13,7 +13,7 @@ Compared to other programs, MLgsc
 - can work on any set of taxa (not just prokaryotes)
 - can work on nucleic acid *and protein* sequences
 - has a simple command-line interface
-- has no dependencies to other packages
+- has no dependencies to other packages (except possibly if you install from source)
 
 A technical description of MLgsc can be found in the [article](http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0129384).
 
@@ -92,6 +92,7 @@ That's it. You can jump to the tutorial.
 Compiling from source isn't extremely complicated. Basically, it involves:
 
 1. Making sure you have a (recent) Haskell Compiler
+1. (possibly) Installing additional libraries
 1. Building
 
 #### [Installing Haskell](#installing-haskell)
@@ -118,9 +119,9 @@ Libraries not included in the Haskell platform may be installed with the
 install all additional packages (you may need to run this as root):
 
 ~~~~ {.sourceCode .bash}
-$ cabal install array binary containers filepath \
-  mtl optparse-applicative parsec random text \
-  text-binary vector vector-binary$
+$ cabal install vector containers text binary text-binary array \
+  parsec learning-hmm random-fu tuple random HUnit process directory \
+  filepath MissingH vector-binary
 ~~~~
 
 ### [Building](#building)
@@ -144,11 +145,69 @@ $ sudo make install
 
 This will install the programs in `/usr/local/bin`.
 
+**Note**: I'm still trying to figure out how to package the thing for use with
+Cabal. Until then, I find it easier to use good old Make.
+
 [Tutorial](#tutorial)
 ---------------------
 
 This section will walk you through a complete example of using MLgsc to build a
-model and use it to classify sequences. The steps involved are:
+model and use it to classify sequences.
+
+File `data/unknown.pep` contains sequences of the Spo0A protein, the master
+regulator of sporulation in some bacteria. It looks like this:
+
+```bash
+$ head data/unknown.pep
+``` 
+
+Our task is to determine which genus each sequence belongs to. For this, we
+need _reference sequences_, that is, Spo0A sequences from bacteria of known
+genus. Spo0A is only found in Firmicutes, a clade of bacteria that includes
+well-known genera like _Bacillus_ and _Clostridium_. Here are the first few
+line of a file with aligned Spo0A sequences from 38 genera of Firmicutes:
+
+```bash
+$ head data/reference.msa
+```
+
+Notice that the headers of each Fasta entry contains, after the ID, the name of
+the genus the sequence belongs to: _Bacillus_ for `ID_001`, _Clostridium_ for
+`ID_002`, and so on. These genera are our _target taxa_: given a sequence from
+one of these genera, we expect our classifier to identify the genus it belongs
+to - even if the sequence was not among the reference sequences.
+
+MLgsc also needs a _phylogeny_ of the reference taxa. This is mostly to speed
+up the computation, the details are in the
+[article](http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0129384).
+
+One way of supplying this information is with a _taxonomy file_, such as this one (another is with a phylogenetic tree, see in the Reference part below):
+
+```bash
+$ head data/firmicutes.taxo
+```
+
+This file simply states that, for example, genus _Anaerofustis_ (line 2)
+belongs to family Eubacteriaceae, which belongs to order Clostridiales, which
+is in class Clostridia, which is itself a subclade of phylum Firmicutes.
+
+We can now build a model for Spo0A in our target taxa. 
+
+```bash
+$ mlgsc_train -T t Prot data/reference.msa data/firmicutes.taxo 
+```
+
+The output of this command is our Spo0A model for Firmicutes, contained in file
+`data/reference.bcls`. We can now use it to classify our unknown sequences:
+
+```bash
+#$ mlgsc data
+```
+
+
+
+Theory
+------
 
 1. Decide on the target taxa and classifying region
 1. Obtain a set of aligned reference sequences of the classifying region for
@@ -162,10 +221,9 @@ Here are the steps in detail.
 ### [Choosing the Target taxa and Classifying region](#choosing-the-clade-and-classifying-region)
 
 The first decisions to make are (i) what organisms we wish to be able to
-recognize, which we refer to as the *target taxa*, and (ii) with which conserved
-region. Obviously, the conserved region must be found in all the organisms under
-consideration, preferably as a single copy. In this tutorial, we have chosen to
-classify the spore-forming
+recognize, which we refer to as the *target taxa*, and (ii) with which classifying region. The target taxa will be pretty much determined by the study being conducted. The classifying region can be 
+
+In this tutorial, we have chosen to classify the spore-forming
 [Firmicutes](https://en.wikipedia.org/wiki/Firmicutes) using the
 [Spo0A](http://www.uniprot.org/uniprot/P06534) gene (at the protein level).
 Spo0A is found in every spore-forming Firmicute species, almost always as a
