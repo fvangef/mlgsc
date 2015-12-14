@@ -223,10 +223,22 @@ $ mlgsc -f "%h -> %p"  data/queries.pep data/reference.bcls | head
 
 I pass option `-f "%h -> %p", which causes the full header (`%h`) to be printed out, instead of only the ID. We see that the classifications are correct. 
 
-**Note**: the above check is not very strong, because in this case the
-sequences have all been part of the training set. MLgsc come swith a program
+**Note**: the above check is not very strong, because in this case the test
+sequences were all part of the training set. MLgsc come swith a program
 (`mlgsc_xval`) that does cross-validation with disjoint training and test sets.
-This is discussed below.
+This is discussed just below.
+
+### Validation
+
+`mlgsc_xval` performs _leave-one-out_ cross-validation: it randomly draws one
+sequence (referred to as the _test sequence_) from the reference set and builds
+the model using all the remaining sequences (called the _training set_). Then
+it classifies the test sequence agaisnt the model. By repeating the procedure,
+one obtains an estimate of MLgsc's error rate. Let's see how this works:
+
+```bash
+
+```
 
 Theory
 ------
