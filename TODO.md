@@ -22,6 +22,7 @@ Documentation
 -------
 
 * (X)HTML output
+* easy way to dump aligned sequences as FastA, for subsequent runs with `-A`
 * XML output for taxonomies, if it exists
 * color output
 
