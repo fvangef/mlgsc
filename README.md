@@ -347,4 +347,3 @@ option `-x`, which causes `mlgsc_xval` to only display failures. Here there are
 two lines, which means that two out of a hundred runs failed, that is, the
 estimated error rate is 2%.
 ---
-Report generated with ESMD on 2015-12-14 at 10:51:19 (CET) by user `tjunier` on host `ibiol-0182.unine.ch` in `/home/tjunier/projects/mlgsc`
