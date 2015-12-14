@@ -1,0 +1,2 @@
+output should consistently start at the root, or ignore it, or (better yet)
+allow an option to specify it. See the xval def and taxo tests"
