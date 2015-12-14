@@ -54,20 +54,9 @@ example, confidence values above 10 are fairly reliable (for more about
 confidence measures, see below), so all queries are confidently classified at
 all levels.
 
-Roadmap
---------
 
-The rest of this document explains:
-
-* how to install MLgsc
-* how to build classifiers with your own data
-* how to check a classifier's performance
-* how to classify unknown sequences with your classifiers, including how to fine-tune the output and the classification parameters
-
-
-
-[Downloading and Installing](#installation)
----------------------------
+Downloading and Installing
+--------------------------
 
 The package is available for download from
 [GitHub](https://github.com/tjunier/mlgsc.git).  You can either download it from
@@ -143,7 +132,7 @@ $ cabal install vector containers text binary text-binary array \
   filepath MissingH vector-binary
 ~~~~
 
-### [Building](#building)
+### Building
 
 
 Issue the following commands in the top-level directory of the source
@@ -167,8 +156,8 @@ This will install the programs in `/usr/local/bin`.
 **Note**: I'm still trying to figure out how to package the thing for use with
 Cabal. Until then, I find it easier to use good old Make.
 
-[Tutorial](#tutorial)
----------------------
+Tutorial
+--------
 
 This section will walk you through a complete example of using MLgsc to build a
 model and use it to classify sequences.
@@ -346,4 +335,3 @@ the model above. Since we're mostly interested in the failure rate, I pass
 option `-x`, which causes `mlgsc_xval` to only display failures. Here there are
 two lines, which means that two out of a hundred runs failed, that is, the
 estimated error rate is 2%.
----
