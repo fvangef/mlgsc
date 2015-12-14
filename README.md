@@ -307,7 +307,7 @@ ID_010 Clostridium -> Firmicutes (*); Clostridia (170); Clostridiales (208); Clo
 ```
 
 
-I pass option `-f "%h -> %p", which causes the full header (`%h`) to be printed
+I pass option `-f "%h -> %p`, which causes the full header (`%h`) to be printed
 out, instead of only the ID.
 
 We see that the classifications are correct.  But this  check is not very

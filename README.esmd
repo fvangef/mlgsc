@@ -214,7 +214,7 @@ As a check, let's classify a set of sequences whose genus is known:
 $ mlgsc -f "%h -> %p"  data/queries.pep data/reference.bcls | head
 ```
 
-I pass option `-f "%h -> %p", which causes the full header (`%h`) to be printed
+I pass option `-f "%h -> %p`, which causes the full header (`%h`) to be printed
 out, instead of only the ID.
 
 We see that the classifications are correct.  But this  check is not very
