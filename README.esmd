@@ -27,21 +27,7 @@ Spo0A gene (file `data/Spo0A.bcls`):
 
 ```bash
 $ mlgsc data/queries.pep data/Spo0A.bcls | head
-
 ```
-```
-ID_001 Bacillus -> Bacilli (56); Bacillaceae (97); Bacillus (87)
-ID_002 Clostridium -> Clostridia (106); Clostridiales (138); Clostridium (83)
-ID_003 Clostridium -> Clostridia (106); Clostridiales (138); Clostridium (83)
-ID_004 Bacillus -> Bacilli (79); Bacillaceae (95); Bacillus (99)
-ID_005 Bacillus -> Bacilli (84); Bacillaceae (89); Bacillus (104)
-ID_006 Bacillus -> Bacilli (84); Bacillaceae (89); Bacillus (104)
-ID_007 Exiguobacterium -> Bacilli (80); Exiguobacterium (279)
-ID_008 Clostridium -> Clostridia (131); Clostridiales (200); Clostridium (179)
-ID_009 Sporomusa -> Clostridia (74); Sporomusa (30)
-ID_010 Clostridium -> Clostridia (170); Clostridiales (208); Clostridium (168)
-```
-
 
 The output has one line per query sequence. Each line contains the query's name
 (`query_001`, etc.), followed by an arrow, and finally by `mlgsc`'s
@@ -124,12 +110,7 @@ compile with a slightly older version. To see which version you have, do
 
 ```bash
 $ ghc --version
-
 ```
-```
-The Glorious Glasgow Haskell Compilation System, version 7.10.2
-```
-
 
 ##### [Additional Libraries](#additional-libraries)
 
@@ -178,21 +159,7 @@ regulator of sporulation in some bacteria. It looks like this:
 
 ```bash
 $ head data/unknown.pep
-
 ```
-```
->query_001
-IMPHLDGLAVLERLRESQLKKQPNVIMLTAFGQEDVTKKAVDLGASYFILKPFDMENLVG
-HIRQVSGNGSQLTHRAPSSQSSVLRPQPESPKKNLDASITTIIHEIGVPAHIKGYLYLRE
-AISMVYNDIELLGSITKVLYPDIAKKFNTTASRVERAIRHAIEVAWSRGNIDSISSLFGY
-TVSMSKAKPTNSEFIAMVAD
->query_002
-IMPHLDGLGVLEKIGATAISKRPLFIILSAVGQDKITQRALALGAEYYVVKPFDMEVLIS
-RIRQLKNVNQPNVIRQDGLSGEVKSSYHPPQPKNLEAEVTNIMHEIGVPAHIKGYQYLRD
-AIIMVVKDLDVINSITKQLYPTIAKEYNTTPSRVERAIRHAIEVAWSRGQIDTIDSLFGY
-TINVGKGKPTNSEFIAMVAD
-```
-
 
 Our task is to determine which genus each sequence belongs to. For this, we
 need _reference sequences_, that is, Spo0A sequences from bacteria of known
@@ -202,21 +169,7 @@ line of a file with aligned Spo0A sequences from 38 genera of Firmicutes:
 
 ```bash
 $ head data/reference.msa
-
 ```
-```
->ID_001 Bacillus
-IMPHLDGLAVLERLRE-SQLKK-QPN-VIMLTAFGQEDVTKKAVDLGASYFILKPFDMEN
-LVGHIRQVSGNGSQL--THRAPS---SQSS------------VLR-PQPES------PKK
-NLDASITTIIHEIGVPAHIKGYLYLREAISMVYNDIELLGSITKVLYPDIAKKFNTTASR
-VERAIRHAIEVAWSRGNIDSISSLFGYTVSMSKAKPTNSEFIAMVAD
->ID_002 Clostridium
-IMPHLDGLGVLEKIGA-TAISK-RPL-FIILSAVGQDKITQRALALGAEYYVVKPFDMEV
-LISRIRQLKNVNQPN--VIRQ----------------DGLSGEVKSSYHPP------QPK
-NLEAEVTNIMHEIGVPAHIKGYQYLRDAIIMVVKDLDVINSITKQLYPTIAKEYNTTPSR
-VERAIRHAIEVAWSRGQIDTIDSLFGYTINVGKGKPTNSEFIAMVAD
-```
-
 
 Notice that the headers of each Fasta entry contains, after the ID, the name of
 the genus the sequence belongs to: _Bacillus_ for `ID_001`, _Clostridium_ for
@@ -233,21 +186,7 @@ one (another is with a phylogenetic tree, see in the Reference part below):
 
 ```bash
 $ head data/firmicutes.taxo
-
 ```
-```
-Firmicutes; Clostridia; Sporomusa
-Firmicutes; Clostridia; Clostridiales; Eubacteriaceae; Anaerofustis
-Firmicutes; Clostridia; Clostridiales; Eubacteriaceae; Eubacterium
-Firmicutes; Clostridia; Clostridiales; Eubacteriaceae
-Firmicutes; Clostridia; Clostridiales; Lachnospiraceae; Anaerostipes
-Firmicutes; Clostridia; Clostridiales; Lachnospiraceae; Dorea
-Firmicutes; Clostridia; Clostridiales; Lachnospiraceae; Marvinbryantia
-Firmicutes; Clostridia; Clostridiales; Lachnospiraceae
-Firmicutes; Clostridia; Clostridiales; Clostridium
-Firmicutes; Clostridia; Clostridiales; Peptococcaceae; Dehalobacter
-```
-
 
 This file simply states that, for example, genus _Anaerofustis_ (line 2)
 belongs to family Eubacteriaceae, which belongs to order Clostridiales, which
@@ -259,11 +198,7 @@ We can now train a model for Spo0A in our target taxa.
 
 ```bash
 $ mlgsc_train -T t Prot data/reference.msa data/firmicutes.taxo 
-
 ```
-```
-```
-
 
 The output of this command is our Spo0A model for Firmicutes, contained in file
 `data/reference.bcls`. We can now use it to classify our unknown sequences:
@@ -272,21 +207,7 @@ The output of this command is our Spo0A model for Firmicutes, contained in file
 
 ```bash
 $ mlgsc data/unknown.pep data/reference.bcls | head
-
 ```
-```
-query_001 -> Firmicutes (*); Bacilli (56); Bacillaceae (97); Bacillus (87)
-query_002 -> Firmicutes (*); Clostridia (106); Clostridiales (138); Clostridium (83)
-query_003 -> Firmicutes (*); Clostridia (106); Clostridiales (138); Clostridium (83)
-query_004 -> Firmicutes (*); Bacilli (80); Bacillaceae (95); Bacillus (99)
-query_005 -> Firmicutes (*); Bacilli (84); Bacillaceae (89); Bacillus (104)
-query_006 -> Firmicutes (*); Bacilli (84); Bacillaceae (89); Bacillus (104)
-query_007 -> Firmicutes (*); Bacilli (79); Exiguobacterium (281)
-query_008 -> Firmicutes (*); Clostridia (131); Clostridiales (200); Clostridium (179)
-query_009 -> Firmicutes (*); Clostridia (73); Sporomusa (30)
-query_010 -> Firmicutes (*); Clostridia (170); Clostridiales (208); Clostridium (168)
-```
-
 
 This means, for example, that `query_001` is inferred by MLgsc to belong to the
 Firmicutes, and within these, to the Bacilli; within the Bacilli, to the
@@ -302,21 +223,7 @@ As a check, let's classify a set of sequences whose genus is known:
 
 ```bash
 $ mlgsc -f "%h -> %p"  data/queries.pep data/reference.bcls | head
-
 ```
-```
-ID_001 Bacillus -> Firmicutes (*); Bacilli (56); Bacillaceae (97); Bacillus (87)
-ID_002 Clostridium -> Firmicutes (*); Clostridia (106); Clostridiales (138); Clostridium (83)
-ID_003 Clostridium -> Firmicutes (*); Clostridia (106); Clostridiales (138); Clostridium (83)
-ID_004 Bacillus -> Firmicutes (*); Bacilli (80); Bacillaceae (95); Bacillus (99)
-ID_005 Bacillus -> Firmicutes (*); Bacilli (84); Bacillaceae (89); Bacillus (104)
-ID_006 Bacillus -> Firmicutes (*); Bacilli (84); Bacillaceae (89); Bacillus (104)
-ID_007 Exiguobacterium -> Firmicutes (*); Bacilli (79); Exiguobacterium (281)
-ID_008 Clostridium -> Firmicutes (*); Clostridia (131); Clostridiales (200); Clostridium (179)
-ID_009 Sporomusa -> Firmicutes (*); Clostridia (73); Sporomusa (30)
-ID_010 Clostridium -> Firmicutes (*); Clostridia (170); Clostridiales (208); Clostridium (168)
-```
-
 
 I pass option `-f "%h -> %p", which causes the full header (`%h`) to be printed
 out, instead of only the ID.
@@ -346,5 +253,3 @@ the model above. Since we're mostly interested in the failure rate, I pass
 option `-x`, which causes `mlgsc_xval` to only display failures. Here there are
 two lines, which means that two out of a hundred runs failed, that is, the
 estimated error rate is 2%.
----
-Report generated with ESMD on 2015-12-14 at 10:51:19 (CET) by user `tjunier` on host `ibiol-0182.unine.ch` in `/home/tjunier/projects/mlgsc`

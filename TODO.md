@@ -10,8 +10,7 @@ Documentation
 `mlgsc_dump`
 ------------
 
-* options to display only the tree, or only one model (by ID), or any other info
-  that is or will be in the model
+* options to display only the tree [done] , or only one model (by ID) [done] , or any other info that is or will be in the model [partly done]
 
 `mlgsc_train`
 -------------
