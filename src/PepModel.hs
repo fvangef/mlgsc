@@ -16,7 +16,8 @@ module PepModel (
     pepPrettyPrint,
     pepTablePrint,
     pepResidues,
-    pepScaleFactor
+    pepScaleFactor,
+    alnToPepModel
     ) where
 
 import Data.Vector ((!))

@@ -2,7 +2,7 @@
 -- be able to recognize a clade (be it a OTU, or a species, or whatever "rank").
 
 module PWMModel (PWMModel(..), scoreOf, scoreSeq, modLength, cladeName,
-    absentResScore, tablePrint, prettyPrint) where
+    absentResScore, tablePrint, prettyPrint, colEntropy) where
 
 import Data.Binary (Binary, put, get, Get, Word8)
 
