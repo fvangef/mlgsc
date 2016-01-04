@@ -9,6 +9,7 @@ import Data.Binary (Binary, put, get, Get, Word8)
 import MlgscTypes
 import NucModel 
 import PepModel
+import Data.Set (Set, toList)
 
 data PWMModel = NucPWMModel NucModel
                 | PepPWMModel PepModel
@@ -41,6 +42,24 @@ prettyPrint (NucPWMModel nm) = nucPrettyPrint nm
 tablePrint :: PWMModel -> String
 tablePrint (PepPWMModel spm) = pepTablePrint spm
 tablePrint (NucPWMModel nm) = undefined
+
+colEntropy :: PWMModel -> Position -> Double
+colEntropy mod pos = sum $ map (colResEntropy mod pos) $
+    toList $ modelResidues mod
+
+colResEntropy :: PWMModel -> Position -> Residue -> Double
+colResEntropy mod pos res = - (p * log10_p)
+    where   log10_p = (fromIntegral $ scoreOf mod res pos) / (scaleFactor mod)
+            p = 10 ** log10_p
+
+modelResidues :: PWMModel -> Set Residue
+modelResidues (NucPWMModel nm) = nucResidues nm
+modelResidues (PepPWMModel pm) = pepResidues pm
+
+scaleFactor :: PWMModel -> ScaleFactor
+scaleFactor (NucPWMModel nm) = nucScaleFactor nm
+scaleFactor (PepPWMModel pm) = pepScaleFactor pm
+
 
 instance Binary PWMModel where
     put (NucPWMModel nm) = do

@@ -7,6 +7,7 @@ import Data.Set (fromList)
 data Molecule = DNA | Prot
     deriving (Show, Eq, Read)
 
+nucleotides = fromList "ATGC-"
 amino_acids = fromList "ACDEFGHIKLMNPQRSTVWY-"
 
 data PhyloFormat = Newick | Taxonomy

@@ -26,6 +26,8 @@ module NucModel (NucModel,
                     nucAbsentResScore,
                     nucCladeName,
                     nucPrettyPrint,
+                    nucResidues,
+                    nucScaleFactor,
                     matrix,
                     alnToNucModel) where
 
@@ -48,6 +50,7 @@ data NucModel = NucModel {
                     clade           :: CladeName
                     , matrix        :: V.Vector (U.Vector Int)
                     , smallScore    :: Int
+                    , scaleFactor   :: ScaleFactor
                 } deriving (Show, Eq)
 
 --Remember: sequence positions start -- at 1, but vector indexes (sensibly)
@@ -79,17 +82,23 @@ nucCladeName = clade
 
 nucPrettyPrint = undefined
 
+nucResidues mod = nucleotides
+
+nucScaleFactor = scaleFactor
+
 instance Binary NucModel where
     put nm = do
         put $ clade nm
         put $ matrix nm
         put $ smallScore nm
+        put $ scaleFactor nm
 
     get = do
         clade <- get :: Get CladeName
         mat <- get :: Get (V.Vector (U.Vector Int))
         smallScore <- get :: Get Int
-        return $ NucModel clade mat smallScore
+        scaleFactor <- get :: Get ScaleFactor
+        return $ NucModel clade mat smallScore scaleFactor
 
 -- Builds a NucModel from a (weighted) Alignment
 -- G, T are ignored, but gaps (-) are modelled.
@@ -97,7 +106,8 @@ instance Binary NucModel where
 alnToNucModel :: SmallProb -> ScaleFactor -> CladeName -> Alignment
     -> NucModel
 alnToNucModel smallProb scale name aln = 
-    NucModel name (scoreMapListToVectors smallScore scoreMapList) smallScore
+    NucModel name (scoreMapListToVectors smallScore scoreMapList)
+                smallScore scale
     where   scoreMapList = fmap (freqMapToScoreMap scale
                                 . countsMapToRelFreqMap wsize
                                 . weightedColToCountsMap weights)

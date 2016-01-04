@@ -6,7 +6,18 @@
  -}
 
 -- TODO: once it works, restrict exports to the minimal needed set.
-module PepModel where
+module PepModel (
+    PepModel,
+    pepScoreOf,
+    pepScoreSeq,
+    pepModLength,
+    pepAbsentResScore,
+    pepCladeName,
+    pepPrettyPrint,
+    pepTablePrint,
+    pepResidues,
+    pepScaleFactor
+    ) where
 
 import Data.Vector ((!))
 import qualified Data.Vector as V
@@ -30,19 +41,20 @@ data PepModel = PepModel {
                     , matrix        :: V.Vector (M.Map Residue Int)
                     , smallScore    :: Int
                     , modelLength   :: Int
+                    , scaleFactor   :: ScaleFactor
                 } deriving (Show, Eq)
 
 --Remember: sequence positions start -- at 1, but vector indexes (sensibly)
 -- start at 0.
 pepScoreOf :: PepModel -> Residue -> Position -> Int
-pepScoreOf (PepModel _ _ smallScore 0) _ _ = smallScore -- empty models
+pepScoreOf (PepModel _ _ smallScore 0 _) _ _ = smallScore -- empty models
 pepScoreOf _ '.' _ = 0 -- masked residues have a score of 0
 pepScoreOf mod res pos = M.findWithDefault (smallScore mod) res posMap
     where posMap = (matrix mod) V.! (pos - 1)
 
 -- TODO: try to rewrite this in applicative style
 pepScoreSeq :: PepModel -> Sequence -> Int
-pepScoreSeq (PepModel _ _ smallScore 0) seq = smallScore * T.length seq
+pepScoreSeq (PepModel _ _ smallScore 0 _) seq = smallScore * T.length seq
 pepScoreSeq mod seq = sum $ map (\(res,pos) -> pepScoreOf mod res pos) seqWithPos
     where seqWithPos = zip (T.unpack seq) [1..] -- eg [('A',1), ...], etc.
 
@@ -88,28 +100,35 @@ tablePrintWM mod = concatMap (\n -> ppMatPos n) [1 .. modelLength mod]
                             Nothing -> smallScore mod
                         pMap = (matrix mod) ! (n-1)
 
+pepResidues mod = amino_acids
+
+pepScaleFactor = scaleFactor
+
 instance Binary PepModel where
     put mod = do
         put $ clade mod
         put $ matrix mod
         put $ smallScore mod
         put $ modelLength mod
+        put $ scaleFactor mod
 
     get = do
         cladeName <- get :: Get CladeName
         mat <- get :: Get (V.Vector (M.Map Residue Int))
         smallScore <- get :: Get Int
         modelLength <- get :: Get Int
-        return $ PepModel cladeName mat smallScore modelLength
+        scale <- get :: Get ScaleFactor
+        return $ PepModel cladeName mat smallScore modelLength scale
 
 -- Builds a PepMOdel from a (weighted) Alignment
 -- G, T are ignored, but gaps (-) are modelled.
 
 alnToPepModel :: SmallProb -> ScaleFactor -> CladeName -> Alignment
     -> PepModel
-alnToPepModel smallProb scale name [] = PepModel name V.empty smallScore 0
+alnToPepModel smallProb scale name [] =
+    PepModel name V.empty smallScore 0 scale
     where   smallScore = round (scale * (logBase 10 smallProb))
-alnToPepModel smallProb scale name aln = PepModel name scoreMapVector smallScore length
+alnToPepModel smallProb scale name aln = PepModel name scoreMapVector smallScore length scale
     where   scoreMapVector = V.fromList scoreMapList
             scoreMapList = fmap (freqMapToScoreMap scale
                                 . countsMapToRelFreqMap wsize
