@@ -9,6 +9,8 @@ manpages = $(addsuffix .1.gz, $(basename $(basename $(sources))))
 %.1.gz: %.1.md
 	pandoc --standalone --to=man $< | gzip > $@
 
+all: $(manpages)
+
 install: $(manpages)
 	install --mode=a+r $(manpages) $(MANDIR)
 
