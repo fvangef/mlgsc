@@ -28,12 +28,14 @@ homologous to the reference sequences used in training the model.
     step is often the bottleneck (especially with small numbers of target taxa),
     since it is performed by full dynamic programming.
     The default is to align.
+
 -e, \--ER-cutoff *NUM*
 :   Stop classifying a particular query if a node has an ER smaller than *NUM*.
     Intuitively, this means that `mlgsc` has reached a node at which cannot
     decide which of its children is best, and therefore stops. 
     The default is not to apply any cutoff (i.e., a cutoff of 0).
--f, --output-format *STRING*
+
+-f, \--output-format *STRING*
 :   A printf(1)-like format string that specifies the format of the output
     elements. The recognized placeholders are:
    
@@ -115,6 +117,39 @@ homologous to the reference sequences used in training the model.
 
     The default format is "%t (%s)", that is, the taxon name followed by the
     evidence ratio in parentheses.
+
+# EXAMPLES
+
+Data for all examples can be found in the _data_ directory of the MLgsc
+distribution.
+
+## Example 1
+
+```
+$ mlgsc Spo0A.pep Spo0A.bcls
+```
+
+This classifies the sequences in file Spo0A.pep according to the classifier in
+file Spo0A.bcls. The output looks like this:
+
+```
+ID_001 Bacillus -> Bacilli (56); Bacillaceae (97); Bacillus (87)
+ID_002 Clostridium -> Clostridia (106); Clostridiales (138); Clostridium (83)
+ID_003 Clostridium -> Clostridia (106); Clostridiales (138); Clostridium (83)
+ID_004 Bacillus -> Bacilli (79); Bacillaceae (95); Bacillus (99)
+ID_005 Bacillus -> Bacilli (84); Bacillaceae (89); Bacillus (104)
+ID_006 Bacillus -> Bacilli (84); Bacillaceae (89); Bacillus (104)
+```
+
+## Example 2
+
+```
+$ mlgsc -f "%i,%P,%s" Spo0A.pep  Spo0A.bcls
+```
+
+As in Example 1, but using option **-f** to change the output format. In this
+case, we request the sequence id (**%i**), the predicted reference taxon
+(**%P**), and the score (**%s**), separated by commas (that is, in CSV).
 
 # SEE ALSO
 
