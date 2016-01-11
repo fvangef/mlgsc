@@ -72,6 +72,15 @@ mlgsc_train trains a model for use with mlgsc(1). The arguments are as follows:
 A binary file containing the model. By default, the file's name derives from the
 multiple alignment file's name, but it can be specified with option **-o**.
 
+The program may also output warnings (unless verbosity is set to 0, see option
+**-v**) in the following situations:
+
+* if a taxon is found in the alignment but not in the phylogeny
+* if a taxon is found in the phylogeny but not in the alignment
+
+in both cases, the taxon is ignored.
+
+
 # OPTIONS
 
 -o, \--output-file *filename*
@@ -87,89 +96,52 @@ multiple alignment file's name, but it can be specified with option **-o**.
     weighted using Henikoff and Henikoff's algorithm [1]. Weighting often, but
     not always, improves accuracy by a few percentage points. Use mlgsc_xval(1)
     to estimate the effect of weighting.
+-I, \--id-tree
+:   The phylogeny is labeled by sequence ID instead of taxa. The use case for
+    this option is when the phylogenetic tree has been computed directly from
+    the alignment passed as second argument. This has the following
+    consequences: (i) the tree is labeled by sequence ID instead of target
+    taxon name; (ii) some taxa may not be monophyletic according to this
+    particular tree; (iii) the tree may yet better reflect the phylogeny of the
+    sequences at hand than would a phylogeny of the same taxa but computed from
+    a different gene. The program then behaves as follows:
+    
+    1. from the headers of the alignment file, it constructs a (sequence ID ->
+       taxon name) map.
+    1. it relabels the input tree, replacing sequence IDs with the corresponding
+       taxon names according to the map.
+    1. it condenses any clade that consists entirely of the same taxon into a
+       single leaf, labeled by that taxon
+    1. if any taxon is found more than once (after condensing, thus indicating
+       paraphyly), it gives a unique name to each leaf by appending a different
+       number to each instance of a taxon that has multiple occurrences.
 
--f, --output-format *STRING*
-:   A printf(1)-like format string that specifies the format of the output
-    elements. The recognized placeholders are:
-   
-    %%: literal '%'
-    
-    %a: the aligned query sequence (useful fo troubleshooting)
+    For examle, imagine we have the following tree, where the leaves are
+    labeled by sequence ID:
 
-    %l: the length of the (unaligned) query sequence
+    ```
+             /---------------+ ID1
+     /-------+                    
+     |       \---------------+ ID6
+     |                            
+    =+               /-------+ ID2
+     |       /-------+            
+     |       |       \-------+ ID3
+     \-------+                    
+             |       /-------+ ID4
+             \-------+            
+                     \-------+ ID5
     
-    %h: the Fasta headerg
-    
-    %i: the query sequence's ID, taken to be the first word in the header line
-    
-    %m: the lowest evidence ratio found for the current query
-    
-    %P: the predicted taxon 
-    
-    %p: the whole path through the phylogeny, from the root to the predicted
-    taxon. Path elements can be formatted via option `-s`.
-    
-    %q: the query sequence, unaligned
-    
-    %s: the score of the query against the predicted taxon
-    
-    The default is "%h -> %p", that is, the query header followed by the whole
-    path. To see just the ID and the predicted taxon, for example, use `-f "%i
-    %P"`.
-    
--h, \--help
-:   print a short help message, and exit successfully.
-
--M, --mask-mode *n|t*
-:   How to mask the query sequence (if at all). This causes some portions of the
-    query sequence to be ignored when scoring against the model (at all nodes in
-    the tree). The possible values are:
-
-    n (none): do not mask - use the whole sequence for scoring.
-    
-    t (trim): ignore the leading and trailing gapped regions. This is useful
-    when the query sequence is substantially shorter than the model, yet has a
-    good local match to it. This will divide the sequence into a matching region
-    flanked by to regions which are mostly gaps. The boundaries between the
-    regions are determined by a hidden Markov model, and those gapped regions
-    will be effectively trimmed from the query sequence.
-    
-    The default is not to mask.
-
--m, --traversal-mode *b|a|INT*
-:   Determines the search strategy, that is, how the model tree is traversed.
-    Possible values are:
-
-    b (best): at each inner node, choose the child with the _best_ score. This
-    is the fastest option, but offers no error recovery.
-    
-    a (all): show _all_ paths through the tree. This is useful when
-    troubleshooting, as it helps determine at which point the classifier makes a
-    wrong choice. The nodes actually followed always shows an evidence ratio of
-    zero.
-    
-    INT: the number supplied is used as an evidence ratio (ER) cutoff. Instead
-    of searching only the child with the best score, as in "best" mode, search
-    all children with an ER (with respect to the best-scoring child) not greater
-    than the threshold (and take the best-scoring taxon among all these). This
-    allows some error recovery, as it can happen that the correct taxon lies on
-    a branch that is not attached to the best-scoring child. Of course,
-    exploring more branches takes more time.
-
--s, --step-format
-:   Like `-f`, but specifies how each element of the path (from the root to the
-    target taxon) is formatted. Valid placeholders are:
-    
-    '%%': literal '%'
-    
-    '%t': taxon name (= tree node label)
-    
-    '%s': evidence ratio
-    
-    '%b': score of best-scoring child of the current node
-
-    The default format is "%t (%s)", that is, the taxon name followed by the
-    evidence ratio in parentheses.
+    ```
+    Suppose further that we have the following  ID -> taxon map:
+    ```
+    ID1 -> Solanum
+    ID2 -> Atropa
+    ID3 -> Datura
+    ID4 -> Datura
+    ID5 -> Mandragora
+    ID6 -> Solanum
+    ```
 
 # EXIT STATUS
 
@@ -179,7 +151,28 @@ multiple alignment file's name, but it can be specified with option **-o**.
 
 * The program could try to determine if the sequences are DNA or protein
 
-# EXAMPLE
+# EXAMPLES
+
+Data for the examples are in the `data` directory of the distribution.
+
+## Example 1
+
+```
+$ mlgsc_train Prot Spo0A.msa firmicute_genera.nw
+```
+
+This trains a model on the protein sequences of Spo0A (master regulator of
+sporulation in Firmicutes), using Spo0A.msa and firmicutegenera.nw as
+alignment and phylogeny, respectively. The output is a file named Spo0A.bcls.
+
+## Example 2
+
+```
+$ mlgsc_train -o Firmicute_Spo0A Prot Spo0A.msa firmicute_genera.nw
+```
+
+As in Example 1, except that the model is named Firmicute_Spo0A (via option
+**-o**).
 
 # SEE ALSO
 
