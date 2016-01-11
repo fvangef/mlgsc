@@ -88,6 +88,7 @@ parseOptions = Params
                 <*> option (str >>= parsePhyloFormat) (
                     short 'T'
                     <> long "tree-file-format"
+                    <> help "T)axonomy or N)ewick (default)"
                     <> value Newick )
                 <*> argument auto (metavar "<DNA|Prot>")
                 <*> argument str (metavar "<alignment file>")
