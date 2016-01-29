@@ -1,5 +1,5 @@
 name:           MLGSC
-version:        0.1
+version:        1.0
 synopsis:       Maximum-Likelihood General sequence classfier
 author:         Thomas Junier
 license:        BSD3
@@ -13,61 +13,61 @@ test-suite        classifier
   main-is:          TestClassifier.hs
   build-depends:    HUnit, mtl, directory
   hs-source-dirs:   src, test
+  other-modules:    Alignment, Classifier, FastA, MlgscTypes, NewickParser,
+                    NucModel, Output, PWMModel, PWMModelAux, PepModel,
+                    TestFileUtils
 
 test-suite        nucmodel
   type:           exitcode-stdio-1.0
   main-is:        TestNucModel.hs
   build-depends:  HUnit
   hs-source-dirs: src, test
+  other-modules:  Alignment, CladeModel, FastA, MlgscTypes, NucModel,
+                  PWMModelAux, PepModel, TestFileUtils
 
 test-suite        align
   type:           exitcode-stdio-1.0
   main-is:        TestAlign.hs
   build-depends:  HUnit, array
   hs-source-dirs: src, test
+  other-modules:  Align, Alignment, FastA, MlgscTypes, NucModel, PWMModel,
+                  PWMModelAux, PepModel
+
 
 test-suite        fasta
   type:           exitcode-stdio-1.0
   main-is:        TestFastA.hs
   build-depends:  HUnit
   hs-source-dirs: src, test
+  other-modules:  FastA, MlgscTypes
 
 test-suite        newick
   type:           exitcode-stdio-1.0
   main-is:        TestNewick.hs
   build-depends:  HUnit
   hs-source-dirs: src, test
+  other-modules:  NewickDumper, NewickParser
 
 test-suite        alignment
   type:           exitcode-stdio-1.0
   main-is:        TestAlignment.hs
   build-depends:  HUnit
   hs-source-dirs: src, test
+  other-modules:  Alignment, FastA, MlgscTypes
 
 test-suite        weights
   type:           exitcode-stdio-1.0
   main-is:        TestWeights.hs
   build-depends:  HUnit
   hs-source-dirs: src, test
+  other-modules:  Weights, Alignment, FastA, MlgscTypes
 
--- test-suite     logodds
---   type:           exitcode-stdio-1.0
---   main-is:        TestLogOdds.hs
---   build-depends:  base, HUnit
---   hs-source-dirs: src, test
--- application tests
-
---test-suite        test_mlgsc
---  type:           exitcode-stdio-1.0
---  main-is:        test_mlgsc.hs
---  build-depends:  base, process, filepath
---  hs-source-dirs: test
---
---test-suite        test_mlgsc_train
---  type:           exitcode-stdio-1.0
---  main-is:        test_mlgsc_train.hs
---  build-depends:  base, process, filepath, MissingH, random
---  hs-source-dirs: test
+-- z ensures this suite is run last
+test-suite        z_test_apps
+  type:           exitcode-stdio-1.0
+  main-is:        run_shell_tests.hs
+  build-depends:  base, process, filepath, MissingH, random
+  hs-source-dirs: test
 
 -- executables
 
@@ -76,15 +76,24 @@ executable mlgsc_train
                   text-binary, mtl, filepath, tuple, bytestring, digest-pure
   main-is:        mlgsc_train.hs
   hs-source-dirs: src
+  other-modules: API, Alignment, Classifier, FastA, IDTree, MlgscTypes,
+                 NewickDumper, NewickParser, NucModel, PWMModel, PWMModelAux,
+                 PepModel, TaxoParser, Weights
 
 executable mlgsc_xval
   build-depends:  base, text, containers, parsec, vector, binary, vector-binary,
                   text-binary, mtl, random, array, optparse-applicative
   main-is:        mlgsc_xval.hs
   hs-source-dirs: src
+  other-modules:  API, Align, Alignment, Classifier, FastA, IDTree, MlgscTypes,
+                  NewickDumper, NewickParser, NucModel, Output, PWMModel,
+                  PWMModelAux, PepModel, Shuffle, TaxoParser, Weights 
 
 executable mlgsc
   build-depends: base, optparse-applicative, parsec, random, text, text-binary,
                  vector, vector-binary, learning-hmm, random-fu, polyparse
   main-is:        mlgsc.hs
   hs-source-dirs: src
+  other-modules: Align, Alignment, Classifier, FastA, MlgscTypes, NucModel,
+                 Output, PWMModel, PWMModelAux, PepModel, Trim
+
