@@ -62,24 +62,12 @@ test-suite        weights
   hs-source-dirs: src, test
   other-modules:  Weights, Alignment, FastA, MlgscTypes
 
--- test-suite     logodds
---   type:           exitcode-stdio-1.0
---   main-is:        TestLogOdds.hs
---   build-depends:  base, HUnit
---   hs-source-dirs: src, test
--- application tests
-
---test-suite        test_mlgsc
---  type:           exitcode-stdio-1.0
---  main-is:        test_mlgsc.hs
---  build-depends:  base, process, filepath
---  hs-source-dirs: test
---
---test-suite        test_mlgsc_train
---  type:           exitcode-stdio-1.0
---  main-is:        test_mlgsc_train.hs
---  build-depends:  base, process, filepath, MissingH, random
---  hs-source-dirs: test
+-- z ensures this suite is run last
+test-suite        z_test_apps
+  type:           exitcode-stdio-1.0
+  main-is:        run_shell_tests.hs
+  build-depends:  base, process, filepath, MissingH, random
+  hs-source-dirs: test
 
 -- executables
 
@@ -108,3 +96,4 @@ executable mlgsc
   hs-source-dirs: src
   other-modules: Align, Alignment, Classifier, FastA, MlgscTypes, NucModel,
                  Output, PWMModel, PWMModelAux, PepModel, Trim
+
