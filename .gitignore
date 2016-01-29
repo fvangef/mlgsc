@@ -4,3 +4,4 @@ dist
 .*.sw?
 Session.vim
 README.html
+.stack-work

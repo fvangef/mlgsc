@@ -1,11 +1,11 @@
 .PHONY: binaries test clean install
 
 INSTALL_DIR=/usr/local/bin
-
-all: binaries test README.html
+BUILD_DIR=.stack-work/install/x86_64-linux/lts-3.13/7.10.2/bin
 
 binaries:
-	cd src && $(MAKE)
+	stack build
+	cp $(BUILD_DIR)/mlgsc* src
 
 test: binaries
 	cd test && $(MAKE)
