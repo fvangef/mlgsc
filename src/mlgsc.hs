@@ -140,11 +140,10 @@ main = do
     let queryRecs = fastATextToRecords queryFastA
     let clsfrFn = clsfrFname params
     storedClassifier <- if isSuffixOf ".gz" clsfrFn
-        then (decodeFile clsfrFn) :: IO StoredClassifier
-        else do
+        then do
             z <- LB.readFile clsfrFn
-            let c = (decode $ decompress z) :: StoredClassifier
-            return c
+            return (decode $ decompress z) :: IO StoredClassifier
+        else (decodeFile clsfrFn) :: IO StoredClassifier
     let (StoredClassifier classifier@(PWMClassifier modTree scale) _) = storedClassifier
     let rootMod = rootLabel modTree
     -- TODO: replace the magic "2" below by a meaningful constant/param
