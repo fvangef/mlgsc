@@ -3,7 +3,7 @@
 shopt -o -s nounset
 
 declare -r PROGNAME=$(basename $0 | sed -e 's/^test_\(.*\)\.sh/\1/')
-declare -r BINDIR=../src
+declare -r BINDIR=$(stack path --local-bin-path)
 declare -r BINNAME=$BINDIR/$PROGNAME
 declare -r ARGS_FILE=test_${PROGNAME}_args
 declare -r FUNC_FILE=test_${PROGNAME}_func.sh
