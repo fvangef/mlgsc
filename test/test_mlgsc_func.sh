@@ -13,9 +13,10 @@ function test_init
 		echo "re-building frc taxo classifier (binary is newer)"
 		$BINDIR/mlgsc_train -T Taxo Prot frc_4train.msa bacteria.taxo
 	fi
-	if [ $BINDIR/mlgsc_train -nt dna_test.bcls ] ; then
+	if [ $BINDIR/mlgsc_train -nt dna_test.bcls.gz ] ; then
 		echo "re-building DNA classifier (binary is newer) - this takes LONG"
 		$BINDIR/mlgsc_train -o dna_test.bcls DNA final_aln.mfa final_tree.nw
+        gzip dna_test.bcls
 	fi
 	if [ $BINDIR/mlgsc_train -nt test_trim.bcls ] ; then
 		echo "re-building trim-test classifier (binary is newer)"
