@@ -22,8 +22,8 @@ import NucModel
 import PepModel
 import PWMModel (PWMModel(..), scoreSeq, cladeName)
 
--- When storing a Classifier to disk, we add some metadata. They may be quieried
--- with mlgsc_dump.
+-- When storing a Classifier to disk, we add some metadata. They may be
+-- queried with mlgsc_dump.
 
 data StoredClassifier = StoredClassifier {
                             classifier :: Classifier
