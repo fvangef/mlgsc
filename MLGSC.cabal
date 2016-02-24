@@ -91,7 +91,7 @@ executable mlgsc_xval
 
 executable mlgsc
   build-depends: base, optparse-applicative, parsec, random, text, text-binary,
-                 vector, vector-binary, learning-hmm, random-fu, polyparse
+                 vector, vector-binary, learning-hmm, random-fu, polyparse, zlib
   main-is:        mlgsc.hs
   hs-source-dirs: src
   other-modules: Align, Alignment, Classifier, FastA, MlgscTypes, NucModel,

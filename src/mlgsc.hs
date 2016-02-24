@@ -17,8 +17,11 @@ import Control.Applicative
 import Control.Monad.Reader
 import Options.Applicative
 
+import Codec.Compression.GZip (decompress)
+
+import qualified Data.ByteString.Lazy as LB
 import Data.Map (Map, fromList, findWithDefault)
-import Data.Binary (decodeFile)
+import Data.Binary (decodeFile, decode)
 import Data.Tree
 import Data.Char
 import Data.List
@@ -135,7 +138,12 @@ main = do
     params <- execParser parseOptionsInfo >>= translateFmtKw
     queryFastA <- LTIO.readFile $ queryFname params
     let queryRecs = fastATextToRecords queryFastA
-    storedClassifier <- (decodeFile $ clsfrFname params) :: IO StoredClassifier
+    let clsfrFn = clsfrFname params
+    storedClassifier <- if isSuffixOf ".gz" clsfrFn
+        then do
+            z <- LB.readFile clsfrFn
+            return (decode $ decompress z) :: IO StoredClassifier
+        else (decodeFile clsfrFn) :: IO StoredClassifier
     let (StoredClassifier classifier@(PWMClassifier modTree scale) _) = storedClassifier
     let rootMod = rootLabel modTree
     -- TODO: replace the magic "2" below by a meaningful constant/param
