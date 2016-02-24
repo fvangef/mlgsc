@@ -27,6 +27,7 @@ module NucModel (NucModel,
                     nucCladeName,
                     nucPrettyPrint,
                     nucResidues,
+                    nucPosResidues,
                     nucScaleFactor,
                     matrix,
                     alnToNucModel) where
@@ -83,6 +84,8 @@ nucCladeName = clade
 nucPrettyPrint = undefined
 
 nucResidues mod = nucleotides
+
+nucPosResidues mod pos = undefined
 
 nucScaleFactor = scaleFactor
 

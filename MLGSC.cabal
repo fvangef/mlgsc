@@ -22,7 +22,7 @@ test-suite        nucmodel
   main-is:        TestNucModel.hs
   build-depends:  HUnit
   hs-source-dirs: src, test
-  other-modules:  Alignment, CladeModel, FastA, MlgscTypes, NucModel,
+  other-modules:  Alignment, FastA, MlgscTypes, NucModel,
                   PWMModelAux, PepModel, TestFileUtils
 
 test-suite        align
@@ -61,6 +61,15 @@ test-suite        weights
   build-depends:  HUnit
   hs-source-dirs: src, test
   other-modules:  Weights, Alignment, FastA, MlgscTypes
+
+test-suite        entropy
+  type:           exitcode-stdio-1.0
+  main-is:        TestEntropy.hs
+  build-depends:  base, HUnit, text, containers, vector, vector-binary,
+                  text-binary, directory, binary
+  hs-source-dirs: src, test
+  other-modules:  Alignment, FastA, MlgscTypes, NucModel, PWMModel,
+                  PWMModelAux, PepModel, TestFileUtils
 
 -- z ensures this suite is run last
 test-suite        z_test_apps

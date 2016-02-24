@@ -5,7 +5,6 @@ import Data.Binary
 import qualified Data.Text as T
 
 import TestFileUtils
-import CladeModel
 import NucModel
 import Alignment
 

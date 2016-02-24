@@ -16,6 +16,7 @@ module PepModel (
     pepPrettyPrint,
     pepTablePrint,
     pepResidues,
+    pepPosResidues,
     pepScaleFactor,
     alnToPepModel
     ) where
@@ -102,6 +103,8 @@ tablePrintWM mod = concatMap (\n -> ppMatPos n) [1 .. modelLength mod]
                         pMap = (matrix mod) ! (n-1)
 
 pepResidues mod = amino_acids
+
+pepPosResidues mod pos = S.fromList $ M.keys $ (matrix mod) V.! (pos - 1)
 
 pepScaleFactor = scaleFactor
 

@@ -2,7 +2,8 @@
 -- be able to recognize a clade (be it a OTU, or a species, or whatever "rank").
 
 module PWMModel (PWMModel(..), scoreOf, scoreSeq, modLength, cladeName,
-    absentResScore, tablePrint, prettyPrint, colEntropy) where
+    absentResScore, tablePrint, prettyPrint, colEntropy, scaleFactor,
+    posResidues) where
 
 import Data.Binary (Binary, put, get, Get, Word8)
 
@@ -44,17 +45,20 @@ tablePrint (PepPWMModel spm) = pepTablePrint spm
 tablePrint (NucPWMModel nm) = undefined
 
 colEntropy :: PWMModel -> Position -> Double
-colEntropy mod pos = sum $ map (colResEntropy mod pos) $
-    toList $ modelResidues mod
-
-colResEntropy :: PWMModel -> Position -> Residue -> Double
-colResEntropy mod pos res = - (p * log10_p)
-    where   log10_p = (fromIntegral $ scoreOf mod res pos) / (scaleFactor mod)
-            p = 10 ** log10_p
+colEntropy mod pos = -(sum $ zipWith (*) probs log2s)
+    where   residues = toList $ posResidues mod pos
+            scores   = map (\res -> scoreOf mod res pos) residues
+            log10s   = map (( / scaleFactor mod) . fromIntegral) scores
+            log2s    = map (/ logBase 10 2) log10s
+            probs    = map (10**) log10s
 
 modelResidues :: PWMModel -> Set Residue
 modelResidues (NucPWMModel nm) = nucResidues nm
 modelResidues (PepPWMModel pm) = pepResidues pm
+
+posResidues :: PWMModel -> Position -> Set Residue
+posResidues (NucPWMModel nm) pos = nucPosResidues nm pos
+posResidues (PepPWMModel pm) pos = pepPosResidues pm pos
 
 scaleFactor :: PWMModel -> ScaleFactor
 scaleFactor (NucPWMModel nm) = nucScaleFactor nm
