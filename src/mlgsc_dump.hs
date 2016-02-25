@@ -57,11 +57,21 @@ main = do
     params <- execParser parseOptionsInfo
     let positionalParams =  posParams params
     let clsfrFname = head positionalParams
-    classifier@(PWMClassifier modTree scale) <-
-        (decodeFile clsfrFname) :: IO Classifier
+    {- classifier@(PWMClassifier modTree scale) <-
+        (decodeFile clsfrFname) :: IO Classifier -}
+    storedClassifier <- (decodeFile clsfrFname) :: IO StoredClassifier
+    let (StoredClassifier
+            classifier@(PWMClassifier modTree scale)
+            (Metadata cmdLine cksum)
+            ) = storedClassifier
     case tail positionalParams of
         [] -> do
             let taxonTree = fmap cladeName modTree 
+            putStrLn $ heading '-' "Command line"
+            putStrLn $ cmdLine ++ "\n"
+            putStr "Checksum: "
+            print cksum
+            putStr "\n"
             putStrLn $ heading '-' "Taxon tree"
             STIO.putStrLn $ treeToNewick taxonTree 
             putStrLn ""
