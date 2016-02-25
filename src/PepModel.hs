@@ -76,14 +76,18 @@ pepPrettyPrint mod = intercalate "\n" [taxonName, modStr, "\n"]
 
 prettyPrintWM :: PepModel -> String
 prettyPrintWM mod = concatMap (\n -> ppMatPos n) [1 .. modelLength mod]   
-    where   ppMatPos n = printf "%3d | %s\n" n posScores
-                     where  posScores = intercalate ", " $
-                                map ppTuple sortedScores :: String
-                            ppTuple (res, score) = 
-                                printf "%c: %d" res score
-                            sortedScores = reverse $ sortBy (comparing snd) $
-                                            M.assocs pMap 
-                            pMap = (matrix mod) ! (n-1)
+    where   ppMatPos n = printf "%3d | %s | %s\n" n maskVal posScores
+                 where  posScores = intercalate ", " $
+                            map ppTuple sortedScores :: String
+                        ppTuple (res, score) = printf "%c: %d" res score
+                        sortedScores = reverse $ sortBy (comparing snd) $
+                                        M.assocs pMap
+                        pMap = (matrix mod) ! (n-1)
+                        maskVal = case mask mod of
+                                    [] -> "-"
+                                    (v:vs) -> printf "%.2f" ((mask mod) !! (n-1))
+
+
 
 pepTablePrint :: PepModel -> String
 pepTablePrint mod = intercalate "\n" [taxonName, modHdr, modStr, "\n"]
