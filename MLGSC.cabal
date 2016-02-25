@@ -89,6 +89,13 @@ executable mlgsc_xval
                   NewickDumper, NewickParser, NucModel, Output, PWMModel,
                   PWMModelAux, PepModel, Shuffle, TaxoParser, Weights 
 
+executable mlgsc_dump
+  build-depends:    base, optparse-applicative
+  main-is:          mlgsc_dump.hs
+  hs-source-dirs:   src
+  other-modules:    Alignment, Classifier, FastA, MlgscTypes, NewickDumper,
+                    NucModel, PWMModel, PWMModelAux, PepModel
+
 executable mlgsc
   build-depends: base, optparse-applicative, parsec, random, text, text-binary,
                  vector, vector-binary, learning-hmm, random-fu, polyparse, zlib
