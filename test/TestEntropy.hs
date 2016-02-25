@@ -27,7 +27,6 @@ test_aln1 = [
 aln1Mod = alnToPepModel small_prob scale_factor "my-OTU" test_aln1 
 aln1PWMMod = PepPWMModel aln1Mod
 
-
 -- p(V) = 1, log2(P(V)) = 0 -> H(col 1) = 0
 exp_01 = 0.0
 obt_01 = colEntropy aln1PWMMod 1
@@ -49,10 +48,14 @@ exp_04 = 2.0
 obt_04 = colEntropy aln1PWMMod 4
 test_04 = "DENA" ~: (abs(exp_04 - obt_04) <= test_tolerance) ~?= True
                              
--- Test model length
+-- now test the function that returns the entropy for all positions
+exp_05 = [exp_01, exp_02, exp_03, exp_04]
+obt_05 = matEntropy aln1PWMMod
+dif_05 = zipWith (\e o -> abs(e-o)) exp_05 obt_05
+test_05 = "all" ~: all (\d -> d <= test_tolerance) dif_05 ~?= True 
 
 tests = TestList [
-            test_01, test_02, test_03, test_04
+            test_01, test_02, test_03, test_04, test_05
         ]
 
 main = do

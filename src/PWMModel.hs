@@ -2,8 +2,8 @@
 -- be able to recognize a clade (be it a OTU, or a species, or whatever "rank").
 
 module PWMModel (PWMModel(..), scoreOf, scoreSeq, modLength, cladeName,
-    absentResScore, tablePrint, prettyPrint, colEntropy, scaleFactor,
-    posResidues) where
+    absentResScore, tablePrint, prettyPrint, matEntropy, colEntropy,
+    scaleFactor, posResidues) where
 
 import Data.Binary (Binary, put, get, Get, Word8)
 
@@ -43,6 +43,9 @@ prettyPrint (NucPWMModel nm) = nucPrettyPrint nm
 tablePrint :: PWMModel -> String
 tablePrint (PepPWMModel spm) = pepTablePrint spm
 tablePrint (NucPWMModel nm) = undefined
+
+matEntropy :: PWMModel -> [Double]
+matEntropy mod = map (colEntropy mod) [1.. modLength mod]
 
 colEntropy :: PWMModel -> Position -> Double
 colEntropy mod pos = -(sum $ zipWith (*) probs log2s)
