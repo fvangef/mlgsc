@@ -102,6 +102,18 @@ buildPepClassifier smallprob scale map otuTree =
             treeOfLeafNamedAlns =
                 fmap (\k -> (k, M.findWithDefault [] k map)) otuTree
 
+-- Functions for applying masks to models in a tree. These functions use the
+-- tree structure, so they belong here rather than in PWMModel, which only uses
+-- the matrix.
+
+maskByEntropy :: Tree PWMModel -> Tree PWMModel
+-- The entropy measure is not defined for leaves, as it depends on entropy in
+-- children.
+maskByEntropy leaf@(Node _ []) = leaf
+maskByEntropy (Node model kids) = undefined
+
+-- Functions for scoring query sequences - the meat of MLGSC
+
 -- The Int parameter is the log_10(ER) cutoff (the support value of nodes in the
 -- path in the default output). 
 

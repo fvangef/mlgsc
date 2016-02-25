@@ -44,19 +44,20 @@ data PepModel = PepModel {
                     , smallScore    :: Int
                     , modelLength   :: Int
                     , scaleFactor   :: ScaleFactor
+                    , mask          :: [Double]
                 } deriving (Show, Eq)
 
 --Remember: sequence positions start -- at 1, but vector indexes (sensibly)
 -- start at 0.
 pepScoreOf :: PepModel -> Residue -> Position -> Int
-pepScoreOf (PepModel _ _ smallScore 0 _) _ _ = smallScore -- empty models
-pepScoreOf _ '.' _ = 0 -- masked residues have a score of 0
+pepScoreOf (PepModel _ _ smallScore 0 _ _) _ _ = smallScore -- empty models
+pepScoreOf _ '.' _ = 0 -- masked query residues have a score of 0
 pepScoreOf mod res pos = M.findWithDefault (smallScore mod) res posMap
     where posMap = (matrix mod) V.! (pos - 1)
 
 -- TODO: try to rewrite this in applicative style
 pepScoreSeq :: PepModel -> Sequence -> Int
-pepScoreSeq (PepModel _ _ smallScore 0 _) seq = smallScore * T.length seq
+pepScoreSeq (PepModel _ _ smallScore 0 _ _) seq = smallScore * T.length seq
 pepScoreSeq mod seq = sum $ map (\(res,pos) -> pepScoreOf mod res pos) seqWithPos
     where seqWithPos = zip (T.unpack seq) [1..] -- eg [('A',1), ...], etc.
 
@@ -115,6 +116,7 @@ instance Binary PepModel where
         put $ smallScore mod
         put $ modelLength mod
         put $ scaleFactor mod
+        put $ mask mod
 
     get = do
         cladeName <- get :: Get CladeName
@@ -122,17 +124,19 @@ instance Binary PepModel where
         smallScore <- get :: Get Int
         modelLength <- get :: Get Int
         scale <- get :: Get ScaleFactor
-        return $ PepModel cladeName mat smallScore modelLength scale
+        mask <- get :: Get [Double]
+        return $ PepModel cladeName mat smallScore modelLength scale mask
 
 -- Builds a PepMOdel from a (weighted) Alignment
 -- G, T are ignored, but gaps (-) are modelled.
 
 alnToPepModel :: SmallProb -> ScaleFactor -> CladeName -> Alignment
-    -> PepModel
+                 -> PepModel
 alnToPepModel smallProb scale name [] =
-    PepModel name V.empty smallScore 0 scale
+    PepModel name V.empty smallScore 0 scale []
     where   smallScore = round (scale * (logBase 10 smallProb))
-alnToPepModel smallProb scale name aln = PepModel name scoreMapVector smallScore length scale
+alnToPepModel smallProb scale name aln =
+    PepModel name scoreMapVector smallScore length scale []
     where   scoreMapVector = V.fromList scoreMapList
             scoreMapList = fmap (freqMapToScoreMap scale
                                 . countsMapToRelFreqMap wsize
