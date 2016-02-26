@@ -16,8 +16,8 @@ import Data.Digest.Pure.CRC32
 import MlgscTypes
 import NewickDumper
 import FastA
-import Classifier (buildClassifier, Classifier, 
-        StoredClassifier(..), Metadata(..))
+import Classifier (buildClassifier, Classifier(..), 
+        StoredClassifier(..), Metadata(..), maskByEntropy)
 import Alignment
 import IDTree
 -- TODO should replace (most of) the above with:
@@ -119,10 +119,13 @@ main = do
                         (molType params)
                         (optSmallProb params) (optScaleFactor params)
                         otuAlnMap tree
+    let (PWMClassifier tree sp) = classifier
+    let maskedTree = maskByEntropy tree -- later: parameterize
+    let maskedClassifier = classifier { modelTree = maskedTree }
     cmdln <- getCmdLine
     -- TODO: the classifier gets encoded twice... this is inefficient.
-    let cksum = crc32 $ encode classifier
-    let sc = StoredClassifier classifier (Metadata cmdln cksum)
+    let cksum = crc32 $ encode maskedClassifier
+    let sc = StoredClassifier maskedClassifier (Metadata cmdln cksum)
     encodeFile outputFileName sc
 
 runInfo :: Params -> NewickTree -> String -> IO ()

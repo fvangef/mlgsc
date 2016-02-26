@@ -55,7 +55,10 @@ instance Binary Metadata where
         checksum <- get :: Get Word32
         return $ Metadata cmdLine checksum
 
-data Classifier = PWMClassifier (Tree PWMModel) ScaleFactor
+data Classifier = PWMClassifier {
+                    modelTree         :: (Tree PWMModel)
+                    , sscaleFactor    :: ScaleFactor
+                    }
                 deriving (Show, Eq)
 
 instance Binary Classifier where
