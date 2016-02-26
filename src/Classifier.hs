@@ -6,6 +6,7 @@ module Classifier (
     classifySequence,
     classifySequenceMulti,
     classifySequenceAll,
+    maskByEntropy,
     leafOTU) where
 
 import Data.Tree
@@ -20,7 +21,7 @@ import MlgscTypes
 import Alignment
 import NucModel
 import PepModel
-import PWMModel (PWMModel(..), scoreSeq, cladeName)
+import PWMModel (PWMModel(..), scoreSeq, cladeName, matEntropy, setMask)
 
 -- When storing a Classifier to disk, we add some metadata. They may be
 -- queried with mlgsc_dump.
@@ -106,11 +107,18 @@ buildPepClassifier smallprob scale map otuTree =
 -- tree structure, so they belong here rather than in PWMModel, which only uses
 -- the matrix.
 
+-- TODO: now call this function after training the model.
 maskByEntropy :: Tree PWMModel -> Tree PWMModel
 -- The entropy measure is not defined for leaves, as it depends on entropy in
 -- children.
-maskByEntropy leaf@(Node _ []) = leaf
-maskByEntropy (Node model kids) = undefined
+maskByEntropy leaf@(Node mod []) = Node (setMask mod entropies) []
+    where entropies = matEntropy mod
+maskByEntropy (Node mod kids) = Node (setMask mod diff_entropies) masked_kids
+    where   diff_entropies = zipWith (-) (matEntropy mod) avg_entropies
+            avg_entropies = map avg $ L.transpose $ map (matEntropy . rootLabel) kids
+            masked_kids = map maskByEntropy kids
+            avg vals = sum vals / (fromIntegral $ length vals)
+
 
 -- Functions for scoring query sequences - the meat of MLGSC
 

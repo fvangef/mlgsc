@@ -3,7 +3,7 @@
 
 module PWMModel (PWMModel(..), scoreOf, scoreSeq, modLength, cladeName,
     absentResScore, tablePrint, prettyPrint, matEntropy, colEntropy,
-    scaleFactor, posResidues) where
+    scaleFactor, posResidues, setMask) where
 
 import Data.Binary (Binary, put, get, Get, Word8)
 
@@ -46,6 +46,10 @@ tablePrint (NucPWMModel nm) = undefined
 
 matEntropy :: PWMModel -> [Double]
 matEntropy mod = map (colEntropy mod) [1.. modLength mod]
+
+setMask :: PWMModel -> [Double] -> PWMModel
+setMask (PepPWMModel pm) mask = PepPWMModel $ pepSetMask pm mask
+setMask (NucPWMModel nm) mask = undefined
 
 colEntropy :: PWMModel -> Position -> Double
 colEntropy mod pos = -(sum $ zipWith (*) probs log2s)

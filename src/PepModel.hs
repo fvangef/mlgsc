@@ -18,6 +18,7 @@ module PepModel (
     pepResidues,
     pepPosResidues,
     pepScaleFactor,
+    pepSetMask,
     alnToPepModel
     ) where
 
@@ -83,9 +84,10 @@ prettyPrintWM mod = concatMap (\n -> ppMatPos n) [1 .. modelLength mod]
                         sortedScores = reverse $ sortBy (comparing snd) $
                                         M.assocs pMap
                         pMap = (matrix mod) ! (n-1)
-                        maskVal = case mask mod of
-                                    [] -> "-"
-                                    (v:vs) -> printf "%.2f" ((mask mod) !! (n-1))
+                        maskVal =
+                            case mask mod of
+                                [] -> "-"
+                                (v:vs) -> printf "%.2f" ((mask mod) !! (n-1))
 
 
 
@@ -112,6 +114,9 @@ pepResidues mod = amino_acids
 pepPosResidues mod pos = S.fromList $ M.keys $ (matrix mod) V.! (pos - 1)
 
 pepScaleFactor = scaleFactor
+
+pepSetMask :: PepModel -> [Double] -> PepModel
+pepSetMask mod newMask = mod { mask = newMask }
 
 instance Binary PepModel where
     put mod = do
