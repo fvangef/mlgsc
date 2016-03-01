@@ -107,6 +107,24 @@ test21 = TestCase (do
 -- let pred = classifySequenceMulti clssfr1 2 "ACGTACGT"
 -- map (ST.intercalate "; " . tail) pred
 
+fastaInput2 = unlines [
+    ">ID0 Aeromonas", 
+    "ADF",
+    ">ID1 Aeromonas", 
+    "AEF",
+    ">ID6 Bacillus", 
+    "CDF",
+    ">ID7 Bacillus", 
+    "CEF"
+    ]
+newick2 = "(Aeromonas,Bacillus);"
+(Right tree2) = parseNewickTree newick2
+
+fastaRecs2 = fastATextToRecords $ LT.pack fastaInput2
+aln2 = fastARecordsToAln fastaRecs2
+map2 = alnToAlnMap aln2
+clssfr2 = buildClassifier DNA smallprob scale map2 tree2
+
 tests = TestList [
                 TestLabel "nuc score" test01
                 , TestLabel "nuc score" test02
