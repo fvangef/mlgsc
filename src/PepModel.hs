@@ -45,21 +45,32 @@ data PepModel = PepModel {
                     , smallScore    :: Int
                     , modelLength   :: Int
                     , scaleFactor   :: ScaleFactor
-                    , mask          :: [Double]
+                    , mask          :: [Double] -- TODO: use Vector, iff works
                 } deriving (Show, Eq)
 
---Remember: sequence positions start -- at 1, but vector indexes (sensibly)
+-- Remember: sequence positions start -- at 1, but vector indexes (sensibly)
 -- start at 0.
+
 pepScoreOf :: PepModel -> Residue -> Position -> Int
 pepScoreOf (PepModel _ _ smallScore 0 _ _) _ _ = smallScore -- empty models
 pepScoreOf _ '.' _ = 0 -- masked query residues have a score of 0
 pepScoreOf mod res pos = M.findWithDefault (smallScore mod) res posMap
     where posMap = (matrix mod) V.! (pos - 1)
 
+-- A version of pepScoreOf that honors masks
+
+pepMaskedScoreOf :: PepModel -> Residue -> Position -> Int
+pepMaskedScoreOf (PepModel _ _ smallScore 0 _ _) _ _ = smallScore -- empty models
+pepMaskedScoreOf _ '.' _ = 0 -- masked query residues have a score of 0
+pepMaskedScoreOf mod res pos
+    | (mask mod) !! (pos - 1) < 0.5 = 0
+    | otherwise = M.findWithDefault (smallScore mod) res posMap
+    where posMap = (matrix mod) V.! (pos - 1)
+
 -- TODO: try to rewrite this in applicative style
 pepScoreSeq :: PepModel -> Sequence -> Int
 pepScoreSeq (PepModel _ _ smallScore 0 _ _) seq = smallScore * T.length seq
-pepScoreSeq mod seq = sum $ map (\(res,pos) -> pepScoreOf mod res pos) seqWithPos
+pepScoreSeq mod seq = sum $ map (\(res,pos) -> pepMaskedScoreOf mod res pos) seqWithPos
     where seqWithPos = zip (T.unpack seq) [1..] -- eg [('A',1), ...], etc.
 
 pepModLength = modelLength
