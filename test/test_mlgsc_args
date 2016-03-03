@@ -10,3 +10,4 @@ trim-off test_trim.pep test_trim.bcls
 trim-on -M t test_trim.pep test_trim.bcls
 dna-def-simple -f simple dna_test.fasta dna_test.bcls.gz
 dna-def-min -f min dna_test.fasta dna_test.bcls.gz
+pep-recover -m r25 final_prot_seq.pep final_prot_aln.bcls

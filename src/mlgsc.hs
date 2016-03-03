@@ -60,7 +60,7 @@ parseTreeTraversal optString
     | 'b' == initC = return BestTraversal
     | 'a' == initC = return FullTraversal
     | 'r' == initC = do
-                        let (Right num,_) = TP.runParser TP.parseDec optString
+                        let (Right num,_) = TP.runParser TP.parseDec $ tail optString
                         -- TODO: handle bad parse
                         return $ RecoverTraversal num
     where initC = toLower $ head optString
@@ -77,7 +77,7 @@ parseOptions = Params
                 <$> option (str >>= parseTreeTraversal)
                     (long "traversal-mode"
                     <> short 'm'
-                    <> help "tree traversal mode (b|a|<int>)"
+                    <> help "tree traversal mode (b|a|r<int>)"
                     <> value BestTraversal)
                 <*> switch
                     (long "no-align"
