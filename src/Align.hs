@@ -149,7 +149,7 @@ msdpmat scsc hmod vseq = runSTUArray $ do
                     B.unsafeWrite dpmat (twoDto1D array_width (i, mat_len + 1)) up
                 -- initialize top row of left array
                 forM_ [0..mat_len] $ \j ->
-                    B.unsafeWrite dpmat (twoDto1D array_width (0, j)) (j * penalty)
+                    B.unsafeWrite dpmat (twoDto1D array_width (0, j)) 0
                 -- and of right array
                 forM_ [mat_len+1 .. ((2*mat_len)+1)] $ \j ->
                     B.unsafeWrite dpmat (twoDto1D array_width (0, j)) left
