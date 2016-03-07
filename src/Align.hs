@@ -162,7 +162,9 @@ msdpmat scsc hmod vseq = runSTUArray $ do
                         vGap_cell_val  <- B.unsafeRead dpmat (twoDto1D array_width (i, j-1)) 
                         let match_sc = match_cell_val + match_score
                         let hGap_sc  = hGap_cell_val  + penalty
-                        let vGap_sc  = vGap_cell_val  + penalty
+                        let vGap_sc  = if i == seq_len
+                                        then vGap_cell_val
+                                        else vGap_cell_val + penalty
                         let best     =  maximum [match_sc, hGap_sc, vGap_sc]
                         B.unsafeWrite dpmat (twoDto1D array_width (i,j)) best
                         if best == hGap_sc
