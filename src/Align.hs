@@ -78,6 +78,7 @@ scoringSchemeMap smallScore = M.fromList $ zip thresholds [-1, 1, 2, 3]
 -- TODO: the gap opening penalty and scoring map for scoreModVseq should be
 -- parameters, not hard-coded.
 
+{-
 msdpmatIA :: ScoringScheme -> PWMModel -> VSequence -> DPMatrix
 msdpmatIA scsc hmod vseq  = dpmat
     where   dpmat = array ((0,0), (seq_len, mat_len)) [((i,j), cell i j) | i <- [0..seq_len], j <- [0..mat_len]]
@@ -97,8 +98,13 @@ msdpmatIA scsc hmod vseq  = dpmat
                     vGap  = val (dpmat!(i  ,j-1)) + penalty
                     penalty = gapOP scsc
                     match_score = scoreModVseq (scThresholds scsc) hmod vseq i j 
+-}
 
--- A version with a mutable array.
+-- A version with a mutable array. This is faster than with immutable arrays.
+-- To speed things further, I use unsafeWrite (which avoids bounds-checking).
+-- This however expects a one-dimensional index (STUArays are stored internally
+-- as 1D arrays), so I convert from the 2D dynamic programming matrices into 1D
+-- via twoDto1D.
 
 -- Int constants for backtracking in the same array as NW scores, but different
 -- cells. I have to use an ADT to be able to case ... of on it, but I need a
@@ -216,9 +222,11 @@ topCell mat = fst $ maximumBy cellCmp (assocs mat)
                 | otherwise     = LT
 -}
 
+{-
 msalignIA :: ScoringScheme -> PWMModel -> Sequence -> Sequence
 msalignIA scsc mat seq = T.pack $ nwMatBacktrackIA (msdpmatIA scsc mat vseq) vseq
     where vseq = U.fromList $ T.unpack seq 
+-}
 
 -- mutable-array - based version
 
