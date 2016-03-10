@@ -36,7 +36,11 @@ import Classifier (Classifier(..), classifySequence, classifySequenceMulti,
                     classifySequenceAll, StoredClassifier(..))
 import Output
 
+-- distinguish between MlgscAlignMode (which includes no alignment) from
+-- AlignMode (which is exported by Align), in which no alignment makes little
+-- sense.
 
+data MlgscAlignMode = DoAlignment AlignMode | NoAlignment
 data MaskMode = None | Trim
 
 data TreeTraversalMode = BestTraversal
@@ -51,6 +55,7 @@ data Params = Params {
                 , optStepFmtString      :: String
                 , optERCutoff           :: Int   -- for Best mode (TODO: could be an argument to the BestTraversal c'tor)
                 , optMaskMode           :: MaskMode
+                , alnMode               :: MlgscAlignMode
                 , queryFname            :: String
                 , clsfrFname            :: String
                 }
@@ -70,6 +75,14 @@ parseMaskMode optString
     | 't' == initC = return Trim
     | 'n' == initC = return None
     | otherwise = return None -- TODO: warn about unrecognized opt
+    where initC = toLower $ head optString
+
+parseAlignMode :: Monad m => String -> m MlgscAlignMode
+parseAlignMode optString
+    | 'g' == initC = return $ DoAlignment AlignGlobal
+    | 's' == initC = return $ DoAlignment AlignSemiglobal
+    | 'n' == initC = return NoAlignment
+    | otherwise = error ("invalid alignment mode: " ++ optString)
     where initC = toLower $ head optString
 
 parseOptions :: Parser Params
@@ -103,6 +116,11 @@ parseOptions = Params
                     <> short 'M'
                     <> help "mask aligned query: n)one* | t)trim"
                     <> value None)
+                <*> option (str >>= parseAlignMode)
+                    (long "align-mode"
+                    <> short 'a'
+                    <> help "alignment mode: g)lobal* | s)emiglobal | n)one"
+                    <> value (DoAlignment AlignGlobal))
                 <*> argument str (metavar "<query seq file>")
                 <*> argument str (metavar "<classifier file>")
 

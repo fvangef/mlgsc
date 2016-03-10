@@ -291,8 +291,11 @@ msalignIA scsc mat seq = T.pack $ nwMatBacktrackIA (msdpmatIA scsc mat vseq) vse
 
 msalign :: AlignMode -> ScoringScheme -> PWMModel -> Sequence -> Sequence
 msalign mode scsc mat seq =
-    T.pack $ nwMatBacktrack (msdpmat_g scsc mat vseq) vseq
-    where vseq = U.fromList $ T.unpack seq 
+    T.pack $ nwMatBacktrack (msdpmat scsc mat vseq) vseq
+    where   vseq = U.fromList $ T.unpack seq 
+            msdpmat = case mode of
+                        AlignGlobal     -> msdpmat_g
+                        AlignSemiglobal -> msdpmat_s
 {-
 nwMatPath :: RawProbMatrix -> String -> String
 nwMatPath hm vs = toPathMatrix (fmap dirSym (nw seqMatScore (-1) hra vra))
