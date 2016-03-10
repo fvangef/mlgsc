@@ -336,7 +336,7 @@ looReader otuTree fastaRecs testRecNdx = do
     let rootMod = rootLabel modTree 
     let scoringScheme =
             ScoringScheme (-2) (scoringSchemeMap (absentResScore rootMod))
-    let alignedTestSeq = msalign scoringScheme rootMod testSeq
+    let alignedTestSeq = msalign AlignGlobal scoringScheme rootMod testSeq
     let prediction = classifySequence classifier 0 alignedTestSeq
     onlyFalse <- asks optOnlyFalse
     if  (onlyFalse && 

@@ -173,7 +173,7 @@ main = do
 mbAlign params scsc rootMod =
     if optNoAlign params
             then id
-            else msalign scsc rootMod
+            else msalign AlignGlobal scsc rootMod
 
 -- Returns a masking step (a ST.Text -> ST.Text function), or just id if no
 -- masking was requested.
