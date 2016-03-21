@@ -5,3 +5,6 @@ dist
 Session.vim
 README.html
 .stack-work
+man
+src/Align_master.hs
+test/final_aln.bcls.gz
