@@ -55,7 +55,7 @@ data Params = Params {
                 , optStepFmtString      :: String
                 , optERCutoff           :: Int   -- for Best mode (TODO: could be an argument to the BestTraversal c'tor)
                 , optMaskMode           :: MaskMode
-                , alnMode               :: MlgscAlignMode
+                , optAlnMode               :: MlgscAlignMode
                 , queryFname            :: String
                 , clsfrFname            :: String
                 }
@@ -92,6 +92,8 @@ parseOptions = Params
                     <> short 'm'
                     <> help "tree traversal mode (b|a|r<int>)"
                     <> value BestTraversal)
+                -- NOTE: the -A switch is deprecated; use -a n instead.
+                -- We keep it for compatibility
                 <*> switch
                     (long "no-align"
                     <> short 'A'
@@ -187,11 +189,21 @@ main = do
     mapM_ STIO.putStrLn outlines
 
 -- Returns an alignment step (technically, a ST.Text -> ST.Text function), or
--- just id if option 'optNoAlign' is set.
+-- just id if option 'optNoAlign' is set. NOTE: for now there are two ways of
+-- spcifying 'no alignment', because we introduced semiglobal, yet either
+-- alignment mode is incompatible with 'no alignment', so in reality it's either
+-- global, semiglobal, or not at all, which are all governed by -a.
+-- We could just drop -A, but this could break existing code. For now we just
+-- handle both here, in the future there should be a distinction between CLI
+-- params and run params, with the former essentially the same as the current
+-- Params, and a function to map them to the latter.
+
 mbAlign params scsc rootMod =
     if optNoAlign params
             then id
-            else msalign AlignGlobal scsc rootMod
+            else case (optAlnMode params) of
+                NoAlignment         -> id
+                (DoAlignment mode)  -> msalign mode scsc rootMod
 
 -- Returns a masking step (a ST.Text -> ST.Text function), or just id if no
 -- masking was requested.
