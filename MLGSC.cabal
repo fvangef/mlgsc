@@ -28,7 +28,7 @@ test-suite        nucmodel
 test-suite        align
   type:           exitcode-stdio-1.0
   main-is:        TestAlign.hs
-  build-depends:  HUnit, array
+  build-depends:  base, HUnit, array
   hs-source-dirs: src, test
   other-modules:  Align, Alignment, FastA, MlgscTypes, NucModel, PWMModel,
                   PWMModelAux, PepModel

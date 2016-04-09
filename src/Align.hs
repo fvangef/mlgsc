@@ -1,4 +1,4 @@
-module Align (msalign,
+module Align (msalign, AlignMode(..),
     ScoringScheme(..), defScScheme, scoringSchemeMap) where
 
 import Data.Array
@@ -15,6 +15,7 @@ import qualified Data.Vector.Unboxed as U
 import MlgscTypes
 import PWMModel (PWMModel, scoreOf, modLength)
 
+data AlignMode = AlignGlobal | AlignSemiglobal
 
 data Direction = None | Diag | Down | Righ -- 'Right' is defined by Either
     deriving (Show, Eq)
@@ -78,6 +79,7 @@ scoringSchemeMap smallScore = M.fromList $ zip thresholds [-1, 1, 2, 3]
 -- TODO: the gap opening penalty and scoring map for scoreModVseq should be
 -- parameters, not hard-coded.
 
+{-
 msdpmatIA :: ScoringScheme -> PWMModel -> VSequence -> DPMatrix
 msdpmatIA scsc hmod vseq  = dpmat
     where   dpmat = array ((0,0), (seq_len, mat_len)) [((i,j), cell i j) | i <- [0..seq_len], j <- [0..mat_len]]
@@ -97,8 +99,13 @@ msdpmatIA scsc hmod vseq  = dpmat
                     vGap  = val (dpmat!(i  ,j-1)) + penalty
                     penalty = gapOP scsc
                     match_score = scoreModVseq (scThresholds scsc) hmod vseq i j 
+-}
 
--- A version with a mutable array.
+-- A version with a mutable array. This is faster than with immutable arrays.
+-- To speed things further, I use unsafeWrite (which avoids bounds-checking).
+-- This however expects a one-dimensional index (STUArays are stored internally
+-- as 1D arrays), so I convert from the 2D dynamic programming matrices into 1D
+-- via twoDto1D.
 
 -- Int constants for backtracking in the same array as NW scores, but different
 -- cells. I have to use an ADT to be able to case ... of on it, but I need a
@@ -125,8 +132,12 @@ int2bt 3    = Both
 twoDto1D :: Int -> (Int, Int) -> Int
 twoDto1D width (i,j) = i * width + j
 
-msdpmat :: ScoringScheme -> PWMModel -> VSequence -> MADPMat
-msdpmat scsc hmod vseq = runSTUArray $ do
+-- Global version. Use this unless the query is substantially shorter than the
+-- (unaligned) references (in which case, use the semiglobal version,
+-- msdpmat_s).
+
+msdpmat_g :: ScoringScheme -> PWMModel -> VSequence -> MADPMat
+msdpmat_g scsc hmod vseq = runSTUArray $ do
                 let seq_len = U.length vseq
                 let mat_len = modLength hmod
                 let penalty = gapOP scsc
@@ -157,6 +168,60 @@ msdpmat scsc hmod vseq = runSTUArray $ do
                         let match_sc = match_cell_val + match_score
                         let hGap_sc  = hGap_cell_val  + penalty
                         let vGap_sc  = vGap_cell_val  + penalty
+                        let best     =  maximum [match_sc, hGap_sc, vGap_sc]
+                        B.unsafeWrite dpmat (twoDto1D array_width (i,j)) best
+                        if best == hGap_sc
+                            then
+                                B.unsafeWrite dpmat (twoDto1D array_width (i,j+mat_len+1)) up
+                            else if best == vGap_sc
+                                then
+                                    B.unsafeWrite dpmat (twoDto1D array_width (i,j+mat_len+1)) left
+                                else 
+                                    B.unsafeWrite dpmat (twoDto1D array_width (i,j+mat_len+1)) both
+                return dpmat 
+-- Semiglobal version: leading and trailing gaps have no penalty (that's gaps in
+-- the _sequence_, since gaps in the matrix are not allowed (note however that
+-- they are discarded during backtracking, not when filling the DP matrix)).
+-- This is meant for use when the query is substantially shorter than the
+-- (unaligned) model. In this case, it is also advisable to use trimming (-M t),
+-- so that leading and trailing gaps are ignored. To summarize: for short
+-- sequences, aligning semi-globally will ensure better placement of leading and
+-- trailing gaps, and trimming will make sure they are ignored.
+
+msdpmat_s :: ScoringScheme -> PWMModel -> VSequence -> MADPMat
+msdpmat_s scsc hmod vseq = runSTUArray $ do
+                let seq_len = U.length vseq
+                let mat_len = modLength hmod
+                let penalty = gapOP scsc
+                let array_width = 2 * (mat_len + 1)
+                -- dpmat has the scores and backtracking info in two contiguous
+                -- arrays (STUArray does not support arrays of tuples). The
+                -- left-hand array (0 <= j <= mat_len) is for the scores, and
+                -- the right-hand array (mat_len+1 <= j <= 2 * mat_len  + 1) is
+                -- for backtracking symbols, coded as integers (see above).
+                dpmat <- newArray ((0,0), (seq_len, (2 * mat_len) + 1)) 0 :: ST s (STUArray s (Int, Int) Int)
+                -- initialize leftmost columns (j = 0 and j = mat_len+1)
+                forM_ [1..seq_len] $ \i -> do
+                    B.unsafeWrite dpmat (twoDto1D array_width (i, 0)) 0
+                    B.unsafeWrite dpmat (twoDto1D array_width (i, mat_len + 1)) up
+                -- initialize top row of left array
+                forM_ [0..mat_len] $ \j ->
+                    B.unsafeWrite dpmat (twoDto1D array_width (0, j)) 0
+                -- and of right array
+                forM_ [mat_len+1 .. ((2*mat_len)+1)] $ \j ->
+                    B.unsafeWrite dpmat (twoDto1D array_width (0, j)) left
+                -- now fill rest of matrices
+                forM_ [1..seq_len] $ \i ->
+                    forM_ [1..mat_len] $ \j -> do
+                        let match_score = scoreModVseq (scThresholds scsc) hmod vseq i j               
+                        match_cell_val <- B.unsafeRead dpmat (twoDto1D array_width (i-1,j-1))
+                        hGap_cell_val  <- B.unsafeRead dpmat (twoDto1D array_width (i-1, j))
+                        vGap_cell_val  <- B.unsafeRead dpmat (twoDto1D array_width (i, j-1)) 
+                        let match_sc = match_cell_val + match_score
+                        let hGap_sc  = hGap_cell_val  + penalty
+                        let vGap_sc  = if i == seq_len
+                                        then vGap_cell_val
+                                        else vGap_cell_val + penalty
                         let best     =  maximum [match_sc, hGap_sc, vGap_sc]
                         B.unsafeWrite dpmat (twoDto1D array_width (i,j)) best
                         if best == hGap_sc
@@ -216,15 +281,21 @@ topCell mat = fst $ maximumBy cellCmp (assocs mat)
                 | otherwise     = LT
 -}
 
+{-
 msalignIA :: ScoringScheme -> PWMModel -> Sequence -> Sequence
 msalignIA scsc mat seq = T.pack $ nwMatBacktrackIA (msdpmatIA scsc mat vseq) vseq
     where vseq = U.fromList $ T.unpack seq 
+-}
 
 -- mutable-array - based version
 
-msalign :: ScoringScheme -> PWMModel -> Sequence -> Sequence
-msalign scsc mat seq = T.pack $ nwMatBacktrack (msdpmat scsc mat vseq) vseq
-    where vseq = U.fromList $ T.unpack seq 
+msalign :: AlignMode -> ScoringScheme -> PWMModel -> Sequence -> Sequence
+msalign mode scsc mat seq =
+    T.pack $ nwMatBacktrack (msdpmat scsc mat vseq) vseq
+    where   vseq = U.fromList $ T.unpack seq 
+            msdpmat = case mode of
+                        AlignGlobal     -> msdpmat_g
+                        AlignSemiglobal -> msdpmat_s
 {-
 nwMatPath :: RawProbMatrix -> String -> String
 nwMatPath hm vs = toPathMatrix (fmap dirSym (nw seqMatScore (-1) hra vra))
