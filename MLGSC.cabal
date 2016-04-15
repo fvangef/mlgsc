@@ -104,3 +104,9 @@ executable mlgsc
   other-modules: Align, Alignment, Classifier, FastA, MlgscTypes, NucModel,
                  Output, PWMModel, PWMModelAux, PepModel, Trim
 
+executable taxo2nw
+  build-depends: base, optparse-applicative, parsec, text, text-binary
+  main-is:       taxo2nw.hs
+  hs-source-dirs: src
+  other-modules: API, Alignment, FastA, IDTree, MlgscTypes, NewickDumper,
+                  NewickParser, TaxoParser, Weights
