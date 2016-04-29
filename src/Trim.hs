@@ -11,7 +11,7 @@ import qualified Data.Text as ST
 -- An HMM for trimming leading and trailing unaligned regions from aligned
 -- sequences that are much shorter than the model
 
-data State = Pre | Aln | Post
+data State = Pre | Aln | Unaln | Post
   deriving (Show, Ord, Eq)
 
 type Path = [State]
@@ -45,6 +45,30 @@ trimHmmEmProb Post = C.fromList [(0.95, Gap), (0.05, Residue)]
 trimHmm = HMM trimHmmStates trimHmmOutputs
     trimHmmInitProb trimHmmTransProb trimHmmEmProb
 
+-- Another HMM, for cases where the sequence may be hard to align on large
+-- portions of the model (e.g. when it has insertions, or when the model itself
+-- has some flaky regions). This is even simpler than the first: we have an
+-- 'aligned' state and an 'unaligned' one. The reason I keep two different
+-- models is that in this one we have no a priori belief about the initial
+-- state, whereas for the "trim" one we strongly favour starting in Pre. 
+
+flakyHmmStates = [Aln, Unaln]
+
+flakyHmmOutputs = [Gap, Residue]
+
+flakyHmmInitProb = C.fromList [(0.5, Aln), (0.5, Unaln)]
+
+flakyHmmTransProb :: State -> Categorical Double State
+flakyHmmTransProb Aln = C.fromList [(0.95, Aln), (0.05, Unaln)]
+flakyHmmTransProb Unaln = C.fromList [(0.95, Unaln), (0.05, Aln)]
+
+flakyHmmEmProb :: State -> Categorical Double Output
+flakyHmmEmProb Aln = C.fromList [(0.95, Residue), (0.05, Gap)]
+flakyHmmEmProb Unaln = C.fromList [(0.95, Gap), (0.05, Residue)]
+
+flakyHmm = HMM flakyHmmStates flakyHmmOutputs flakyHmmInitProb
+    flakyHmmTransProb flakyHmmEmProb
+--
 -- trimSeq should be replaced by trimSeqGeneric trimHmm
 trimSeq :: Text -> Text
 trimSeq seq = ST.pack $ zipWith translate path seqAsStr
@@ -53,9 +77,10 @@ trimSeq seq = ST.pack $ zipWith translate path seqAsStr
 
 translate :: State -> Char -> Char
 translate state c = case state of
-                        Pre -> '.'
-                        Aln -> c
-                        Post -> '.'
+                        Pre     -> '.'
+                        Aln     -> c
+                        Post    -> '.'
+                        Unaln   -> '.'
 
 -- A generalized version of trimSeq, works for any HMM. I don't change existing
 -- names so as not to break code, but trimSeq should be the name of this
@@ -82,6 +107,13 @@ boundaries hmm seq = transitionsPos path
 seq1 = [Gap, Gap, Gap, Gap, Gap, Gap, Gap, Gap, Gap, Gap, Gap, Gap, Gap, Gap, Residue, Residue, Residue, Residue, Residue, Residue, Residue, Residue, Residue, Residue, Residue, Residue, Residue, Residue, Residue, Residue, Residue, Residue, Residue, Residue, Residue, Residue, Residue, Residue, Gap, Gap, Gap, Gap, Gap, Gap, Gap, Gap, Gap]
 
 alnSeq1 = "-------------cgacgagcgacttacgagcagcgatg-------------"
+alnSeq2 = "-----------a-cg-cgagcgacttacgagcagcga-g--ct---------"
 
-(outs, _) = viterbi hmm $ alnSeqToHMMSym alnSeq1
+alnSeq3 = "cacgatgcagcat----------cagatgcatgcat----cgatgcagcacg"
+alnSeq4 = "cacgatgcagc-tca-------c-agatgcatgca-t---cgatgcagcacg"
+
+alnSeq5 = "-----cacgatgcagcat----------cagatgcatgcat-----------"
+alnSeq6 = "--c-tcacgatgcagc-tca-------c-agatgcatgca-t---ca-----"
+
+(outs, _) = viterbi trimHmm $ alnSeqToHMMSym alnSeq1
 
