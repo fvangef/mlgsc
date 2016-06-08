@@ -29,7 +29,7 @@ import Data.Ord
 
 import MlgscTypes
 import FastA
-import Trim
+import Trim (trimSeq, maskFlaky)
 import PWMModel
 import Align
 import Classifier (Classifier(..), classifySequence, classifySequenceMulti,
@@ -41,7 +41,7 @@ import Output
 -- sense.
 
 data MlgscAlignMode = DoAlignment AlignMode | NoAlignment
-data MaskMode = None | Trim
+data MaskMode = None | Trim | MaskFlaky
 
 data TreeTraversalMode = BestTraversal
                        | FullTraversal
@@ -74,6 +74,7 @@ parseMaskMode :: Monad m => String -> m MaskMode
 parseMaskMode optString
     | 't' == initC = return Trim
     | 'n' == initC = return None
+    | 'f' == initC = return MaskFlaky
     | otherwise = return None -- TODO: warn about unrecognized opt
     where initC = toLower $ head optString
 
@@ -116,7 +117,7 @@ parseOptions = Params
                 <*> option (str >>= parseMaskMode)
                     (long "mask-mode"
                     <> short 'M'
-                    <> help "mask aligned query: n)one* | t)trim"
+                    <> help "mask aligned query: n)one* | t)trim | mask f)laky"
                     <> value None)
                 <*> option (str >>= parseAlignMode)
                     (long "align-mode"
@@ -206,11 +207,14 @@ mbAlign params scsc rootMod =
                 (DoAlignment mode)  -> msalign mode scsc rootMod
 
 -- Returns a masking step (a ST.Text -> ST.Text function), or just id if no
--- masking was requested.
+-- masking was requested. TODO: this function could be called  during
+-- command-line argument parsing...
+
 mbMask params =
     case optMaskMode params of
         None -> id
         Trim -> trimSeq
+        MaskFlaky -> maskFlaky
 
 bestTraversal :: Params -> Classifier -> [FastA] -> [Sequence] -> [ST.Text]
 bestTraversal params classifier queryRecs processedQueries =

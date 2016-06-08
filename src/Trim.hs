@@ -1,4 +1,7 @@
-module Trim (trimSeq) where
+module Trim (
+    trimSeq
+    , maskFlaky
+    ) where
 
 import Learning.HMM
 import Data.Random.Distribution.Categorical as C
@@ -69,11 +72,12 @@ flakyHmmEmProb Unaln = C.fromList [(0.95, Gap), (0.05, Residue)]
 flakyHmm = HMM flakyHmmStates flakyHmmOutputs flakyHmmInitProb
     flakyHmmTransProb flakyHmmEmProb
 --
--- trimSeq should be replaced by trimSeqGeneric trimHmm
+-- trimSeq should be replaced by maskSeqGeneric trimHmm
 trimSeq :: Text -> Text
-trimSeq seq = ST.pack $ zipWith translate path seqAsStr
-    where   (path, _)   = viterbi trimHmm $ alnSeqToHMMSym seqAsStr
-            seqAsStr    = ST.unpack seq    
+trimSeq = maskSeqGeneric trimHmm 
+
+maskFlaky :: Text -> Text
+maskFlaky = maskSeqGeneric flakyHmm
 
 translate :: State -> Char -> Char
 translate state c = case state of
@@ -86,8 +90,8 @@ translate state c = case state of
 -- names so as not to break code, but trimSeq should be the name of this
 -- function.
 
-trimSeqGeneric :: HMM State Output -> Text -> Text
-trimSeqGeneric hmm seq = ST.pack $ zipWith translate path seqAsStr
+maskSeqGeneric :: HMM State Output -> Text -> Text
+maskSeqGeneric hmm seq = ST.pack $ zipWith translate path seqAsStr
     where   (path, _)   = viterbi hmm $ alnSeqToHMMSym seqAsStr
             seqAsStr    = ST.unpack seq
 
