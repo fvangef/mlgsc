@@ -24,19 +24,19 @@ scsc = ScoringScheme (-2) (scoringSchemeMap (absentResScore aln1Mod))
 
 input1 = "AAATTTAAA"
 exp1 = input1
-test1 = TestCase (assertEqual "ident" exp1 (msalign scsc aln1Mod input1))
+test1 = TestCase (assertEqual "ident" exp1 (msalign AlignGlobal scsc aln1Mod input1))
 
 input2 = "AAATTAAA"
 exp2 = "AAATT-AAA"
-test2 = TestCase (assertEqual "1 gap" exp2 (msalign scsc aln1Mod input2))
+test2 = TestCase (assertEqual "1 gap" exp2 (msalign AlignGlobal scsc aln1Mod input2))
 
 input3 = "GGGGGGGGGAAATTTAAACCCCCCCCCC"
 exp3 = input1
-test3 = TestCase (assertEqual "overhangs" exp3 (msalign scsc aln1Mod input3))
+test3 = TestCase (assertEqual "overhangs" exp3 (msalign AlignGlobal scsc aln1Mod input3))
 
 input4 = "GGGGGGGGGAAATAAACCCCCCCCCC"
 exp4 = "AAAT--AAA"
-test4 = TestCase (assertEqual "gap+overhangs" exp4 (msalign scsc aln1Mod input4))
+test4 = TestCase (assertEqual "gap+overhangs" exp4 (msalign AlignGlobal scsc aln1Mod input4))
 
 -- Small, real example (protein)
 
@@ -56,28 +56,28 @@ mod2 = PepPWMModel $ alnToPepModel small_prob scale_factor "some-OTU" aln2
 
 input5 = "MNLSPQPKIIMKPFDMEVLANRVRQLVG"
 exp5 = input5
-test5 = TestCase (assertEqual "small real 1" exp5 (msalign scoring mod2 input5))
+test5 = TestCase (assertEqual "small real 1" exp5 (msalign AlignGlobal scoring mod2 input5))
 
 input6 = "REKQPSVIMKPFDMENLVYHIRQVHG"
 exp6 = "RE--KQPSVIMKPFDMENLVYHIRQVHG"
-test6 = TestCase (assertEqual "small real 2" exp6 (msalign scoring mod2 input6))
+test6 = TestCase (assertEqual "small real 2" exp6 (msalign AlignGlobal scoring mod2 input6))
 
 input7 = "VAILGYMDIPKMPKIIVKPFDFVVFINRIRELVSPCWFL"
 exp7 = "MDIPKMPKIIVKPFDFVVFINRIRELVS"
-test7 = TestCase (assertEqual "small real 3" exp7 (msalign scoring mod2 input7))
+test7 = TestCase (assertEqual "small real 3" exp7 (msalign AlignGlobal scoring mod2 input7))
 
 input8 = "VAILGYREKQPSVIMKPFDMENLVYHIRQVHGPCWFL"
 exp8 = "RE--KQPSVIMKPFDMENLVYHIRQVHG"
-test8 = TestCase (assertEqual "small real 4" exp8 (msalign scoring mod2 input8))
+test8 = TestCase (assertEqual "small real 4" exp8 (msalign AlignGlobal scoring mod2 input8))
 
 input9 = "VAILGYMDIPKMPKPFDFVVFINRIRELVSPCWFL"
 exp9 = "MDIPKMPK----PFDFVVFINRIRELVS"
-test9 = TestCase (assertEqual "small real 5" exp9 (msalign scoring mod2 input9))
+test9 = TestCase (assertEqual "small real 5" exp9 (msalign AlignGlobal scoring mod2 input9))
 
 input10 = "VAILGYMDIPKMPKIIVKVFINRIRELVSPCWFL"
 exp10 = "MDIPKMPKIIVK-----VFINRIRELVS"
 
-test10 = TestCase (assertEqual "small real 6" exp10 (msalign scoring mod2 input10))
+test10 = TestCase (assertEqual "small real 6" exp10 (msalign AlignGlobal scoring mod2 input10))
 
 -- This very small matrix was used to find and fix a bug, captured in test cases
 -- below.
@@ -98,7 +98,7 @@ input11 = "REKQPS"
 -- This used to yield, wrongly, "-E--KQPS".
 exp11 = "RE--KQPS"
 
-test11 = TestCase (assertEqual "small real 7" exp11 (msalign scoring mod3 input11))
+test11 = TestCase (assertEqual "small real 7" exp11 (msalign AlignGlobal scoring mod3 input11))
 
 
 -- Real-life, full-length alignment (long enough to classify to genus in most
@@ -135,19 +135,19 @@ mod4 = PepPWMModel $  alnToPepModel small_prob scale_factor "real-life" aln4
 input12 = "EFCNILNDYLLNQRDIVVTGVAKDGIEALKLIQEKKPDLLILDIIMPHLDGLGVLEKINTMNIEKLPRVIVLSAVGQDKITQRAITLGADYYVVKPFDMDVFTKRIRQMFN"
 exp12 = "EFCNILNDYLLNQRDIVVTGVAKDGIEALKLIQEKKPDLLILDIIMPHLDGLGVLEKINTMNIEKLPRVIVLSAVGQDKITQRAITLGADYYVVKPFDMDVFTKRIRQMFN-"
 
-test12 = TestCase (assertEqual "small real 7" exp12 (msalign scoring mod4 input12))
+test12 = TestCase (assertEqual "small real 7" exp12 (msalign AlignGlobal scoring mod4 input12))
 
 input13 = "ELVTLLDEYISNQSDMEVIGTAYNGQDCLHMLEEKQPDILILDIIMPHLDGLAVLEKVRTSFEHQPNVIMLTAFGQEDVTKKAVELGASYFILKPFDMENLVHHIRQIYG"
 exp13 = "ELVTLLDEYISNQSDMEVIGTAYNGQDCLHMLEEKQPDILILDIIMPHLDGLAVLEKVRT-SFEHQPNVIMLTAFGQEDVTKKAVELGASYFILKPFDMENLVHHIRQIYG-"
 
-test13 = TestCase (assertEqual "small real 7" exp13 (msalign scoring mod4 input13))
+test13 = TestCase (assertEqual "small real 7" exp13 (msalign AlignGlobal scoring mod4 input13))
 
 -- for this one the function yields a different alignment, but with an equal
 -- score...
 input14 = "EFAKLLKEYMNQYEDIEVLELAKDGLQAIEMIISKKPDVVVLDIIMPNLDGLGVLERLSTMQLEYRPIFIMLSAIGQDVFVQRAVNLGAEYYIIKPFDVEVLVTRIRQLY"
 exp14 = "EFAKLLKEYMNQYEDIEVLELAKDGLQAIEMIISKKPDVVVLDIIMPNLDGLGVLERLSTMQLEYRPIFIMLSAIGQDVFVQRAVNLGAEYYIIKPFDVEVLVTRIRQLY--"
 
-test14 = TestCase (assertEqual "small real 7" exp14 (msalign scoring mod4 input14))
+test14 = TestCase (assertEqual "small real 7" exp14 (msalign AlignGlobal scoring mod4 input14))
 
 tests = TestList [
         TestLabel "msalign" test1

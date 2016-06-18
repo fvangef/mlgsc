@@ -29,15 +29,19 @@ import Data.Ord
 
 import MlgscTypes
 import FastA
-import Trim
+import Trim (trimSeq, maskFlaky)
 import PWMModel
 import Align
 import Classifier (Classifier(..), classifySequence, classifySequenceMulti,
                     classifySequenceAll, StoredClassifier(..))
 import Output
 
+-- distinguish between MlgscAlignMode (which includes no alignment) from
+-- AlignMode (which is exported by Align), in which no alignment makes little
+-- sense.
 
-data MaskMode = None | Trim
+data MlgscAlignMode = DoAlignment AlignMode | NoAlignment
+data MaskMode = None | Trim | MaskFlaky
 
 data TreeTraversalMode = BestTraversal
                        | FullTraversal
@@ -51,6 +55,7 @@ data Params = Params {
                 , optStepFmtString      :: String
                 , optERCutoff           :: Int   -- for Best mode (TODO: could be an argument to the BestTraversal c'tor)
                 , optMaskMode           :: MaskMode
+                , optAlnMode               :: MlgscAlignMode
                 , queryFname            :: String
                 , clsfrFname            :: String
                 }
@@ -69,7 +74,16 @@ parseMaskMode :: Monad m => String -> m MaskMode
 parseMaskMode optString
     | 't' == initC = return Trim
     | 'n' == initC = return None
+    | 'f' == initC = return MaskFlaky
     | otherwise = return None -- TODO: warn about unrecognized opt
+    where initC = toLower $ head optString
+
+parseAlignMode :: Monad m => String -> m MlgscAlignMode
+parseAlignMode optString
+    | 'g' == initC = return $ DoAlignment AlignGlobal
+    | 's' == initC = return $ DoAlignment AlignSemiglobal
+    | 'n' == initC = return NoAlignment
+    | otherwise = error ("invalid alignment mode: " ++ optString)
     where initC = toLower $ head optString
 
 parseOptions :: Parser Params
@@ -79,6 +93,8 @@ parseOptions = Params
                     <> short 'm'
                     <> help "tree traversal mode (b|a|r<int>)"
                     <> value BestTraversal)
+                -- NOTE: the -A switch is deprecated; use -a n instead.
+                -- We keep it for compatibility
                 <*> switch
                     (long "no-align"
                     <> short 'A'
@@ -101,8 +117,13 @@ parseOptions = Params
                 <*> option (str >>= parseMaskMode)
                     (long "mask-mode"
                     <> short 'M'
-                    <> help "mask aligned query: n)one* | t)trim"
+                    <> help "mask aligned query: n)one* | t)trim | mask f)laky"
                     <> value None)
+                <*> option (str >>= parseAlignMode)
+                    (long "align-mode"
+                    <> short 'a'
+                    <> help "alignment mode: g)lobal* | s)emiglobal | n)one"
+                    <> value (DoAlignment AlignGlobal))
                 <*> argument str (metavar "<query seq file>")
                 <*> argument str (metavar "<classifier file>")
 
@@ -169,18 +190,31 @@ main = do
     mapM_ STIO.putStrLn outlines
 
 -- Returns an alignment step (technically, a ST.Text -> ST.Text function), or
--- just id if option 'optNoAlign' is set.
+-- just id if option 'optNoAlign' is set. NOTE: for now there are two ways of
+-- spcifying 'no alignment', because we introduced semiglobal, yet either
+-- alignment mode is incompatible with 'no alignment', so in reality it's either
+-- global, semiglobal, or not at all, which are all governed by -a.
+-- We could just drop -A, but this could break existing code. For now we just
+-- handle both here, in the future there should be a distinction between CLI
+-- params and run params, with the former essentially the same as the current
+-- Params, and a function to map them to the latter.
+
 mbAlign params scsc rootMod =
     if optNoAlign params
             then id
-            else msalign scsc rootMod
+            else case (optAlnMode params) of
+                NoAlignment         -> id
+                (DoAlignment mode)  -> msalign mode scsc rootMod
 
 -- Returns a masking step (a ST.Text -> ST.Text function), or just id if no
--- masking was requested.
+-- masking was requested. TODO: this function could be called  during
+-- command-line argument parsing...
+
 mbMask params =
     case optMaskMode params of
         None -> id
         Trim -> trimSeq
+        MaskFlaky -> maskFlaky
 
 bestTraversal :: Params -> Classifier -> [FastA] -> [Sequence] -> [ST.Text]
 bestTraversal params classifier queryRecs processedQueries =
