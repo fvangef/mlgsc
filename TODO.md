@@ -27,6 +27,7 @@ Documentation
   exactly one of global, semiglobal, or none. Keep -A for some time for
   compatibility
 * (X)HTML/HTML5 output
+* easy way to dump aligned sequences as FastA, for subsequent runs with `-A`
 * XML output for taxonomies, if it exists
 * color output
 

@@ -15,7 +15,9 @@ README.html: README.md
 
 install: 
 	install -t $(INSTALL_DIR) src/mlgsc src/mlgsc_train src/mlgsc_xval
+	cd man && $(MAKE) install
 
 clean:
 	cd src && $(MAKE) clean
 	cd test && $(MAKE) clean
+	cd man && $(MAKE) clean
