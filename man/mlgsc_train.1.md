@@ -12,6 +12,10 @@ mlgsc_train -h
 
 mlgsc_train [*options*] **DNA|Prot** *multiple-alignment* *phylogeny* 
 
+OR
+
+mlgsc_train [*options*] **DNA|Prot** *multiple-alignment*
+
 # DESCRIPTION
 
 mlgsc_train trains a model for use with mlgsc(1). The arguments are as follows:
@@ -19,9 +23,15 @@ mlgsc_train trains a model for use with mlgsc(1). The arguments are as follows:
 **DMA|Prot**
 :   specifies whether the model is trained on nucleotide (DNA or RNA) or protein
     sequences.
+
 *multiple-alignment*
 :   the name of a file containing a Fasta-formatted mutliple alignment of the
-    classifying region. The Fasta headers should have the following format:
+    classifying region. In the first form (above), the Fasta header contains an
+    ID and the taxon name (the phylogeny being supplied in a separate file). In
+    the second form, the Fasta header also contains the taxon's complete
+    anscestry (see below).
+    
+    In the first form, the Fasta headers should have the following format:
     
     `><ID> <taxon-name> [rest]`
     
@@ -35,6 +45,17 @@ mlgsc_train trains a model for use with mlgsc(1). The arguments are as follows:
     is not used, but it *can* be used for cross-validation (see
     *mlgsc_xval*(1)), and it is simpler for *mlgsc_train* and *mlgsc_xval* to
     use the same format.
+
+    In the second form, the Fasta headers must have the following format:
+
+    `><ID>;tax=d:<domain name>,p:<phylum name>,c:<class name>,o:<order name>,f:<family name>,g:<genus name>,s:<scientific name>;`
+
+    e.g:
+
+    `>Aquifex_aeolicus;tax=d:Bacteria,p:Aquificae,c:Aquificae,o:Aquificales,f:Aquificaceae,g:Aquifex,s:Aquifex aeolicus;`
+
+    This is the format used by Utax
+    (http://www.drive5.com/usearch/manual/tax_annot.htmlhttp://www.drive5.com/usearch/manual/tax_annot.html)
     
 *phylogeny*
 :   the name of a file containing a phylogeny of the target taxa (see option

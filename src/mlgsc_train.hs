@@ -32,8 +32,7 @@ data Params = Params {
                 , optIDtree         :: Bool
                 , optPhyloFormat    :: PhyloFormat 
                 , molType           :: Molecule
-                , alnFName          :: String
-                , treeFName         :: String
+                , posParams         :: [String]
                 }
 
 parseSmallProb :: Parser Double
@@ -91,8 +90,7 @@ parseOptions = Params
                     <> help "T)axonomy or N)ewick (default)"
                     <> value Newick )
                 <*> argument auto (metavar "<DNA|Prot>")
-                <*> argument str (metavar "<alignment file>")
-                <*> argument str (metavar "<tree file>")
+                <*> many (argument str (metavar "<alignment file> [tree file]"))
 
 parseOptionsInfo :: ParserInfo Params
 parseOptionsInfo = info (helper <*> parseOptions) 
