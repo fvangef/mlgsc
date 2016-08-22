@@ -8,10 +8,12 @@ import qualified Data.Map.Strict as M
 import Data.Binary (encodeFile, encode)
 import Data.ByteString.Lazy (ByteString, unpack)
 import qualified Data.Text as ST
+import qualified Data.Text.Lazy as LT
 import qualified Data.Text.IO as STIO
 import qualified Data.Text.Lazy.IO as LTIO
 import System.Environment (getArgs, getProgName)
 import Data.Digest.Pure.CRC32
+import Data.Tree
 
 import MlgscTypes
 import NewickDumper
@@ -105,9 +107,12 @@ main :: IO ()
 main = do
     params <- execParser parseOptionsInfo
     let alnFName = head $ posParams params
-    let treeFName = last $ posParams params
-    treeString <- readFile $ treeFName
     fastAInput <-  LTIO.readFile $ alnFName
+    treeString <- if (length $ posParams params) == 2
+        then do
+            readFile $ last $ posParams params
+        else do
+            return ""
     let (fastaRecs, tree) = fastaRecsAndTree
                                 (optIDtree params)
                                 (fastATextToRecords fastAInput)
@@ -125,6 +130,14 @@ main = do
     let cksum = crc32 $ encode classifier
     let sc = StoredClassifier classifier (Metadata cmdln cksum)
     encodeFile outputFileName sc
+
+getFastaRecsAndTree :: Params -> LT.Text -> String -> ([FastA], Tree OTUName)
+getFastaRecsAndTree params fastAInput treeString =
+    case (length $ posParams params) of
+        2 -> fastaRecsAndTree
+                (optIDtree params)
+                (fastATextToRecords fastAInput)
+                (rawTree (optPhyloFormat params) treeString)
 
 runInfo :: Params -> NewickTree -> String -> IO ()
 runInfo params tree outFname
