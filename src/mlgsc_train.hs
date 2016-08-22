@@ -21,7 +21,8 @@ import Classifier (buildClassifier, Classifier,
 import Alignment
 import IDTree
 -- TODO should replace (most of) the above with:
-import API (rawTree, fastaRecsAndTree, otuAlignmentMap, parsePhyloFormat)
+import API (rawTree, fastaRecsAndTree, fastaRecsAndTree',
+    otuAlignmentMap, parsePhyloFormat)
 
 data Params = Params {
                 optSmallProb        :: Double
@@ -103,14 +104,16 @@ parseOptionsInfo = info (helper <*> parseOptions)
 main :: IO ()
 main = do
     params <- execParser parseOptionsInfo
-    treeString <- readFile $ treeFName params
-    fastAInput <-  LTIO.readFile $ alnFName params
+    let alnFName = head $ posParams params
+    let treeFName = last $ posParams params
+    treeString <- readFile $ treeFName
+    fastAInput <-  LTIO.readFile $ alnFName
     let (fastaRecs, tree) = fastaRecsAndTree
                                 (optIDtree params)
                                 (fastATextToRecords fastAInput)
                                 (rawTree (optPhyloFormat params) treeString)
     let otuAlnMap = otuAlignmentMap (optNoHenikoffWt params) fastaRecs
-    let outputFileName = outFName (optOutFName params) (alnFName params)
+    let outputFileName = outFName (optOutFName params) alnFName
     runInfo params tree outputFileName
     possibleWarnings params tree otuAlnMap
     let classifier = buildClassifier
@@ -129,8 +132,8 @@ runInfo params tree outFname
     | otherwise                 = do
         putStrLn $ unlines [
             "mlgsc_train - building model ",
-            ("input alignment:  " ++ (alnFName params)),
-            ("input tree: " ++ (treeFName params)),
+            ("input alignment:  " ++ (head $ posParams params)),
+            ("input tree: " ++ (last $ posParams params)),
             ("output: " ++ outFname),
             ("molecule: " ++ (show $ molType params)),
             ("small prob: " ++ (show $ optSmallProb params)),

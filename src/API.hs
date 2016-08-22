@@ -8,6 +8,7 @@
 module API (
     rawTree,
     fastaRecsAndTree,
+    fastaRecsAndTree',
     otuAlignmentMap,
     parsePhyloFormat
    )  where
@@ -75,6 +76,13 @@ fastaRecsAndTree isIDtree rawFastaRecs rawTree
     | otherwise = (rawFastaRecs, rawTree)
         where (Just rnMap) = renumberedTaxonMap rawTree rawFastaRecs
     
+{- This version handles the case where the Fasta multiple alignment file also
+ - contains the phylogeny (and thus there is no need for a separate phylogeny
+ - file, be it a Newick tree or a taxonomy.  -}
+
+fastaRecsAndTree' :: [FastA] -> ([FastA], Tree OTUName)
+fastaRecsAndTree' = undefined
+
 {- Takes the list of FastA records and builds a Taxon -> Record map; also takes
  - care of applying Henikoff weighting unless disabled ('noHenWt'). -}
 
