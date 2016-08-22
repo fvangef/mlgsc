@@ -113,10 +113,10 @@ main = do
             readFile $ last $ posParams params
         else do
             return ""
-    let (fastaRecs, tree) = fastaRecsAndTree
-                                (optIDtree params)
-                                (fastATextToRecords fastAInput)
-                                (rawTree (optPhyloFormat params) treeString)
+    let treeString' = if treeString == ""
+                        then Nothing
+                        else (Just treeString)
+    let (fastaRecs, tree) = getFastaRecsAndTree params fastAInput treeString'
     let otuAlnMap = otuAlignmentMap (optNoHenikoffWt params) fastaRecs
     let outputFileName = outFName (optOutFName params) alnFName
     runInfo params tree outputFileName
@@ -131,13 +131,15 @@ main = do
     let sc = StoredClassifier classifier (Metadata cmdln cksum)
     encodeFile outputFileName sc
 
-getFastaRecsAndTree :: Params -> LT.Text -> String -> ([FastA], Tree OTUName)
-getFastaRecsAndTree params fastAInput treeString =
-    case (length $ posParams params) of
-        2 -> fastaRecsAndTree
-                (optIDtree params)
-                (fastATextToRecords fastAInput)
-                (rawTree (optPhyloFormat params) treeString)
+getFastaRecsAndTree :: Params -> LT.Text -> Maybe String -> ([FastA], Tree OTUName)
+getFastaRecsAndTree params fastAInput mbTreeString =
+    case mbTreeString of
+        Nothing             -> fastaRecsAndTree' fastaRecords
+        (Just treeString)   -> fastaRecsAndTree
+                                    (optIDtree params)
+                                    fastaRecords
+                                    (rawTree (optPhyloFormat params) treeString)
+    where   fastaRecords = fastATextToRecords fastAInput
 
 runInfo :: Params -> NewickTree -> String -> IO ()
 runInfo params tree outFname
