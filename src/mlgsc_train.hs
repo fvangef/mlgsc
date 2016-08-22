@@ -110,13 +110,11 @@ main = do
     fastAInput <-  LTIO.readFile $ alnFName
     treeString <- if (length $ posParams params) == 2
         then do
-            readFile $ last $ posParams params
+            c <- readFile $ last $ posParams params
+            return $ Just c
         else do
-            return ""
-    let treeString' = if treeString == ""
-                        then Nothing
-                        else (Just treeString)
-    let (fastaRecs, tree) = getFastaRecsAndTree params fastAInput treeString'
+            return Nothing
+    let (fastaRecs, tree) = getFastaRecsAndTree params fastAInput treeString
     let otuAlnMap = otuAlignmentMap (optNoHenikoffWt params) fastaRecs
     let outputFileName = outFName (optOutFName params) alnFName
     runInfo params tree outputFileName
