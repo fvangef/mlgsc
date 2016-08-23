@@ -8,12 +8,13 @@
 module API (
     rawTree,
     fastaRecsAndTree,
-    treeFromFasta,
+    treeStringFromFasta,
     otuAlignmentMap,
     parsePhyloFormat
    )  where
 
 import qualified Data.Text as ST
+import qualified Data.Text.Lazy as LT
 import Data.Tree
 
 import MlgscTypes
@@ -35,8 +36,9 @@ parsePhyloFormat s = if 'N' == head s
                                 then return Newick
                                 else return Taxonomy
 
-{- The phylogeny may be passed as a tree (Newick) or as a taxonomy. The contents
- - of the phylogeny file must be passed 
+{- The phylogeny may be passed as a tree (Newick) or as a taxonomy.
+ - Note that both are passed as a String (which is ok for Newick, but not that
+ - much for Taxonomy, since taxo files can be large).
  - TODO: this function does no error handling!
  -}
 
@@ -80,8 +82,8 @@ fastaRecsAndTree isIDtree rawFastaRecs rawTree
  - contains the phylogeny (and thus there is no need for a separate phylogeny
  - file, be it a Newick tree or a taxonomy.  -}
 
-treeFromFasta :: [FastA] -> ([FastA], Tree OTUName)
-treeFromFasta recs = map header recs
+treeStringFromFasta :: [FastA] -> String
+treeStringFromFasta recs = concatMap (LT.unpack . header) recs
 
 {- Takes the list of FastA records and builds a Taxon -> Record map; also takes
  - care of applying Henikoff weighting unless disabled ('noHenWt'). -}

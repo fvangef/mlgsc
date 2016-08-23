@@ -23,7 +23,7 @@ import Classifier (buildClassifier, Classifier,
 import Alignment
 import IDTree
 -- TODO should replace (most of) the above with:
-import API (rawTree, fastaRecsAndTree, fastaRecsAndTree',
+import API (rawTree, fastaRecsAndTree, treeStringFromFasta,
     otuAlignmentMap, parsePhyloFormat)
 
 data Params = Params {
@@ -133,8 +133,12 @@ getFastaRecsAndTree ::
     Params -> LT.Text -> Maybe String -> ([FastA], Tree OTUName)
 getFastaRecsAndTree params fastAInput mbTreeString =
     case mbTreeString of
+        -- no separate phylogeny file: take it from Fasta header}
         Nothing             -> (fastaRecords,
-                                    rawTree treeStringFromFasta fastaRecords)
+                                    rawTree Taxonomy $
+                                    treeStringFromFasta fastaRecords)
+        -- get the phylogeny from the phylogeny file's contents, which may be
+        -- Taxonomy or Newick (and in that case, a taxon tree or an ID tree)
         (Just treeString)   -> fastaRecsAndTree
                                     (optIDtree params)
                                     fastaRecords
