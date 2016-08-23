@@ -129,10 +129,12 @@ main = do
     let sc = StoredClassifier classifier (Metadata cmdln cksum)
     encodeFile outputFileName sc
 
-getFastaRecsAndTree :: Params -> LT.Text -> Maybe String -> ([FastA], Tree OTUName)
+getFastaRecsAndTree ::
+    Params -> LT.Text -> Maybe String -> ([FastA], Tree OTUName)
 getFastaRecsAndTree params fastAInput mbTreeString =
     case mbTreeString of
-        Nothing             -> fastaRecsAndTree' fastaRecords
+        Nothing             -> (fastaRecords,
+                                    rawTree treeStringFromFasta fastaRecords)
         (Just treeString)   -> fastaRecsAndTree
                                     (optIDtree params)
                                     fastaRecords

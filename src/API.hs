@@ -8,7 +8,7 @@
 module API (
     rawTree,
     fastaRecsAndTree,
-    fastaRecsAndTree',
+    treeFromFasta,
     otuAlignmentMap,
     parsePhyloFormat
    )  where
@@ -80,8 +80,8 @@ fastaRecsAndTree isIDtree rawFastaRecs rawTree
  - contains the phylogeny (and thus there is no need for a separate phylogeny
  - file, be it a Newick tree or a taxonomy.  -}
 
-fastaRecsAndTree' :: [FastA] -> ([FastA], Tree OTUName)
-fastaRecsAndTree' = undefined
+treeFromFasta :: [FastA] -> ([FastA], Tree OTUName)
+treeFromFasta recs = map header recs
 
 {- Takes the list of FastA records and builds a Taxon -> Record map; also takes
  - care of applying Henikoff weighting unless disabled ('noHenWt'). -}
