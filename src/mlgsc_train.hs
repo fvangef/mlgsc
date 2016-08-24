@@ -108,6 +108,7 @@ main = do
     params <- execParser parseOptionsInfo
     let alnFName = head $ posParams params
     fastAInput <-  LTIO.readFile $ alnFName
+    putStrLn $ treeStringFromFasta $ fastATextToRecords fastAInput
     treeString <- if (length $ posParams params) == 2
         then do
             c <- readFile $ last $ posParams params

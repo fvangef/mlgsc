@@ -24,7 +24,7 @@ import Weights
 import TaxoParser (parseTaxonomy)
 import IDTree (renumFastaRecs, renumTaxonTree,
                 renumberedTaxonMap)
-import FastA
+import FastA (FastA, utax2taxo)
 
 
 -- Used in the options parser to determine if tree is Newick or Taxo
@@ -80,10 +80,13 @@ fastaRecsAndTree isIDtree rawFastaRecs rawTree
     
 {- This version handles the case where the Fasta multiple alignment file also
  - contains the phylogeny (and thus there is no need for a separate phylogeny
- - file, be it a Newick tree or a taxonomy.  -}
+ - file, be it a Newick tree or a taxonomy).  For now we assume that it is in
+ - Utax format, and that the tree string is expected to be a concatenation of
+ - Silva-style (i.e., "; "-separated) taxonomy lines.
+ -}
 
 treeStringFromFasta :: [FastA] -> String
-treeStringFromFasta recs = concatMap (LT.unpack . header) recs
+treeStringFromFasta = unlines . map (LT.unpack . utax2taxo)
 
 {- Takes the list of FastA records and builds a Taxon -> Record map; also takes
  - care of applying Henikoff weighting unless disabled ('noHenWt'). -}

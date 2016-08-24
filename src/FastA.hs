@@ -4,7 +4,8 @@ module FastA (
     fastAId,
     fastAOTU,
     degap,
-    idToTaxonMap
+    idToTaxonMap,
+    utax2taxo
     ) where
 
 import qualified Data.Text.Lazy as LT
@@ -39,3 +40,7 @@ idToTaxonMap records = fromList $ zip ids taxa
     where   ids     = map fastAId records
             taxa    = map fastAOTU records
 
+-- Returns the taxonomy part of a Fasta record with Utax-formatted header
+utax2taxo :: FastA -> LT.Text
+utax2taxo rec =
+    LT.replace (LT.pack ",") (LT.pack "; ") $ last $ LT.splitOn (LT.pack "=") $ header rec
