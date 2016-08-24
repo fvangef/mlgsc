@@ -9,7 +9,14 @@ type TaxoLine = [OTUName]
 
 parseTaxonomy :: String -> OTUTree
 parseTaxonomy taxo = foldl addTaxoLine (Node ST.empty []) taxolines
-    where taxolines = map (ST.splitOn (ST.pack "; ")) $ ST.lines $ ST.pack taxo
+    where   taxolines = map (fixlast . ST.splitOn (ST.pack "; ")) $ ST.lines $ ST.pack taxo
+
+-- The last element of a taxo list must be stripped of any trailing ';', also, I
+-- replace any spaces with underscores.
+--
+fixlast :: [ST.Text] -> [ST.Text]
+fixlast taxolist = init taxolist ++ [fix $ last taxolist]
+    where fix = ST.replace (ST.pack " ") (ST.pack "_") .  ST.dropAround (== ';')
 
 addTaxoLine :: OTUTree -> TaxoLine -> OTUTree
 addTaxoLine n []    = n

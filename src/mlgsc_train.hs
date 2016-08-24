@@ -17,7 +17,7 @@ import Data.Tree
 
 import MlgscTypes
 import NewickDumper
-import FastA
+import FastA (FastA, fastATextToRecords, utax2plain)
 import Classifier (buildClassifier, Classifier, 
         StoredClassifier(..), Metadata(..))
 import Alignment
@@ -108,13 +108,15 @@ main = do
     params <- execParser parseOptionsInfo
     let alnFName = head $ posParams params
     fastAInput <-  LTIO.readFile $ alnFName
-    putStrLn $ treeStringFromFasta $ fastATextToRecords fastAInput
+    -- putStrLn $ treeStringFromFasta $ fastATextToRecords fastAInput
     treeString <- if (length $ posParams params) == 2
         then do
             c <- readFile $ last $ posParams params
             return $ Just c
         else do
             return Nothing
+    -- we have to return these at the same time because in some cases (e.g., ID
+    -- tree) they depend on one another.
     let (fastaRecs, tree) = getFastaRecsAndTree params fastAInput treeString
     let otuAlnMap = otuAlignmentMap (optNoHenikoffWt params) fastaRecs
     let outputFileName = outFName (optOutFName params) alnFName
@@ -135,7 +137,7 @@ getFastaRecsAndTree ::
 getFastaRecsAndTree params fastAInput mbTreeString =
     case mbTreeString of
         -- no separate phylogeny file: take it from Fasta header}
-        Nothing             -> (fastaRecords,
+        Nothing             -> (map utax2plain fastaRecords,
                                     rawTree Taxonomy $
                                     treeStringFromFasta fastaRecords)
         -- get the phylogeny from the phylogeny file's contents, which may be
