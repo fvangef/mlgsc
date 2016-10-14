@@ -31,7 +31,7 @@ main = do
 -- Generates all the paths through the tree - in just two lines (I'm sure
 -- Haskell pros can whittle this down even further, but still, the contrast with
 -- tree2taxo.lua (which is 23 lines long and of course relies also on nw_luaed)
--- is rather striking. This could serve as the basis for a mechanism that
+-- is rather striking.) This could serve as the basis for a mechanism that
 -- explores multiple branches in the tree if there is any doubt that the best
 -- score is the only reasonable choice.
 
