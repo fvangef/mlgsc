@@ -62,6 +62,14 @@ test-suite        weights
   hs-source-dirs: src, test
   other-modules:  Weights, Alignment, FastA, MlgscTypes
 
+test-suite        ssmap
+  type:           exitcode-stdio-1.0
+  main-is:        TestSSMap.hs
+  build-depends:  HUnit
+  hs-source-dirs: src, test
+  other-modules:  SSMap
+
+
 -- z ensures this suite is run last
 test-suite        z_test_apps
   type:           exitcode-stdio-1.0
