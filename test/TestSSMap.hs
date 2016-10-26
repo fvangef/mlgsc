@@ -2,15 +2,17 @@
 
 import Test.HUnit
 
+import SSMap
+
 -- Testing of subsequence maps (SSMaps)
 
 -- Test a map of a single sequence, indexing dimers.
 
-patterns = ["RR"]   -- index dimers
+patterns_01 = ["RR"]   -- index dimers
 
 seq_01 = "GAATATC"
 
-ssmap_01 = toSSMap patterns seq_01
+ssmap_01 = toSSMap patterns_01 seq_01
 
 test_01 = "get num" ~: 1 ~?= numSeq ssmap_01
 test_02 = "get f(GA)" ~: 1 ~?= ssfreq ssmap_01 "GA"
